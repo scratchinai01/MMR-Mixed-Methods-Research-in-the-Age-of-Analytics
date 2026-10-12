@@ -12,7 +12,7 @@ export interface AnalysisRecord {
   createdAt: number;
   fileName: string;
   paperTitle: string;
-  majorDesignId: 'triangulation' | 'embedded' | 'explanatory' | 'exploratory';
+  majorDesignId: 'triangulation' | 'embedded' | 'explanatory' | 'exploratory' | 'unclear';
   majorDesignName: string;
   subVariantName: string;
   notation: string;
@@ -20,7 +20,7 @@ export interface AnalysisRecord {
   weight: string;
   summary: string;
   markdownReport: string;
-  diagramType?: 'explanatory' | 'triangulation' | 'embedded' | 'exploratory';
+  diagramType?: 'explanatory' | 'triangulation' | 'embedded' | 'exploratory' | 'unclear';
   followups?: Array<{ q: string; a: string; timestamp?: number; modelUsed?: string }>;
 }
 

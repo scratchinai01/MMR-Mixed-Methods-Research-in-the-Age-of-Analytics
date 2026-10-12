@@ -44,6 +44,32 @@ interface PaperUploadAnalysisModalProps {
   onAskGeminiFollowup?: (question: string) => void;
 }
 
+// ── 設計類型的顯示資料（Creswell & Plano Clark 表 4.2） ──
+type DesignId = 'triangulation' | 'embedded' | 'explanatory' | 'exploratory' | 'unclear';
+
+function describeDesign(id: string) {
+  const table: Record<DesignId, { id: DesignId; name: string; notation: string; timing: string; weight: string; theme: string; badgeBg: string }> = {
+    triangulation: { id: 'triangulation', name: '三角校正設計 (Triangulation Design)', notation: 'QUAN + QUAL', timing: '同時進行', weight: '通常相等', theme: 'bg-amber-50 border-amber-300 text-amber-950', badgeBg: 'bg-amber-500 text-slate-950' },
+    embedded: { id: 'embedded', name: '嵌入式設計 (Embedded Design)', notation: 'QUAN (qual) / QUAL (quan)', timing: '同時或連續', weight: '不相等 (一主一次)', theme: 'bg-blue-50 border-blue-300 text-blue-950', badgeBg: 'bg-blue-600 text-white' },
+    explanatory: { id: 'explanatory', name: '解釋式設計 (Explanatory Design)', notation: 'QUAN ➔ qual', timing: '連續時序 (先量後質)', weight: '通常強調量化', theme: 'bg-emerald-50 border-emerald-300 text-emerald-950', badgeBg: 'bg-emerald-600 text-white' },
+    exploratory: { id: 'exploratory', name: '探索式設計 (Exploratory Design)', notation: 'QUAL ➔ quan', timing: '連續時序 (先質後量)', weight: '通常強調質性', theme: 'bg-purple-50 border-purple-300 text-purple-950', badgeBg: 'bg-purple-600 text-white' },
+    unclear: { id: 'unclear', name: '未能明確判定', notation: '—', timing: '—', weight: '—', theme: 'bg-slate-50 border-slate-300 text-slate-900', badgeBg: 'bg-slate-600 text-white' },
+  };
+  return table[(id as DesignId)] || table.unclear;
+}
+
+/** 沒有 AI 判定時的備用推測：找報告中「判定為／屬於 XX 設計」的句子，而不是只要出現詞彙就算 */
+function guessDesignType(text: string): DesignId {
+  const patterns: Array<[DesignId, RegExp]> = [
+    ['triangulation', /(判定|屬於|歸類為|為)[^。\n]{0,12}三角校正/],
+    ['embedded', /(判定|屬於|歸類為|為)[^。\n]{0,12}嵌入式/],
+    ['explanatory', /(判定|屬於|歸類為|為)[^。\n]{0,12}解釋式/],
+    ['exploratory', /(判定|屬於|歸類為|為)[^。\n]{0,12}探索式/],
+  ];
+  const hits = patterns.filter(([, re]) => re.test(text));
+  return hits.length === 1 ? hits[0][0] : 'unclear';
+}
+
 export const PaperUploadAnalysisModal: React.FC<PaperUploadAnalysisModalProps> = ({
   isOpen,
   onClose,
@@ -61,6 +87,10 @@ export const PaperUploadAnalysisModal: React.FC<PaperUploadAnalysisModalProps> =
   const [analyzedFileName, setAnalyzedFileName] = useState<string>('');
   const [analyzedModelUsed, setAnalyzedModelUsed] = useState<string>('Gemini 3.1 Flash / 3.8 Flash (即時線上推理)');
   const [analyzedLatencyMs, setAnalyzedLatencyMs] = useState<number | undefined>(undefined);
+  // AI 從報告萃取的結構化判定（設計類型、子變型、各階段實際做法）；沒有時改用文字推測並標示
+  const [verdict, setVerdict] = useState<any | null>(null);
+  // true = 沒有呼叫到 Gemini，報告是內建範本
+  const [isFallbackReport, setIsFallbackReport] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
 
   // History Drawer state
@@ -125,13 +155,22 @@ export const PaperUploadAnalysisModal: React.FC<PaperUploadAnalysisModalProps> =
     { id: '20', code: '/博論寫作指引', name: '博論寫作指引', desc: '產出符合國際頂級期刊標準之方法論章節段落建議與口試口委答辯策略', category: '博士指引', icon: '🎓' }
   ];
 
+  // 是否已有可分析的論文（上傳檔案、貼上文字或選了範例論文）
+  const hasPaperInput = !!(file || fileBase64 || pastedText.trim() || fileText.trim());
+  const [skillHint, setSkillHint] = useState<string | null>(null);
+
+  // 點選快捷指令：已有論文時，立即「只用這個指令」評估上傳的論文；還沒有論文時提示先上傳
   const handleApplySkill = (skillCode: string) => {
     setSelectedSkill(skillCode);
     setFocusTopic(`【博士論文技能】：${skillCode}`);
-    if (!checkedSkillCodes.includes(skillCode)) {
-      setCheckedSkillCodes([...checkedSkillCodes, skillCode]);
-    }
     setShowSkillsModal(false);
+    if (hasPaperInput) {
+      setSkillHint(null);
+      handleStartAnalysis([skillCode]);
+    } else {
+      if (!checkedSkillCodes.includes(skillCode)) setCheckedSkillCodes([...checkedSkillCodes, skillCode]);
+      setSkillHint(`已選擇 ${skillCode}。請先上傳論文檔案或貼上內容，再按「開始 Gemini AI MMR 深度診斷」，就會以這個指令評估您的論文。`);
+    }
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -215,7 +254,13 @@ Abstract: This paper quantitatively measures the interactions between media pess
     setUploadMode('preset');
   };
 
-  const handleStartAnalysis = async () => {
+  const handleStartAnalysis = async (skillsOverride?: string[]) => {
+    // 單一快捷指令模式：只依這個指令評估；否則用勾選的多個指令做聯合診斷
+    const skillsToUse = Array.isArray(skillsOverride) && skillsOverride.length > 0 ? skillsOverride : checkedSkillCodes;
+    const skillDetails = skillsToUse.map((code) => {
+      const sk = phdSkillsList.find((x) => x.code === code);
+      return { code, name: sk?.name || code, desc: sk?.desc || '' };
+    });
     const targetText = uploadMode === 'file' ? fileText : pastedText;
     let finalFileName = file ? file.name : (analyzedFileName || '');
     let finalTargetText = targetText;
@@ -234,8 +279,11 @@ Abstract: In an increasingly data-rich business environment, organizations face 
 
     setLoading(true);
     setAnalysisResult(null);
+    setVerdict(null);
+    setIsFallbackReport(false);
 
-    const fileNameToReport = file ? file.name : (finalFileName || 'Mixed Methods Research in the Age of Analytics: An Exemplar');
+    // 貼上文字時不要沿用範例論文的名稱，避免 AI 把它當成 Raman et al. (2022)
+    const fileNameToReport = file ? file.name : (uploadMode === 'paste' && !finalFileName ? '使用者貼上的論文內容' : (finalFileName || '使用者貼上的論文內容'));
 
     try {
       const data = await callAiApi('/api/gemini/analyze-paper', {
@@ -244,7 +292,9 @@ Abstract: In an increasingly data-rich business environment, organizations face 
         fileBase64: fileBase64,
         textContent: finalTargetText,
         focusTopic,
-        checkedSkills: checkedSkillCodes,
+        checkedSkills: skillsToUse,
+        skillDetails,
+        singleSkill: Array.isArray(skillsOverride) && skillsOverride.length === 1,
       });
 
       if (data && data.answer) {
@@ -252,20 +302,23 @@ Abstract: In an increasingly data-rich business environment, organizations face 
         setAnalyzedFileName(fileNameToReport);
         if (data.modelUsed) setAnalyzedModelUsed(data.modelUsed);
         if (data.latencyMs) setAnalyzedLatencyMs(data.latencyMs);
+        setVerdict(data.verdict || null);
+        setIsFallbackReport(!!data.isFallback);
 
-        const isExp = data.answer.includes('解釋式') || data.answer.includes('Explanatory');
+        // 歷史紀錄：以 AI 判定為準；沒有判定時才用報告文字推測
+        const d = describeDesign(data.verdict?.designType || guessDesignType(data.answer));
         const savedRec = await analysisStorage.saveRecord({
           fileName: fileNameToReport,
-          paperTitle: fileNameToReport,
-          majorDesignId: isExp ? 'explanatory' : 'triangulation',
-          majorDesignName: isExp ? '解釋式設計 (Explanatory Design)' : '三角校正設計 (Triangulation)',
-          subVariantName: isExp ? '追蹤的解釋模式 (Follow-up Explanations)' : '資料轉化模式 (Data Transformation)',
-          notation: isExp ? 'QUAN ➔ qual' : 'QUAN + QUAL',
-          timing: isExp ? '連續 (先量後質)' : '同時進行',
-          weight: isExp ? '通常強調量化' : '通常相等',
+          paperTitle: data.verdict?.paperTitle || fileNameToReport,
+          majorDesignId: d.id,
+          majorDesignName: d.name,
+          subVariantName: data.verdict?.variant || '未判定',
+          notation: d.notation,
+          timing: d.timing,
+          weight: d.weight,
           summary: data.answer.slice(0, 150) + '...',
           markdownReport: data.answer,
-          diagramType: isExp ? 'explanatory' : 'triangulation',
+          diagramType: d.id,
         });
         if (savedRec && savedRec.id) {
           setCurrentRecordId(savedRec.id);
@@ -348,67 +401,15 @@ Abstract: In an increasingly data-rich business environment, organizations face 
   // Detect both Tier 1 (Major Design) and Tier 2 (Sub-variant) from analysisResult
   const detectedAnalysis = (() => {
     if (!analysisResult) return null;
-    const res = analysisResult.toLowerCase();
-
-    // 1. Tier 1: Major Design Detection
-    let major = {
-      name: '三角校正設計 (Triangulation Design)',
-      notation: 'QUAN + QUAL',
-      timing: '同時進行',
-      weight: '通常相等',
-      theme: 'bg-amber-50 border-amber-300 text-amber-950',
-      badgeBg: 'bg-amber-500 text-slate-950'
-    };
-
-    if (res.includes('解釋式') || res.includes('explanatory') || res.includes('quan ➔ qual') || res.includes('quan -> qual') || res.includes('先量後質')) {
-      major = {
-        name: '解釋式設計 (Explanatory Design)',
-        notation: 'QUAN ➔ qual',
-        timing: '連續時序 (先量後質)',
-        weight: '通常強調量化',
-        theme: 'bg-emerald-50 border-emerald-300 text-emerald-950',
-        badgeBg: 'bg-emerald-600 text-white'
-      };
-    } else if (res.includes('探索式') || res.includes('exploratory') || res.includes('qual ➔ quan') || res.includes('qual -> quan') || res.includes('先質後量')) {
-      major = {
-        name: '探索式設計 (Exploratory Design)',
-        notation: 'QUAL ➔ quan',
-        timing: '連續時序 (先質後量)',
-        weight: '通常強調質性',
-        theme: 'bg-purple-50 border-purple-300 text-purple-950',
-        badgeBg: 'bg-purple-600 text-white'
-      };
-    } else if (res.includes('嵌入式') || res.includes('embedded') || res.includes('(qual)') || res.includes('(quan)')) {
-      major = {
-        name: '嵌入式設計 (Embedded Design)',
-        notation: 'QUAN (qual) / QUAL (quan)',
-        timing: '同時或連續',
-        weight: '不相等 (一主一次)',
-        theme: 'bg-blue-50 border-blue-300 text-blue-950',
-        badgeBg: 'bg-blue-600 text-white'
-      };
+    // 優先使用 AI 結構化判定；沒有時才從報告文字推測（並在畫面上標示「推測」）
+    if (verdict) {
+      return { major: describeDesign(verdict.designType), variant: verdict.variant || '未判定', source: 'ai' as const };
     }
-
-    // 2. Tier 2: Sub-variant Detection
-    let variant = '資料轉化模式 (Data Transformation Model)';
-    if (res.includes('(c)') || res.includes('資料轉化') || res.includes('data transformation')) {
-      variant = '資料轉化模式 (Data Transformation) — 質性轉為 quan 數值並交互關聯';
-    } else if (res.includes('(b)') || res.includes('聚斂') || res.includes('convergence')) {
-      variant = '聚斂模式 (Convergence Model) — 雙軌獨立產出後比較對比';
-    } else if (res.includes('(a)') || res.includes('原型') || res.includes('prototype')) {
-      variant = '三角校正設計原型 (Prototype) — 同步並行等重詮釋';
-    } else if (res.includes('(d)') || res.includes('證實量化') || res.includes('validating')) {
-      variant = '證實量化資料模式 (Validating Quantitative) — 主量化輔質性證實';
-    } else if (res.includes('(e)') || res.includes('多層次') || res.includes('multilevel')) {
-      variant = '多層次模式 (Multilevel Model) — 宏觀微觀多層次整合';
-    } else if (res.includes('追蹤') || res.includes('follow-up')) {
-      variant = '追蹤的解釋模式 (Follow-up Explanations) — 質性追蹤異常因果';
-    } else if (res.includes('工具發展') || res.includes('instrument')) {
-      variant = '工具發展模式 (Instrument Development) — 質性編製詞典量化驗證';
-    }
-
-    return { major, variant };
+    return { major: describeDesign(guessDesignType(analysisResult)), variant: '（未能自動判定，請參考下方報告內文）', source: 'guess' as const };
   })();
+
+  // 只有分析的正是 Gupta et al. (2023) 時，才顯示以該論文為例的固定對照圖
+  const isGuptaPaper = /gupta/i.test(`${analyzedFileName} ${verdict?.paperTitle || ''}`);
 
   return (
     <>
@@ -474,6 +475,8 @@ Abstract: In an increasingly data-rich business environment, organizations face 
           onSelectRecord={(rec: AnalysisRecord) => {
             setAnalysisResult(rec.markdownReport);
             setAnalyzedFileName(rec.fileName);
+            setVerdict(null);
+            setIsFallbackReport(false);
           }}
         />
 
@@ -869,6 +872,10 @@ Abstract: In an increasingly data-rich business environment, organizations face 
             </div>
           )}
 
+          {skillHint && (
+            <div className="p-3 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-900 text-xs">{skillHint}</div>
+          )}
+
           {/* Action Trigger Button */}
           <div className="flex items-center justify-between pt-2">
             <div className="text-xs text-slate-500 flex items-center gap-1.5">
@@ -877,7 +884,7 @@ Abstract: In an increasingly data-rich business environment, organizations face 
             </div>
 
             <button
-              onClick={handleStartAnalysis}
+              onClick={() => handleStartAnalysis()}
               disabled={loading || (!file && !fileBase64 && !pastedText.trim() && !fileText.trim())}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm shadow-md transition-all cursor-pointer"
             >
@@ -933,6 +940,13 @@ Abstract: In an increasingly data-rich business environment, organizations face 
                 </div>
               </div>
 
+              {isFallbackReport && (
+                <div className="p-3.5 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 text-xs leading-relaxed">
+                  ⚠️ <strong>這份報告是內建範本，不是 AI 針對這篇論文的分析。</strong>
+                  伺服器目前無法呼叫 Gemini（可能未設定 GEMINI_API_KEY 或額度不足），可到頁首「AI 連線狀態」測試。
+                </div>
+              )}
+
               {/* Two-Tier Deduction Result Summary Card (Table 4.2 Major Design ➔ Sub-Variant) */}
               {detectedAnalysis && (
                 <div className={`p-4 sm:p-5 rounded-2xl border-2 space-y-3 ${detectedAnalysis.major.theme}`}>
@@ -977,6 +991,11 @@ Abstract: In an increasingly data-rich business environment, organizations face 
                       <span className="font-bold text-slate-900">
                         {detectedAnalysis.variant}
                       </span>
+                      {detectedAnalysis.source === 'guess' && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/80 border border-black/10 text-slate-600">
+                          依報告文字推測，可能不準
+                        </span>
+                      )}
                     </div>
 
                     <button
@@ -993,8 +1012,41 @@ Abstract: In an increasingly data-rich business environment, organizations face 
                 </div>
               )}
 
-              {/* Explanatory vs Exploratory Infographic Diagram (if Explanatory design detected) */}
-              {(detectedAnalysis?.major.name.includes('解釋式') || analysisResult?.includes('解釋式') || analysisResult?.includes('Explanatory')) && (
+              {/* 本篇論文的研究流程：由 AI 依報告整理，內容對應這篇論文 */}
+              {verdict && verdict.phases?.length > 0 && !isGuptaPaper && (
+                <div className="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-white space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-bold text-slate-900 text-sm">
+                      本篇論文的研究流程
+                      {verdict.paperTitle && verdict.paperTitle !== '未說明' && (
+                        <span className="ml-2 font-normal text-slate-500">{verdict.paperTitle}</span>
+                      )}
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                      AI 依診斷報告整理
+                    </span>
+                  </div>
+                  <div className={`grid gap-3 ${verdict.phases.length === 1 ? 'grid-cols-1' : verdict.phases.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
+                    {verdict.phases.map((ph: any, i: number) => (
+                      <div key={i} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2">
+                        <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
+                          <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center shrink-0">{i + 1}</span>
+                          <span>{ph.label}</span>
+                        </div>
+                        <ul className="space-y-1 text-xs text-slate-700 list-disc pl-5">
+                          {ph.items.map((it: string, j: number) => <li key={j}>{it}</li>)}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                  {verdict.evidence && verdict.evidence !== '未說明' && (
+                    <p className="text-xs text-slate-600"><strong>判定依據：</strong>{verdict.evidence}</p>
+                  )}
+                </div>
+              )}
+
+              {/* 解釋式 vs 探索式對照圖：內容以 Gupta et al. (2023) 為範例，只在分析該論文時顯示 */}
+              {isGuptaPaper && detectedAnalysis?.major.name.includes('解釋式') && (
                 <div className="my-4">
                   <ExplanatoryVsExploratoryDiagram 
                     onAskGemini={(prompt) => handleAskFollowup(prompt)}

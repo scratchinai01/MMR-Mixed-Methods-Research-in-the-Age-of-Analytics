@@ -36,6 +36,7 @@ interface AiExecutionResult {
   text: string;
   modelUsed: string;
   latencyMs: number;
+  isFallback?: boolean; // true = 沒有呼叫到 AI，內容是內建範本
 }
 
 // =====================================================================
@@ -126,6 +127,7 @@ async function callAiWithGemini(options: {
     text: smartRes.text,
     modelUsed: `${smartRes.modelUsed} (本地高階知識庫備援)`,
     latencyMs: Date.now() - startTime,
+    isFallback: true,
   };
 }
 
@@ -812,31 +814,89 @@ app.post('/api/gemini/explain', async (req, res) => {
   }
 });
 
+// 從 MMR 診斷報告萃取結構化判定（便宜的 Flash-Lite、最低思考程度；失敗時回傳 null，前端改用文字推測並標示）
+async function extractMmrVerdict(report: string): Promise<any | null> {
+  if (!hasValidApiKey()) return null;
+  try {
+    const r = await callGeminiWithFallback({
+      task: 'classify',
+      jsonMode: true,
+      temperature: 0,
+      timeoutMs: 30000,
+      systemInstruction: '你負責把一份混合方法研究 (MMR) 診斷報告整理成 JSON。只能根據報告內容，報告沒寫的欄位填「未說明」，不可自行補充或沿用其他論文的數字。只輸出 JSON。',
+      contents: `請讀以下報告，輸出 JSON：
+{
+  "paperTitle": "論文名稱或作者年份",
+  "designType": "triangulation | embedded | explanatory | exploratory | unclear 其中之一（報告最終判定的主要設計，不是被排除的類型）",
+  "variant": "第二階段子變型的中文名稱（含英文）",
+  "evidence": "一句話說明判定依據（時機與權重）",
+  "phases": [ { "label": "階段名稱，例如 量化階段 (QUAN)", "items": ["研究對象：…", "資料蒐集：…", "分析方法：…", "產出：…"] } ]
+}
+phases 依報告描述的實際執行順序列出 1～3 個階段，每階段 2～5 項，只寫這篇論文實際做了什麼。
+
+【報告】
+${report.slice(0, 20000)}`,
+    });
+    const v = parseJsonLoose(r.text);
+    const types = ['triangulation', 'embedded', 'explanatory', 'exploratory', 'unclear'];
+    if (!v || !types.includes(v.designType)) return null;
+    v.phases = Array.isArray(v.phases) ? v.phases.slice(0, 3).map((p: any) => ({
+      label: String(p?.label || '研究階段'),
+      items: Array.isArray(p?.items) ? p.items.map(String).slice(0, 6) : [],
+    })) : [];
+    v.model = r.model;
+    return v;
+  } catch (err: any) {
+    console.warn('[Analyze-Paper] verdict extraction failed:', err.message);
+    return null;
+  }
+}
+
 // Gemini Full Paper MMR Analysis endpoint (Supports file upload PDF/text/markdown)
 app.post('/api/gemini/analyze-paper', async (req, res) => {
   try {
-    const { fileName, fileType, fileBase64, textContent, focusTopic, checkedSkills } = req.body;
+    const { fileName, fileType, fileBase64, textContent, focusTopic, checkedSkills, skillDetails, singleSkill } = req.body;
 
-    const checkedSkillsStr = Array.isArray(checkedSkills) && checkedSkills.length > 0 
-      ? checkedSkills.join(', ') 
+    // 指令清單（含說明），讓 AI 知道每個快捷指令要評估什麼
+    const skills: Array<{ code: string; name?: string; desc?: string }> = Array.isArray(skillDetails) && skillDetails.length > 0
+      ? skillDetails
+      : (Array.isArray(checkedSkills) ? checkedSkills.map((code: string) => ({ code })) : []);
+    const skillLines = skills.map((sk) => `- ${sk.code}${sk.desc ? `：${sk.desc}` : ''}`).join('\n');
+    const checkedSkillsStr = skills.length > 0
+      ? skills.map((sk) => sk.code).join(', ')
       : (focusTopic || '表 4.2 四大主要設計類型判定 ➔ 次級變型推導');
 
-    const basePrompt = `請作為頂級期刊主編與混合方法研究資深評審教授，針對這份論文進行全方位的「混合方法研究 (MMR) 與 20 大博士 Skills 架構診斷分析報告」：
-【論文檔案】：${fileName || 'Mixed Methods Research in the Age of Analytics: An Exemplar Leveraging Sentiments from News Articles to Predict Firm Performance'}
-【勾選的快捷指令 Skills 聯合判定清單】：${checkedSkillsStr}
+    const evidenceRule = `【證據紀律】：
+★ 只能根據這份上傳論文的內容作答；每個判斷都要引用論文中的具體依據（章節、研究對象人數、方法、表格或原文短句）。
+★ 論文沒有提到的內容請明確寫「論文未說明」，不可沿用其他論文（例如 Raman et al. 2022 或 Gupta et al. 2023）的數字或結論。`;
 
-【核心審查紀律】：
-★ 務必嚴格依據 Creswell & Plano Clark《表 4.2 主要的混合方法設計類型》執行兩階段判定！
-★ 針對用戶勾選的每個快捷指令 Skills（例如 ${checkedSkillsStr}），逐一進行深度專業判定與論述評析，並產出綜合性博士級診斷報告！
+    const basePrompt = singleSkill && skills.length === 1
+      ? `請以混合方法研究資深審查委員的身分，只針對快捷指令「${skills[0].code}」評估這篇上傳的論文。
+【論文檔案】：${fileName || '使用者上傳的論文'}
+【指令內容】：${skills[0].desc || skills[0].code}
 
-請嚴格包含以下核心段落：
-1. 🎯【快捷指令 Skills 聯合判定摘要】針對用戶勾選的各個 Skills（如 /MMR判定、/計量架構、/預期踏車效應等）逐項進行精準診斷與評分。
-2. 🧭【第一階段：四大主要設計類型判定】依據表 4.2 檢驗「時機 (同時 vs 連續)」、「權重 (通常相等 vs 強調量化等)」與「混合方式」，精準判定屬於四大主要設計的哪一種（三角校正 / 嵌入式 / 解釋式 / 探索式），並明確闡述為何排除其他三種！
-3. 📐【第二階段：次級具體變型精準判定】依據第一步確立之大類，深入判定所屬子變型（如資料轉化模式、聚斂模式、追蹤解釋模式等）。
-4. 🌐 哲學基石（實用主義 Pragmatism 等如何破除純歷史數字回測的時滯性）
-5. 📊 雙軌數據與模型架構拆解（量化財務軌道 vs 質性文本語意軌道，交叉調節項如 Sales_growth × Positive = -102.094）
-6. 🛡️ 空洞架構陷阱診斷與元推論（Meta-Inference 深度，是否提供實質因果機制）
-7. 🇹🇼 台股實戰（FinMind 工具）復刻與改進方針`;
+${evidenceRule}
+
+請依序輸出：
+1. 🎯【${skills[0].code} 結論】一段話直接回答這個指令的問題，並給 0–100 分與評分理由。
+2. 📑【論文證據】條列支持結論的論文原文依據（標明出處位置）。
+3. 🧭【與 Creswell & Plano Clark 表 4.2 的對應】這個指令的結論如何對應主要設計類型與子變型（判定為哪一種，並簡述為何排除其他類型）。
+4. ⚠️【不足與改進建議】這篇論文在此指令面向上的弱點，以及具體可行的改進方式。`
+      : `請作為頂級期刊主編與混合方法研究資深評審教授，針對這份上傳的論文進行「混合方法研究 (MMR) 架構診斷分析報告」：
+【論文檔案】：${fileName || '使用者上傳的論文'}
+【勾選的快捷指令】：
+${skillLines || checkedSkillsStr}
+
+${evidenceRule}
+★ 務必嚴格依據 Creswell & Plano Clark《表 4.2 主要的混合方法設計類型》執行兩階段判定。
+
+請包含以下段落：
+1. 🎯【快捷指令逐項判定】針對上面每個勾選指令，逐項給出結論、0–100 分與論文證據。
+2. 🧭【第一階段：四大主要設計類型判定】依「時機 (同時 vs 連續)」、「權重」與「混合方式」，判定屬於三角校正 / 嵌入式 / 解釋式 / 探索式哪一種，並說明為何排除其他三種。
+3. 📐【第二階段：子變型判定】依第一步的大類，判定所屬子變型（如資料轉化、聚斂、追蹤解釋、工具發展模式等）。
+4. 📊【量化與質性兩軌拆解】這篇論文實際的量化資料與方法、質性資料與方法，以及兩者在哪裡整合。
+5. 🛡️【元推論與整合深度】是否真正整合量化與質性（而非只是並列），有沒有提出實質的因果機制。
+6. 💡【改進建議】若論文與台灣情境或台股資料相關，可補充在地化（如 FinMind 資料）的延伸方向；不相關則省略此點。`;
 
     const systemInstruction = `你是一位享譽國際的頂級管理學與計算財務學期刊資深主編與混合方法研究（Mixed Methods Research, MMR）講座教授。
 你的任務是針對用戶上傳的學術論文（包含全文 PDF、摘要、方法論章節或文字），進行深度的「混合方法研究 (MMR) 架構診斷與評估報告」。
@@ -877,12 +937,17 @@ app.post('/api/gemini/analyze-paper', async (req, res) => {
         timeoutMs: 65000,
       });
 
+      // 從 AI 報告中萃取「結構化判定」，讓網頁顯示的設計類型與流程圖對應這篇論文，而不是固定範例
+      const verdict = result.isFallback ? null : await extractMmrVerdict(result.text);
+
       return res.json({
         success: true,
         answer: result.text,
         modelUsed: result.modelUsed,
         latencyMs: result.latencyMs,
         fileName: fileName || '論文檔案',
+        isFallback: !!result.isFallback,
+        verdict,
       });
     } catch (apiErr: any) {
       console.warn('[AI Pipeline Analyze-Paper] API failed, using domain fallback:', apiErr.message);
