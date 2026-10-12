@@ -202,7 +202,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
 
       {/* Multi-Paper Selection Bar (Sticky & Prominent) */}
       {showMultiPaperBanner ? (
-        <div className="relative sticky top-20 z-20 bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 text-white p-4 sm:p-5 rounded-2xl shadow-xl border border-indigo-500/40 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-300">
+        <div className="relative sticky top-[117px] z-20 bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 text-white p-4 sm:p-5 rounded-2xl shadow-xl border border-indigo-500/40 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-300">
           <div className="flex items-center gap-3 pr-8 sm:pr-0">
             <div className="w-11 h-11 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold shadow-lg shadow-amber-400/20 shrink-0">
               <BookOpen className="w-6 h-6 fill-slate-950" />

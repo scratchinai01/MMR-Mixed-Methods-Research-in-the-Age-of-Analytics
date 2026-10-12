@@ -356,59 +356,52 @@ RQ3: 透過資料轉化模式（QUAL into quan）之整合元推論（Meta-Infer
         }
       `}</style>
 
-      {/* Top Floating Control Bar */}
-      <div className="sticky top-16 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs px-4 sm:px-6 lg:px-8 py-3">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          {/* Left: Mode Switch & Title */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center text-white shadow-xs">
-              <Presentation className="w-5 h-5" />
+      {/* 頁面工具列：左為標題，右為模式切換與口試工具 */}
+      <div className="sticky top-[101px] z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-2.5">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-900 text-sm sm:text-base truncate">
+                學術論文專題報告與口試答辯
+              </span>
+              <span className="hidden sm:inline px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
+                SSCI Q1 口試規格
+              </span>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-slate-900 text-sm sm:text-base">
-                  學術論文專題報告與口試答辯版面
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                  SSCI Q1 口試規格
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 hidden sm:block">
-                Raman et al. (2022) IJIM 混合方法與台股實證全景報告
-              </p>
-            </div>
+            <p className="text-[11px] text-slate-500 hidden md:block truncate">
+              Raman et al. (2022) IJIM 混合方法與台股實證全景報告
+            </p>
           </div>
 
-          {/* Center: Mode Tabs */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* 模式切換 */}
+          <div className="flex items-center h-9 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
             <button
               onClick={() => setViewMode('slides')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 h-full rounded-md text-xs font-bold transition-all ${
                 viewMode === 'slides'
                   ? 'bg-white text-indigo-700 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Presentation className="w-3.5 h-3.5" />
-              <span>🖥️ 口試簡報投影模式</span>
+              <span>簡報模式</span>
             </button>
             <button
               onClick={() => setViewMode('manuscript')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 h-full rounded-md text-xs font-bold transition-all ${
                 viewMode === 'manuscript'
                   ? 'bg-white text-indigo-700 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>📄 論文書面報告模式</span>
+              <span>書面報告</span>
             </button>
           </div>
 
-          {/* Right: Defense Timer & Actions */}
-          <div className="flex items-center gap-2">
             {/* Defense Timer Widget */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-mono shadow-xs border border-slate-800">
+            <div className="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-slate-900 text-white text-xs font-mono border border-slate-800">
               <Clock className={`w-3.5 h-3.5 ${timerSecondsLeft < 120 ? 'text-rose-400 animate-pulse' : 'text-amber-400'}`} />
               <span className={`font-bold tracking-wider ${timerSecondsLeft < 120 ? 'text-rose-300' : 'text-white'}`}>
                 {formatTimer(timerSecondsLeft)}
@@ -442,7 +435,7 @@ RQ3: 透過資料轉化模式（QUAL into quan）之整合元推論（Meta-Infer
             {/* Quick Actions */}
             <button
               onClick={handleCopyDraft}
-              className="hidden md:flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 text-xs font-semibold text-slate-700 hover:text-indigo-600 transition-colors shadow-2xs"
+              className="hidden md:flex items-center gap-1 h-9 px-3 rounded-lg bg-white border border-slate-200 hover:border-indigo-300 text-xs font-semibold text-slate-700 hover:text-indigo-600 transition-colors shadow-2xs"
               title="複製口試發表標準逐字講稿"
             >
               {copiedDraft ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -452,7 +445,7 @@ RQ3: 透過資料轉化模式（QUAL into quan）之整合元推論（Meta-Infer
             {viewMode === 'manuscript' ? (
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shadow-xs"
+                className="flex items-center gap-1 h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shadow-xs"
                 title="列印或存為 PDF"
               >
                 <Printer className="w-3.5 h-3.5" />
@@ -461,7 +454,7 @@ RQ3: 透過資料轉化模式（QUAL into quan）之整合元推論（Meta-Infer
             ) : (
               <button
                 onClick={toggleFullscreen}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition-colors shadow-xs"
+                className="flex items-center gap-1 h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition-colors shadow-xs"
                 title="全螢幕投影"
               >
                 {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
@@ -483,24 +476,25 @@ RQ3: 透過資料轉化模式（QUAL into quan）之整合元推論（Meta-Infer
           }`}>
             {/* Slide Navigation & Sizing Control Bar */}
             <div className="bg-white rounded-2xl p-3 border border-slate-200 shadow-xs space-y-2.5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* 一列排好：上下頁＋頁碼｜各頁快速跳轉（可橫向滑動）｜講稿開關 */}
+              <div className="flex items-center gap-3">
                 {/* Prev / Next & Slide Counter */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => setCurrentSlide((p) => Math.max(p - 1, 1))}
                     disabled={currentSlide === 1}
-                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:pointer-events-none text-slate-800 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:pointer-events-none text-slate-800 transition-colors cursor-pointer"
                     title="上一頁 (←)"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
-                  <span className="font-mono text-sm font-bold text-slate-800 px-2">
-                    Slide {currentSlide} / {totalSlides}
+                  <span className="font-mono text-sm font-bold text-slate-800 px-1.5 whitespace-nowrap tabular-nums">
+                    {currentSlide} / {totalSlides}
                   </span>
                   <button
                     onClick={() => setCurrentSlide((p) => Math.min(p + 1, totalSlides))}
                     disabled={currentSlide === totalSlides}
-                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:pointer-events-none text-slate-800 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:pointer-events-none text-slate-800 transition-colors cursor-pointer"
                     title="下一頁 (→ 或 空白鍵)"
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -508,16 +502,16 @@ RQ3: 透過資料轉化模式（QUAL into quan）之整合元推論（Meta-Infer
                 </div>
 
                 {/* Slide Thumbnail Pills */}
-                <div className="flex items-center gap-1 overflow-x-auto py-1">
+                <div className="flex-1 min-w-0 flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
                   {[
-                    { num: 1, title: '封面題目' },
+                    { num: 1, title: '封面' },
                     { num: 2, title: 'MMR 架構' },
-                    { num: 3, title: '計量 GEE' },
-                    { num: 4, title: '核心發現 Table 2' },
-                    { num: 5, title: '5大機器學習實證' },
-                    { num: 6, title: '元推論貢獻' },
+                    { num: 3, title: 'GEE' },
+                    { num: 4, title: 'Table 2' },
+                    { num: 5, title: '機器學習' },
+                    { num: 6, title: '元推論' },
                     { num: 7, title: '研究限制' },
-                    { num: 8, title: '口試 Q&A 答辯' },
+                    { num: 8, title: 'Q&A' },
                   ].map((s) => (
                     <button
                       key={s.num}
@@ -534,7 +528,7 @@ RQ3: 透過資料轉化模式（QUAL into quan）之整合元推論（Meta-Infer
                 </div>
 
                 {/* Speaker Notes Toggle */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => setShowSpeakerNotes(!showSpeakerNotes)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
@@ -544,7 +538,7 @@ RQ3: 透過資料轉化模式（QUAL into quan）之整合元推論（Meta-Infer
                     }`}
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
-                    <span>{showSpeakerNotes ? '隱藏答辯備忘講稿' : '顯示答辯備忘講稿'}</span>
+                    <span className="hidden sm:inline">{showSpeakerNotes ? '隱藏講稿' : '顯示講稿'}</span>
                   </button>
                 </div>
               </div>
@@ -728,7 +722,7 @@ RQ3: 透過資料轉化模式（QUAL into quan）之整合元推論（Meta-Infer
 
             {/* Current Slide Display Canvas (Proportional Slide Canvas) */}
             <div 
-              className={`bg-white rounded-3xl border border-slate-300 shadow-2xl overflow-hidden flex flex-col justify-between transition-all duration-300 ring-1 ring-slate-900/5 ${
+              className={`w-full min-w-0 bg-white rounded-3xl border border-slate-300 shadow-2xl overflow-hidden flex flex-col justify-between transition-all duration-300 ring-1 ring-slate-900/5 ${
                 fontFamily === 'serif' ? 'font-serif' : fontFamily === 'mono' ? 'font-mono' : 'font-sans'
               } ${
                 fontScale === 'sm' ? 'text-xs' : fontScale === 'lg' ? 'text-base leading-relaxed' : 'text-sm'
