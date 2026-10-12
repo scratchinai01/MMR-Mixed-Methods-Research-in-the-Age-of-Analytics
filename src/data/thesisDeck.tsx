@@ -27,6 +27,7 @@ export interface DeckSlide {
   left: (ctx: DeckContext) => React.ReactNode;
   right: (ctx: DeckContext) => React.ReactNode;
   notes: string;
+  quotes?: string[]; // 左欄附上的論文原文段落（PAPER_PARAGRAPHS 的 id），英中對照
 }
 
 export const SECTION_META: Record<DeckSection, { label: string; minutes: number; color: string }> = {
@@ -171,6 +172,7 @@ const SourceNote: React.FC = () => (
 export const DECK: DeckSlide[] = [
   // ════════════ 第一部分　原文報告（40 分鐘） ════════════
   {
+    quotes: ['abs-1', 'abs-3'],
     id: 'p1', section: 'paper', minutes: 3, title: '封面與報告架構',
     left: () => (
       <div className="space-y-3">
@@ -195,6 +197,7 @@ export const DECK: DeckSlide[] = [
     notes: '開場說明今天的三段結構：先完整報告原論文，再報告我們用台股真實資料做的復刻，最後逐項比較兩者的異同。每一頁左邊是原著、右邊是台股復刻。',
   },
   {
+    quotes: ['abs-2', 'intro-6'],
     id: 'p2', section: 'paper', minutes: 4, title: '研究動機',
     left: () => <Bullets items={[
       '投資人長期結合財務數字與文字資訊做決策',
@@ -209,6 +212,7 @@ export const DECK: DeckSlide[] = [
     notes: '說明原論文的缺口：文字資訊來源變多，但研究多停在分析師報告。接著點出我們把同樣的問題搬到台股的理由。',
   },
   {
+    quotes: ['intro-12'],
     id: 'p3', section: 'paper', minutes: 3, title: '研究問題',
     left: () => <Bullets items={[
       'RQ1：新聞正面／負面情緒是否直接影響超額報酬？',
@@ -223,6 +227,7 @@ export const DECK: DeckSlide[] = [
     notes: '三個研究問題一一對應，右邊說明我們在台股如何操作化每個問題。',
   },
   {
+    quotes: ['theory-1', 'abs-5'],
     id: 'p4', section: 'paper', minutes: 4, title: '理論基礎與預期',
     left: () => <Bullets items={[
       '資訊處理觀點：新聞文字傳遞財務報表以外的訊息',
@@ -237,6 +242,7 @@ export const DECK: DeckSlide[] = [
     notes: '把原論文的理論轉成三個可在台股檢驗的預期，第三部分會逐一對照。',
   },
   {
+    quotes: ['theory-10'],
     id: 'p5', section: 'paper', minutes: 4, title: '混合方法設計（表 4.2 判定）',
     left: () => <KV rows={[
       ['質性資料', '《華爾街日報》新聞文字'],
@@ -253,6 +259,7 @@ export const DECK: DeckSlide[] = [
     notes: '用 Creswell & Plano Clark 表 4.2 說明兩者都屬資料轉化：先把文字量化，再與財務變數整合分析。',
   },
   {
+    quotes: ['abs-3', 'intro-18'],
     id: 'p6', section: 'paper', minutes: 4, title: '資料與樣本',
     left: () => <KV rows={[
       ['公司', 'S&P 500 成分股'],
@@ -269,6 +276,7 @@ export const DECK: DeckSlide[] = [
     notes: '比較兩邊的資料來源。重點：原著用年度財報，我們用月營收與每日估值，時間頻率不同，第三部分會討論這個差異的影響。',
   },
   {
+    quotes: ['methods-7'],
     id: 'p7', section: 'paper', minutes: 4, title: '變數定義',
     left: () => <MiniTable dense headers={['變數', '原著定義']} rows={[
       ['SCAR', '標準化累積超額報酬'],
@@ -291,6 +299,7 @@ export const DECK: DeckSlide[] = [
     notes: '逐一對照變數。誠實說明我們的情緒是「新聞則數比例」，原著是「詞彙比例」，這是重要的方法差異。',
   },
   {
+    quotes: ['methods-10', 'methods-13'],
     id: 'p8', section: 'paper', minutes: 3, title: '情緒分析方法',
     left: () => <Bullets items={[
       'Loughran–McDonald 金融情緒詞典',
@@ -305,6 +314,7 @@ export const DECK: DeckSlide[] = [
     notes: '說明為何不能直接套用英文 LM 詞典，以及我們的替代做法與其限制。',
   },
   {
+    quotes: ['methods-15'],
     id: 'p9', section: 'paper', minutes: 4, title: '計量模型：GEE',
     left: () => <Bullets items={[
       '廣義估計方程式（GEE），處理同一公司跨期觀測值的相關性',
@@ -321,6 +331,7 @@ export const DECK: DeckSlide[] = [
     notes: '強調我們刻意保持模型設定與原著一致，差異只來自資料與變數操作化。',
   },
   {
+    quotes: ['abs-4', 'results-5'],
     id: 'p10', section: 'paper', minutes: 4, title: '原著主要結果（表 2）',
     left: () => (
       <div className="space-y-2">
@@ -335,6 +346,7 @@ export const DECK: DeckSlide[] = [
     notes: '解讀原著表 2：負面情緒顯著降低超額報酬；營收成長與正面情緒的交互作用顯著為負，也就是基本面已好時，利多新聞的效果遞減。',
   },
   {
+    quotes: ['results-14'],
     id: 'p11', section: 'paper', minutes: 3, title: '原著機器學習結果與結論',
     left: () => (
       <div className="space-y-2">
@@ -352,6 +364,7 @@ export const DECK: DeckSlide[] = [
 
   // ════════════ 第二部分　台股復刻（60 分鐘） ════════════
   {
+    quotes: ['abs-4', 'abs-5'],
     id: 'r1', section: 'replication', minutes: 3, title: '復刻目標與原則',
     left: () => <Bullets items={[
       '原著主張一：負面情緒顯著降低超額報酬',
@@ -366,6 +379,7 @@ export const DECK: DeckSlide[] = [
     notes: '第二部分開場：說明我們要檢驗哪些主張，以及確保真實性的三個原則。',
   },
   {
+    quotes: ['intro-18'],
     id: 'r2', section: 'replication', minutes: 4, title: '樣本股票',
     left: () => <KV rows={[['樣本', 'S&P 500 成分股（大型權值股）'], ['期間', '2013–2016']]} />,
     right: (ctx) => ctx.data ? (
@@ -374,6 +388,7 @@ export const DECK: DeckSlide[] = [
     notes: '介紹樣本股票與每檔新聞量。新聞量差異很大時，要提醒觀眾結果可能由新聞量大的公司主導。',
   },
   {
+    quotes: ['methods-8'],
     id: 'r3', section: 'replication', minutes: 4, title: '新聞語料概況',
     left: () => <KV rows={[['來源', '《華爾街日報》'], ['單位', '文章全文'], ['情緒', 'LM 詞比例']]} />,
     right: (ctx) => ctx.data ? <KV rows={[
@@ -387,6 +402,7 @@ export const DECK: DeckSlide[] = [
     notes: '報告語料規模與正負面比例。若正面遠多於負面，可呼應原著「負面新聞較稀少但影響較大」的論點。',
   },
   {
+    quotes: ['methods-11'],
     id: 'r4', section: 'replication', minutes: 4, title: '情緒判讀實例',
     left: () => <p>原著以詞典計算詞比例，論文中未逐篇列出分類結果。</p>,
     right: (ctx) => {
@@ -403,6 +419,7 @@ export const DECK: DeckSlide[] = [
     notes: '展示真實新聞標題與判讀分數，讓口委看到資料是真實的，也可以討論判讀錯誤的例子。',
   },
   {
+    quotes: ['methods-3'],
     id: 'r5', section: 'replication', minutes: 4, title: '財務變數敘述統計',
     left: () => <p>原著財務變數來自 Compustat 年度資料（見表 1 定義）。</p>,
     right: (ctx) => {
@@ -418,6 +435,7 @@ export const DECK: DeckSlide[] = [
     notes: '報告各變數的平均與標準差，並說明是否有資料集抓不到而被排除。',
   },
   {
+    quotes: ['theory-14'],
     id: 'r6', section: 'replication', minutes: 3, title: 'SCAR 的建構',
     left: () => <Bullets items={['以市場模型計算異常報酬', '累積後再標準化（SCAR）', '衡量新聞事件後的股價反應']} />,
     right: (ctx) => <Bullets items={[
@@ -428,6 +446,7 @@ export const DECK: DeckSlide[] = [
     notes: '說明我們以 0050 作為市場基準，並用個股自身波動度標準化，概念上對應原著的 SCAR。',
   },
   {
+    quotes: ['methods-22'],
     id: 'r7', section: 'replication', minutes: 3, title: '避免前視偏誤',
     left: () => <p>原著使用年度財務資料與事件後報酬，時間順序清楚。</p>,
     right: () => <Bullets items={[
@@ -438,6 +457,7 @@ export const DECK: DeckSlide[] = [
     notes: '這頁是真實性的關鍵：說明每個變數都只使用當時已公開的資訊。',
   },
   {
+    quotes: ['results-2'],
     id: 'r8', section: 'replication', minutes: 3, title: 'GEE 估計設定',
     left: () => <KV rows={[['模型', 'GEE，三種相關結構'], ['配適', 'QIC']]} />,
     right: (ctx) => {
@@ -454,12 +474,14 @@ export const DECK: DeckSlide[] = [
     notes: '報告 GEE 的實際樣本數與期間；若有變數因資料不足被排除，要在這裡說清楚。',
   },
   {
+    quotes: ['results-4'],
     id: 'r9', section: 'replication', minutes: 4, title: 'GEE 主效果',
     left: () => <div className="space-y-2"><PaperCoefTable terms={['Prior_SCAR', 'Size', 'Positive', 'Negative', 'PE_ratio', 'Sales_growth', 'MB_ratio']} /><SourceNote /></div>,
     right: (ctx) => <OurCoefTable ctx={ctx} terms={['Prior_SCAR', 'Size', 'Positive', 'Negative', 'PE_ratio', 'Sales_growth', 'MB_ratio']} />,
     notes: '逐列比較主效果。注意兩邊的情緒變數單位不同（詞比例 vs 新聞則數比例），係數大小不能直接比，應比較方向與顯著性。',
   },
   {
+    quotes: ['results-5'],
     id: 'r10', section: 'replication', minutes: 4, title: '關鍵交互作用：營收成長 × 正面情緒',
     left: () => <div className="space-y-2">
       <KV rows={[['Sales_growth X Positive', paperCell('Sales_growth X Positive')]]} />
@@ -477,12 +499,14 @@ export const DECK: DeckSlide[] = [
     notes: '這是原著最重要的發現。依右邊結果說明台股是否也有「利多遞減」的現象。',
   },
   {
+    quotes: ['results-7', 'results-8'],
     id: 'r11', section: 'replication', minutes: 4, title: '其他交互作用項',
     left: () => <div className="space-y-2"><PaperCoefTable terms={['PE_ratio X Positive', 'MB_ratio X Positive', 'PE_ratio X Negative', 'Sales_growth X Negative', 'MB_ratio X Negative']} /><SourceNote /></div>,
     right: (ctx) => <OurCoefTable ctx={ctx} terms={['PE_ratio X Positive', 'MB_ratio X Positive', 'PE_ratio X Negative', 'Sales_growth X Negative', 'MB_ratio X Negative']} />,
     notes: '比較其餘五個交互作用項，指出哪些與原著方向一致、哪些不一致。',
   },
   {
+    quotes: ['results-2'],
     id: 'r12', section: 'replication', minutes: 3, title: '三種相關結構的穩健性',
     left: () => <p>原著三個模型的係數幾乎相同（例如 Sales_growth X Positive：{paperCell('Sales_growth X Positive', 1)}／{paperCell('Sales_growth X Positive', 2)}／{paperCell('Sales_growth X Positive', 3)}）。</p>,
     right: (ctx) => {
@@ -498,6 +522,7 @@ export const DECK: DeckSlide[] = [
     notes: '若三種結構的結果一致，表示結論不受相關結構假設影響；若 AR(1) 無法估計，會在表中顯示空白。',
   },
   {
+    quotes: ['methods-17', 'methods-18'],
     id: 'r13', section: 'replication', minutes: 3, title: '機器學習設定',
     left: () => <Bullets items={['8 種二元分類演算法', '比較純量化與量化＋文字兩組特徵', '指標：準確率與 AUC']} />,
     right: (ctx) => <KV rows={[
@@ -510,12 +535,14 @@ export const DECK: DeckSlide[] = [
     notes: '說明特徵與資料切分方式，強調測試期完全在訓練期之後。',
   },
   {
+    quotes: ['results-14'],
     id: 'r14', section: 'replication', minutes: 4, title: '機器學習結果',
     left: () => <MiniTable dense headers={['演算法', '準確率', 'AUC']} rows={(T78?.rows || []).slice(0, 5).map((r) => [String(r[0]).replace(/ \(.*\)/, ''), `${r[1]} → ${String(r[2]).replace(/💥.*$/, '').trim()}`, `${r[3]} → ${String(r[4]).replace(/💥.*$/, '').trim()}`])} />,
     right: (ctx) => ctx.data?.rows ? <MiniTable dense headers={['演算法', '準確率', 'AUC']} rows={ctx.data.rows.map((r: any) => [r.algorithm.replace(/ \(.*\)/, ''), `${r.quantOnlyAcc} → ${r.quantTextAcc}`, `${r.quantOnlyAuc} → ${r.quantTextAuc}`])} /> : <Pending what="機器學習結果" />,
     notes: '箭頭左邊是純財務、右邊是加入情緒。逐一說明哪些模型因加入情緒而改善。',
   },
   {
+    quotes: ['results-15'],
     id: 'r15', section: 'replication', minutes: 3, title: '模型是否優於基準',
     left: () => <p>原著未報告「全猜多數類別」的基準準確率。</p>,
     right: (ctx) => {
@@ -533,6 +560,7 @@ export const DECK: DeckSlide[] = [
     notes: '這頁回答「模型到底有沒有用」。若沒有贏過基準，這本身就是重要且誠實的發現。',
   },
   {
+    quotes: ['disc-2'],
     id: 'r16', section: 'replication', minutes: 3, title: '個股差異',
     left: () => <p>原著以大樣本面板估計平均效果，未逐家公司報告。</p>,
     right: (ctx) => ctx.data?.stocks ? (
@@ -552,6 +580,7 @@ export const DECK: DeckSlide[] = [
     notes: '新聞量集中在少數權值股，討論這對估計結果的可能影響。',
   },
   {
+    quotes: ['disc-8'],
     id: 'r17', section: 'replication', minutes: 4, title: '復刻的限制',
     left: () => <Bullets items={['原著的限制：單一新聞來源（WSJ）、美國市場、2013–2016 年']} />,
     right: () => <Bullets items={[
@@ -566,6 +595,7 @@ export const DECK: DeckSlide[] = [
 
   // ════════════ 第三部分　復刻後比較（20 分鐘） ════════════
   {
+    quotes: ['abs-4'],
     id: 'c1', section: 'compare', minutes: 4, title: '比較總表',
     left: () => <MiniTable dense headers={['檢驗項目', '原著結果']} rows={[
       ['Negative 主效果', paperCell('Negative')],
@@ -580,6 +610,7 @@ export const DECK: DeckSlide[] = [
     notes: '用一張表總結：左右同一列對照，右邊的標籤由係數方向與顯著性自動判定。',
   },
   {
+    quotes: ['abs-4'],
     id: 'c2', section: 'compare', minutes: 3, title: '負面情緒是否影響較大？',
     left: () => <p>原著：Negative {paperCell('Negative')}，Positive {paperCell('Positive')}；摘要指出負面情緒的影響大於正面情緒。</p>,
     right: (ctx) => {
@@ -595,6 +626,7 @@ export const DECK: DeckSlide[] = [
     notes: '比較正負面情緒的相對大小，回應原著「負面影響較大」的主張。',
   },
   {
+    quotes: ['abs-5'],
     id: 'c3', section: 'compare', minutes: 3, title: '利多遞減效應是否存在？',
     left: () => <p>原著：Sales_growth X Positive = {paperCell('Sales_growth X Positive')}，營收成長高時正面新聞效果減弱。</p>,
     right: (ctx) => {
@@ -608,6 +640,7 @@ export const DECK: DeckSlide[] = [
     notes: '聚焦原著最核心的發現，說明台股證據支持、部分支持或不支持。',
   },
   {
+    quotes: ['results-16'],
     id: 'c4', section: 'compare', minutes: 3, title: '新聞情緒的預測增益',
     left: () => <p>原著：加入情緒後各模型準確率與 AUC 均大幅提升（例如提升決策樹 {String(T78?.rows?.[0]?.[1] ?? '')} → {String(T78?.rows?.[0]?.[2] ?? '').replace(/💥.*$/, '').trim()}）。</p>,
     right: (ctx) => {
@@ -623,6 +656,7 @@ export const DECK: DeckSlide[] = [
     notes: '比較預測增益的幅度，並討論為何原著的提升遠大於我們（資料洩漏的可能、市場差異、樣本規模）。',
   },
   {
+    quotes: ['theory-19'],
     id: 'c5', section: 'compare', minutes: 4, title: '差異來源與混合方法元推論',
     left: () => <Bullets items={[
       '原著元推論：質性文字補足財務數字無法反映的資訊',
@@ -637,6 +671,7 @@ export const DECK: DeckSlide[] = [
     notes: '用混合方法的元推論角度整合：不只說結果一不一致，而是說明為什麼，以及這對理論的意義。',
   },
   {
+    quotes: ['abs-5'],
     id: 'c6', section: 'compare', minutes: 3, title: '結論與 Q&A',
     left: () => <Bullets items={[
       '原著貢獻：示範如何在分析時代做混合方法研究',

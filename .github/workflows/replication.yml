@@ -1,0 +1,97 @@
+# 台股復刻：用 FinMind 真實資料重算論文報告第二、三部分的數字，並自動上架
+# - 金鑰（FINMIND_API_TOKEN、GEMINI_API_KEY）直接讀取 Cloud Run 上已設定的值，不需另外設定
+# - 每個交易日晚上 22:10（台北時間）自動更新；也可在「Actions」分頁手動按「Run workflow」
+# - 抓過的新聞與情緒判讀存在快取，之後每天只會補抓新的一天
+name: 台股復刻計算
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: '往回抓幾天新聞'
+        default: '365'
+      stocks:
+        description: '股票代號（逗號分隔）'
+        default: '2330,2317,2454,2308,2382,2891,2881,2412,3711,2882'
+  schedule:
+    - cron: '10 14 * * 1-5'   # UTC 14:10 = 台北 22:10（週一至週五）
+
+permissions:
+  contents: write          # 把計算結果寫回 repo
+  id-token: write          # 以 Workload Identity 登入 Google Cloud
+
+concurrency:
+  group: replication
+  cancel-in-progress: false
+
+jobs:
+  compute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 登入 Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/154274473112/locations/global/workloadIdentityPools/github/providers/github
+          service_account: github-deployer@payfirebase.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: 讀取 Cloud Run 上的金鑰（自動遮蔽，不會出現在紀錄中）
+        run: |
+          gcloud run services describe mmr-analytics --region asia-east1 --project payfirebase --format=json > /tmp/svc.json
+          python3 - <<'PY'
+          import json, os
+          env = {e["name"]: e.get("value", "") for e in json.load(open("/tmp/svc.json"))["spec"]["template"]["spec"]["containers"][0].get("env", [])}
+          with open(os.environ["GITHUB_ENV"], "a") as f:
+              for k in ("FINMIND_API_TOKEN", "GEMINI_API_KEY"):
+                  v = env.get(k, "")
+                  if v:
+                      print(f"::add-mask::{v}")
+                      f.write(f"{k}={v}\n")
+                  print(f"{k}: {'已取得' if v else '未設定'}")
+          PY
+          rm -f /tmp/svc.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安裝套件
+        run: pip install pandas scikit-learn statsmodels requests
+
+      - name: 還原資料快取
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: finmind-${{ github.run_id }}
+          restore-keys: finmind-
+
+      - name: 計算台股復刻（GEE 表 2 ＋ 機器學習表 7–8）
+        run: |
+          python3 news_ml_study.py \
+            --days "${{ github.event.inputs.days || '365' }}" \
+            --stocks "${{ github.event.inputs.stocks || '2330,2317,2454,2308,2382,2891,2881,2412,3711,2882' }}"
+
+      - name: 寫回結果
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/ml_results.json
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "更新台股復刻結果（FinMind 真實資料）"
+            git pull --rebase origin main
+            git push origin HEAD:main
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # GitHub 內建權限推送的提交不會觸發其他工作流程，所以在這裡直接部署
+      - name: 部署到 Cloud Run
+        if: steps.commit.outputs.changed == 'true'
+        run: |
+          gcloud run deploy mmr-analytics --source . --region asia-east1 --project payfirebase --quiet

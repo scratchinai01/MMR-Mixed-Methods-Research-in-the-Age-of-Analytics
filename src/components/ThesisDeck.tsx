@@ -7,6 +7,32 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, MessageSquare, ListOrdered } from 'lucide-react';
 import { DECK, SECTION_META, DECK_TOTAL_MINUTES, DeckSection } from '../data/thesisDeck.tsx';
 import { useMlResults } from '../services/mlResults.ts';
+import { PAPER_PARAGRAPHS } from '../data/paperContent.ts';
+
+/** 論文原文段落（英文）＋中譯，附 PDF 頁碼；摘要段落已與公開摘要核對 */
+const QuoteBlock: React.FC<{ id: string }> = ({ id }) => {
+  const [open, setOpen] = useState(false);
+  const para = PAPER_PARAGRAPHS.find((p) => p.id === id);
+  if (!para) return null;
+  const LIMIT = 220;
+  const long = para.en.length > LIMIT || para.zh.length > LIMIT;
+  const cut = (t: string) => (open || t.length <= LIMIT ? t : `${t.slice(0, LIMIT)}…`);
+  const verified = id.startsWith('abs-');
+  return (
+    <figure className="rounded-xl bg-white/80 border border-blue-200 p-3 space-y-1.5 text-[0.82em] leading-relaxed">
+      <blockquote lang="en" className="italic text-slate-700 border-l-4 border-blue-400 pl-3">{cut(para.en)}</blockquote>
+      <p className="text-blue-950 pl-4">{cut(para.zh)}</p>
+      <figcaption className="flex flex-wrap items-center justify-between gap-2 pl-4 text-[0.9em] text-blue-800/80">
+        <span>{para.pdfPage}{verified ? '｜已與公開摘要核對' : '｜請以原文 PDF 核對'}</span>
+        {long && (
+          <button onClick={() => setOpen(!open)} className="font-semibold text-blue-700 hover:underline">
+            {open ? '收合' : '展開全文'}
+          </button>
+        )}
+      </figcaption>
+    </figure>
+  );
+};
 
 interface ThesisDeckProps {
   initialSlide?: number;
@@ -155,6 +181,12 @@ export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlid
               <span className="text-xs text-blue-800/70">Raman et al. (2022)・美股</span>
             </div>
             <div>{slide.left(ctx)}</div>
+            {slide.quotes && slide.quotes.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-blue-200/70">
+                <div className="text-xs font-bold text-blue-900">原文對照（英／中）</div>
+                {slide.quotes.map((q) => <QuoteBlock key={`${slide.id}-${q}`} id={q} />)}
+              </div>
+            )}
           </section>
 
           <section className="rounded-2xl border-2 border-emerald-200 bg-emerald-50/50 text-emerald-950 p-5 space-y-3 min-w-0">

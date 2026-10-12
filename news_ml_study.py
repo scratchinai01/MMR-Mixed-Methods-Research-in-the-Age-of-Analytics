@@ -213,11 +213,15 @@ def gemini_batch(titles, key):
         "generationConfig": {"temperature": 0.1, "responseMimeType": "application/json",
                              "thinkingConfig": {"thinkingLevel": "MINIMAL"}},
     }
-    for attempt in range(3):
-        r = requests.post(f"{GEMINI_URL}/models/{GEMINI_MODEL}:generateContent", json=body,
-                          headers={"x-goog-api-key": key}, timeout=60)
-        if r.status_code == 429:  # 免費額度每分鐘上限：稍等再試
-            time.sleep(15 * (attempt + 1))
+    for attempt in range(6):
+        try:
+            r = requests.post(f"{GEMINI_URL}/models/{GEMINI_MODEL}:generateContent", json=body,
+                              headers={"x-goog-api-key": key}, timeout=90)
+        except requests.RequestException:
+            time.sleep(5 * (attempt + 1))
+            continue
+        if r.status_code in (429, 500, 503):  # 每分鐘額度上限或暫時性錯誤：等一下再試
+            time.sleep(min(60, 10 * (attempt + 1)))
             continue
         r.raise_for_status()
         parts = r.json()["candidates"][0]["content"]["parts"]
@@ -225,7 +229,7 @@ def gemini_batch(titles, key):
         text = re.sub(r"```(?:json)?", "", text).strip()
         items = json.loads(re.search(r"\{[\s\S]*\}", text).group(0)).get("items", [])
         return {int(it["i"]): max(-1.0, min(1.0, float(it.get("score", 0)))) for it in items if "i" in it}
-    raise RuntimeError("Gemini 持續回報 429（超過額度），請稍後再試")
+    raise RuntimeError("Gemini 多次重試仍失敗（可能超過額度）")
 
 
 def score_titles(titles):
@@ -234,6 +238,8 @@ def score_titles(titles):
     h = lambda t: hashlib.md5(t.encode("utf-8")).hexdigest()
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     engine = f"Gemini {GEMINI_MODEL}" if key else "關鍵詞情緒詞典"
+    fallback_n = 0
+    temp = {}  # API 失敗改用關鍵詞的結果不寫入快取，下次執行會再用 Gemini 重試
     todo = [t for t in dict.fromkeys(titles) if h(t) not in cache]
     if todo:
         log(f"  需判讀 {len(todo)} 則（已快取 {len(set(titles)) - len(todo)} 則），引擎：{engine}")
@@ -246,13 +252,19 @@ def score_titles(titles):
             except Exception as e:
                 log(f"\n  ⚠️ Gemini 失敗（{e}），此批改用關鍵詞")
         for i, t in enumerate(batch):
-            cache[h(t)] = scores.get(i, keyword_score(t))
+            if i in scores:
+                cache[h(t)] = scores[i]
+            else:
+                fallback_n += 1
+                (temp if key else cache)[h(t)] = keyword_score(t)
         print(f"\r  情緒判讀 {min(b + 80, len(todo))}/{len(todo)}", end="", flush=True)
         os.makedirs(CACHE, exist_ok=True)
         json.dump(cache, open(path, "w", encoding="utf-8"))
     if todo:
         print()
-    return [cache[h(t)] for t in titles], engine
+    if key and fallback_n:
+        engine += f"（其中 {fallback_n} 則因 API 失敗改用關鍵詞）"
+    return [cache.get(h(t), temp.get(h(t), 0.0)) for t in titles], engine
 
 
 # ─────────────────────────── 3. 建立「個股 × 新聞交易日」面板 ───────────────────────────
