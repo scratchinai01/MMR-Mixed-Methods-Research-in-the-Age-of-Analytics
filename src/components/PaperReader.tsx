@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { aiClick } from '../services/aiGate.ts';
 import { makeUtterance } from '../services/ttsVoice.ts';
 import { 
@@ -71,6 +71,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
   React.useEffect(() => {
     if (initialSection) {
       setActiveSection(initialSection);
+      setTimeout(() => document.getElementById(`sec-${initialSection}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
     }
   }, [initialSection]);
   const [readingMode, setReadingMode] = useState<'bilingual' | 'zh' | 'en'>('bilingual');
@@ -139,7 +140,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
   // Filter paragraphs based on section and search
   const filteredParagraphs = useMemo(() => {
     return PAPER_PARAGRAPHS.filter((p) => {
-      const matchesSection = searchQuery.trim() !== '' ? true : p.section === activeSection;
+      const matchesSection = true; // 一頁式：所有章節依序排開
       const matchesSearch =
         searchQuery.trim() === '' ||
         p.en.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -157,6 +158,21 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
   // 原文逐字閱讀器（使用者自行上傳 PDF，在瀏覽器中解析）
   const [pdfReaderOpen, setPdfReaderOpen] = useState(false);
   const [deepParaId, setDeepParaId] = useState<string | null>(null);
+
+  // 捲動時自動標示目前章節（左側大綱亮起）
+  useEffect(() => {
+    const onScroll = () => {
+      let cur = '';
+      let best = -Infinity;
+      document.querySelectorAll<HTMLElement>('[data-sec]').forEach((el) => {
+        const top = el.getBoundingClientRect().top;
+        if (top < 220 && top > best) { best = top; cur = el.dataset.sec || ''; }
+      });
+      if (cur) setActiveSection(cur);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const handleCopyBibtex = () => {
     navigator.clipboard.writeText(ORIGINAL_PAPER_SOURCE.bibtex);
@@ -575,7 +591,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
       {/* Main Grid: Left TOC Sidebar + Right Content */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: TOC Navigation (4 cols on lg) */}
-        <div className="lg:col-span-4 space-y-5 lg:sticky lg:top-20">
+        <div className="lg:col-span-4 space-y-5 lg:sticky lg:top-[130px] lg:max-h-[calc(100vh-150px)] lg:overflow-y-auto no-scrollbar">
           {/* Search Box */}
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -636,6 +652,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                 onClick={() => {
                   setActiveSection(sec.id);
                   setSearchQuery('');
+                  setTimeout(() => document.getElementById(`sec-${sec.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
                 }}
                 className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-between group ${
                   activeSection === sec.id && !searchQuery
@@ -823,7 +840,17 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
           </div>
 
           {/* Paragraph Cards */}
-          {filteredParagraphs.map((para) => (
+          {filteredParagraphs.map((para, pi) => (
+            <React.Fragment key={para.id}>
+            {!searchQuery && (pi === 0 || filteredParagraphs[pi - 1].section !== para.section) && (() => {
+              const sec = PAPER_SECTIONS.find((x) => x.id === para.section);
+              return (
+                <div id={`sec-${para.section}`} data-sec={para.section} className="scroll-mt-40 pt-4 flex items-baseline gap-3 border-b-2 border-indigo-200 pb-2">
+                  <h2 className="text-xl font-extrabold text-slate-900">{sec?.titleZh || para.section}</h2>
+                  <span className="text-xs font-mono text-slate-400">{sec?.titleEn}</span>
+                </div>
+              );
+            })()}
             <article
               key={para.id}
               className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/90 shadow-xs hover:border-indigo-200 transition-all space-y-4"
@@ -998,49 +1025,11 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                 );
               })()}
             </article>
+            </React.Fragment>
           ))}
 
-          {/* Section Pagination (Previous & Next Section) */}
-          {(() => {
-            const currentIndex = PAPER_SECTIONS.findIndex(s => s.id === activeSection);
-            const prevSection = currentIndex > 0 ? PAPER_SECTIONS[currentIndex - 1] : null;
-            const nextSection = currentIndex < PAPER_SECTIONS.length - 1 ? PAPER_SECTIONS[currentIndex + 1] : null;
-
-            return (
-              <div className="pt-8 pb-4 border-t border-slate-200 flex items-center justify-between gap-4">
-                {prevSection ? (
-                  <button
-                    onClick={() => {
-                      setActiveSection(prevSection.id);
-                      setSearchQuery('');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-semibold border border-slate-300 flex items-center gap-2 text-xs sm:text-sm transition-all shadow-xs"
-                  >
-                    <ChevronRight className="w-4 h-4 rotate-180" />
-                    <span>上一頁：{prevSection.titleZh}</span>
-                  </button>
-                ) : <div />}
-
-                {nextSection && (
-                  <button
-                    onClick={() => {
-                      setActiveSection(nextSection.id);
-                      setSearchQuery('');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-2 text-xs sm:text-sm transition-all shadow-md ml-auto"
-                  >
-                    <span>下一頁：{nextSection.titleZh}</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            );
-          })()}
-
           {/* Section Tables (Shown when activeSection is results or methods) */}
-          {(activeSection === 'results' || activeSection === 'methods') && (
+          {!searchQuery && (
             <div className="space-y-8 pt-4">
               <div className="flex items-center gap-2 text-slate-900 font-bold text-lg border-b border-slate-200 pb-3">
                 <TableIcon className="w-5 h-5 text-indigo-600" />
@@ -1092,7 +1081,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
           )}
 
           {/* Interactive Appendix Interaction Plots (When on conclusion / results) */}
-          {(activeSection === 'conclusion' || activeSection === 'results') && (
+          {!searchQuery && (
             <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
               <div className="border-b border-slate-200 pb-3">
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
