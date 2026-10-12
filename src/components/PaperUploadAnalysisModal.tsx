@@ -37,6 +37,7 @@ import { AnalysisHistoryDrawer } from './AnalysisHistoryDrawer.tsx';
 import { callAiApi } from '../services/aiHelper.ts';
 import { saveFollowupToFirestore } from '../services/firebase.ts';
 import { MathRenderer } from './MathRenderer.tsx';
+import { buildReportHtml } from '../services/reportHtml.ts';
 
 interface PaperUploadAnalysisModalProps {
   isOpen: boolean;
@@ -338,6 +339,29 @@ Abstract: In an increasingly data-rich business environment, organizations face 
     navigator.clipboard.writeText(analysisResult);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // 下載圖表豐富的單一 HTML 報告（離線可開、可列印成 PDF）
+  const handleDownloadHtml = () => {
+    if (!analysisResult) return;
+    const html = buildReportHtml({
+      title: verdict?.paperTitle && verdict.paperTitle !== '未說明' ? verdict.paperTitle : (analyzedFileName || '論文'),
+      markdown: analysisResult,
+      designId: detectedAnalysis?.major.id,
+      designName: detectedAnalysis?.major.name,
+      variant: detectedAnalysis?.variant,
+      designSource: detectedAnalysis?.source,
+      phases: verdict?.phases,
+      evidence: verdict?.evidence && verdict.evidence !== '未說明' ? verdict.evidence : undefined,
+      modelUsed: analyzedModelUsed,
+    });
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `MMR_Analysis_${(analyzedFileName || 'Paper').replace(/\.[a-z]+$/i, '')}.html`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleDownloadMarkdown = () => {
@@ -932,10 +956,19 @@ Abstract: In an increasingly data-rich business environment, organizations face 
 
                   <button
                     onClick={handleDownloadMarkdown}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Markdown</span>
+                  </button>
+
+                  <button
+                    onClick={handleDownloadHtml}
+                    title="下載含圖表的 HTML 報告，可直接用瀏覽器開啟或列印成 PDF"
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors shadow-2xs"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>下載 Markdown</span>
+                    <span>下載圖表報告 (HTML)</span>
                   </button>
                 </div>
               </div>
