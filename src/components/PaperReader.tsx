@@ -31,6 +31,7 @@ import {
   Presentation,
   ArrowLeft
 } from 'lucide-react';
+import { PdfImmersiveReader } from './PdfImmersiveReader.tsx';
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
 
 interface PaperReaderProps {
@@ -157,6 +158,9 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
     setTimeout(() => setCopiedApa(false), 2000);
   };
 
+  // 原文逐字閱讀器（使用者自行上傳 PDF，在瀏覽器中解析）
+  const [pdfReaderOpen, setPdfReaderOpen] = useState(false);
+
   const handleCopyBibtex = () => {
     navigator.clipboard.writeText(ORIGINAL_PAPER_SOURCE.bibtex);
     setCopiedBibtex(true);
@@ -199,6 +203,21 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
           </button>
         </div>
       )}
+
+      {/* 原文逐字＋沉浸式翻譯：上傳 PDF */}
+      <div className="rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-white p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="font-bold text-slate-900">原文一字不漏＋沉浸式翻譯</div>
+          <p className="text-xs text-slate-600 mt-0.5">
+            上傳您手上的論文 PDF，逐段顯示 PDF 原文，下方附繁體中文譯文，並可對照 PDF 原頁。PDF 只在您的瀏覽器中解析，不會上傳或公開。
+          </p>
+        </div>
+        <button onClick={() => setPdfReaderOpen(true)}
+          className="h-10 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shrink-0">
+          上傳 PDF 開始閱讀
+        </button>
+      </div>
+      {pdfReaderOpen && <PdfImmersiveReader onClose={() => setPdfReaderOpen(false)} />}
 
       {/* Multi-Paper Selection Bar (Sticky & Prominent) */}
       {showMultiPaperBanner ? (

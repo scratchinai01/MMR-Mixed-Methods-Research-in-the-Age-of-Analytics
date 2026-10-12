@@ -1751,6 +1751,39 @@ app.delete('/api/analysis-records/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// =====================================================================
+// 沉浸式翻譯：一次翻譯多個原文段落（PDF 逐字閱讀器使用）
+// 使用最便宜的 Flash-Lite、最低思考程度；回傳與輸入等長的繁體中文陣列
+// =====================================================================
+app.post('/api/translate', async (req, res) => {
+  const texts: string[] = Array.isArray(req.body?.texts) ? req.body.texts.map((t: any) => String(t || '')) : [];
+  if (texts.length === 0) return res.status(400).json({ error: 'texts is required' });
+  if (texts.length > 30 || texts.join('').length > 24000) {
+    return res.status(413).json({ error: '一次最多 30 段、24,000 字元，請分批送出' });
+  }
+  if (!hasValidApiKey()) {
+    return res.status(503).json({ error: '伺服器尚未設定 GEMINI_API_KEY，無法翻譯' });
+  }
+  const context = String(req.body?.context || '').slice(0, 300);
+  try {
+    const r = await callGeminiWithFallback({
+      task: 'translate',
+      jsonMode: true,
+      temperature: 0.2,
+      timeoutMs: 60000,
+      systemInstruction: '你是學術論文翻譯者。把英文學術段落翻成通順、精確的繁體中文（台灣用語）。專有名詞第一次出現時保留英文於括號中。數字、統計量、變數名稱、引用文獻（作者, 年份）原樣保留。不要增減內容、不要加評論。只輸出 JSON。',
+      contents: `${context ? `【論文】${context}\n` : ''}請翻譯以下 ${texts.length} 段，輸出 {"items":["第0段譯文","第1段譯文",...]}，順序與數量必須相同。\n\n${texts.map((t, i) => `<<${i}>>\n${t}`).join('\n\n')}`,
+    });
+    const parsed = parseJsonLoose(r.text);
+    const items: any[] = Array.isArray(parsed) ? parsed : parsed.items || [];
+    const translations = texts.map((_, i) => (typeof items[i] === 'string' ? items[i] : ''));
+    res.json({ translations, model: r.model });
+  } catch (err: any) {
+    console.warn('[Translate] failed:', err.message);
+    res.status(502).json({ error: `翻譯失敗：${err.message}` });
+  }
+});
+
 // AI 狀態：前端可用來顯示目前使用的模型與思考程度
 app.get('/api/ai/status', (_req, res) => {
   const gemini = hasValidApiKey();
