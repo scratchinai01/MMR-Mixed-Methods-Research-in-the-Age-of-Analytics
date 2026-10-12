@@ -60,7 +60,15 @@ export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlid
   const [showNotes, setShowNotes] = useState(true);
   const [showList, setShowList] = useState(false);
   const ml = useMlResults();
-  const ctx = useMemo(() => ({ data: ml.isDemo ? null : ml.data || null }), [ml]);
+  // 每次計算的執行紀錄（資料蒐集流程頁使用）
+  const [history, setHistory] = useState<any[]>([]);
+  useEffect(() => {
+    fetch('/data/run_history.json', { cache: 'no-cache' })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((h) => setHistory(Array.isArray(h) ? h : []))
+      .catch(() => setHistory([]));
+  }, []);
+  const ctx = useMemo(() => ({ data: ml.isDemo ? null : ml.data || null, history }), [ml, history]);
 
   const clamp = (n: number) => Math.min(Math.max(n, 0), DECK.length - 1);
   const go = (n: number) => setIdx(clamp(n));

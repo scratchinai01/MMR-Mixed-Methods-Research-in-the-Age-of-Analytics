@@ -1,8 +1,8 @@
 // =====================================================================
 // 兩小時論文報告投影片內容（三大段、34 頁、每頁左右對照）
 // ---------------------------------------------------------------------
-//   第一部分 原文報告   40 分鐘（11 頁）
-//   第二部分 台股復刻   60 分鐘（17 頁）
+//   第一部分 原文報告   40 分鐘（含摘要逐句精讀）
+//   第二部分 台股復刻   60 分鐘（含資料蒐集流程）
 //   第三部分 復刻後比較 20 分鐘（6 頁）
 //
 // 每頁固定「左：原著論文（藍）｜右：台股復刻（綠）」。
@@ -11,12 +11,13 @@
 // 左欄原著數字取自本平台的論文翻譯（src/data/paperContent.ts），報告前請以原文 PDF 核對。
 // =====================================================================
 import React from 'react';
-import { PAPER_TABLES, ORIGINAL_PAPER_SOURCE } from './paperContent.ts';
+import { PAPER_TABLES, ORIGINAL_PAPER_SOURCE, PAPER_PARAGRAPHS } from './paperContent.ts';
 
 export type DeckSection = 'paper' | 'replication' | 'compare';
 
 export interface DeckContext {
   data: any | null; // ml_results.json；null = 尚未計算
+  history?: any[];   // run_history.json：每次計算的執行紀錄
 }
 
 export interface DeckSlide {
@@ -168,12 +169,42 @@ const SourceNote: React.FC = () => (
   <p className="text-[0.75em] opacity-70 pt-2">原著數字取自本平台論文翻譯（表 2：Model 3 Exchangeable），報告前請以原文 PDF 核對。</p>
 );
 
-// ─────────────────────────── 34 頁內容 ───────────────────────────
+
+/** 摘要逐句精讀：左欄完整英文原文＋中譯（摘要已與 Virginia Tech 典藏頁的公開摘要核對） */
+function AbstractFull({ id, focus }: { id: string; focus: string[] }) {
+  const para = PAPER_PARAGRAPHS.find((p) => p.id === id);
+  if (!para) return null;
+  return (
+    <div className="space-y-3">
+      <blockquote lang="en" className="italic text-slate-800 border-l-4 border-blue-500 pl-3 leading-relaxed">{para.en}</blockquote>
+      <p className="pl-4 leading-relaxed">{para.zh}</p>
+      <div className="pl-4">
+        <div className="text-[0.8em] font-bold opacity-80 mb-1">本句重點</div>
+        <Bullets items={focus} />
+      </div>
+      <p className="text-[0.75em] opacity-70 pl-4">{para.pdfPage}｜已與公開摘要核對（Virginia Tech 典藏頁）</p>
+    </div>
+  );
+}
+
+/** 新聞來源統計（從實際抓到的新聞計算） */
+function topSources(ctx: DeckContext, n = 6): Array<[string, number]> {
+  const counts: Record<string, number> = {};
+  (ctx.data?.articles || []).forEach((a: any) => {
+    const src = String(a.source || '未標示').replace(/\s+/g, '');
+    counts[src] = (counts[src] || 0) + 1;
+  });
+  return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, n);
+}
+
+const fmtSecs = (s?: number | null) => (typeof s === 'number' ? (s >= 60 ? `${Math.floor(s / 60)} 分 ${Math.round(s % 60)} 秒` : `${Math.round(s)} 秒`) : '—');
+
+// ─────────────────────────── 投影片內容 ───────────────────────────
 export const DECK: DeckSlide[] = [
   // ════════════ 第一部分　原文報告（40 分鐘） ════════════
   {
     quotes: ['abs-1', 'abs-3'],
-    id: 'p1', section: 'paper', minutes: 3, title: '封面與報告架構',
+    id: 'p1', section: 'paper', minutes: 2, title: '封面與報告架構',
     left: () => (
       <div className="space-y-3">
         <div className="text-[1.15em] font-bold leading-snug">{ORIGINAL_PAPER_SOURCE.titleEn}</div>
@@ -197,23 +228,68 @@ export const DECK: DeckSlide[] = [
     notes: '開場說明今天的三段結構：先完整報告原論文，再報告我們用台股真實資料做的復刻，最後逐項比較兩者的異同。每一頁左邊是原著、右邊是台股復刻。',
   },
   {
-    quotes: ['abs-2', 'intro-6'],
-    id: 'p2', section: 'paper', minutes: 4, title: '研究動機',
-    left: () => <Bullets items={[
-      '投資人長期結合財務數字與文字資訊做決策',
-      '過去研究多看分析師報告；網路上大量財經新聞的作用較少被檢驗',
-      '本文以《華爾街日報》新聞情緒，結合財務量化指標，解釋 S&P 500 公司的累積超額報酬',
-    ]} />,
+    id: 'a1', section: 'paper', minutes: 3, title: '摘要精讀①：投資決策與多元資訊',
+    left: () => <AbstractFull id="abs-1" focus={['投資人一向結合多元資訊做決策', '網路資訊與預測分析興起，投資人不再只看傳統財務指標']} />,
+    right: (ctx) => ctx.data ? (
+      <div className="space-y-2">
+        <p>台股新聞來源（本研究實際抓到的新聞，取最近 {Math.min(3000, ctx.data.articles?.length || 0).toLocaleString()} 則統計）：</p>
+        <MiniTable dense headers={['來源', '則數']} rows={topSources(ctx).map(([k, v]) => [k, v.toLocaleString()])} />
+        <p className="text-[0.85em]">台灣投資人同樣面對多家媒體同時報導，正是本文「多元資訊來源」的情境。</p>
+      </div>
+    ) : <Pending what="新聞來源統計" />,
+    notes: '逐句精讀摘要第一句：說明作者的出發點是「投資人結合多元資訊」。右邊用我們實際抓到的新聞來源，說明台股也有同樣的多元媒體環境。',
+  },
+  {
+    id: 'a2', section: 'paper', minutes: 3, title: '摘要精讀②：研究缺口',
+    left: () => <AbstractFull id="abs-2" focus={['既有研究：多種資訊來源彼此互補', '缺口：網路上持續出現、觸及更多投資人的文字內容，其作用尚未被檢驗']} />,
     right: () => <Bullets items={[
-      '台股散戶交易比重高，新聞與社群情緒可能影響更直接',
-      '中文財經新聞語料（鉅亨、經濟日報、Yahoo 股市等）可經 FinMind 取得',
-      '問題：美股的「新聞情緒 × 財務指標」發現，在台股是否成立？',
+      '台股情境的缺口：中文財經新聞的情緒，是否同樣與財務指標互補？',
+      '多數台股研究以社群論壇或單一指標為主，較少複製原著的「情緒 × 財務指標」交互作用設計',
+      '本研究定位：以相同模型設定在台股重做一次，檢驗原著結論能否推廣到新興市場',
     ]} />,
-    notes: '說明原論文的缺口：文字資訊來源變多，但研究多停在分析師報告。接著點出我們把同樣的問題搬到台股的理由。',
+    notes: '第二句點出研究缺口。右邊說明我們把同樣的缺口放到台股脈絡，定位為「可推廣性檢驗」。',
+  },
+  {
+    id: 'a3', section: 'paper', minutes: 4, title: '摘要精讀③：資料與方法',
+    left: () => <AbstractFull id="abs-3" focus={['資料：商業報刊（《華爾街日報》）＋財務總結指標', '結果變數：累積超額報酬', '方法：情緒分析＋機器學習＋計量經濟']} />,
+    right: (ctx) => <KV rows={[
+      ['新聞', ctx.data ? `FinMind 台股新聞 ${ctx.data.articleCount.toLocaleString()} 則` : 'FinMind 台股新聞（尚未計算）'],
+      ['公司', ctx.data ? stockList(ctx) : '台灣 50 前 10 大權值股'],
+      ['期間', ctx.data ? `${ctx.data.period.start}～${ctx.data.period.end}` : '最近 365 天'],
+      ['結果變數', '新聞日後 5 日標準化超額報酬（相對 0050）'],
+      ['方法', `情緒分析（${ctx.data?.sentimentEngine || 'Gemini Flash-Lite'}）＋ GEE ＋ 5 種機器學習`],
+    ]} />,
+    notes: '第三句說明資料與方法。右邊逐項對應我們的資料與方法，這也是第二部分的預告。',
+  },
+  {
+    id: 'a4', section: 'paper', minutes: 4, title: '摘要精讀④：直接效果、交互效果與負面情緒',
+    left: () => <AbstractFull id="abs-4" focus={['新聞文字與財務指標對超額報酬有直接效果與交互效果', '換用不同變數定義，結果仍一致（穩健性）', '負面情緒的影響大於正面情緒']} />,
+    right: (ctx) => {
+      const n = ourTerm(ctx, 'Negative'); const p = ourTerm(ctx, 'Positive');
+      if (!n || !p) return <Pending what="直接效果" />;
+      return <div className="space-y-2">
+        <KV rows={[['Negative', n.display], ['Positive', p.display], ['負面效果', <VerdictChip v={verdictFor(ctx, 'Negative')} />]]} />
+        <p className="text-[0.85em]">預告：台股的負面情緒比例係數為{n.coef >= 0 ? '正' : '負'}，{n.coef >= 0 ? '與原著「負面降低報酬」方向相反' : '與原著方向相同'}；詳見第二部分。</p>
+      </div>;
+    },
+    notes: '第四句是全文主要發現。右邊先預告台股結果，第三部分再完整討論差異的原因。',
+  },
+  {
+    id: 'a5', section: 'paper', minutes: 3, title: '摘要精讀⑤：量化指標高時，正面情緒效果減弱',
+    left: () => <AbstractFull id="abs-5" focus={['先前量化指標（例如營收成長）高時，正面情緒的效果變弱', '貢獻：網路資訊持續出現下，對金融市場情緒分析實務的意義']} />,
+    right: (ctx) => {
+      const r = ourTerm(ctx, 'Sales_growth X Positive');
+      if (!r) return <Pending what="Sales_growth × Positive" />;
+      return <div className="space-y-2">
+        <KV rows={[['Sales_growth X Positive', r.display], ['與原著比較', <VerdictChip v={verdictFor(ctx, 'Sales_growth X Positive')} />]]} />
+        <p className="text-[0.85em]">{explain(r, '台股方向與原著相反', '台股也觀察到營收成長高時，正面新聞效果減弱')}</p>
+      </div>;
+    },
+    notes: '第五句是本文最核心的機制。右邊直接呈現台股的對應結果，作為整場報告的主軸。',
   },
   {
     quotes: ['intro-12'],
-    id: 'p3', section: 'paper', minutes: 3, title: '研究問題',
+    id: 'p3', section: 'paper', minutes: 2, title: '研究問題',
     left: () => <Bullets items={[
       'RQ1：新聞正面／負面情緒是否直接影響超額報酬？',
       'RQ2：情緒的效果是否會被財務指標（營收成長、本益比、淨值比）調節？',
@@ -228,7 +304,7 @@ export const DECK: DeckSlide[] = [
   },
   {
     quotes: ['theory-1', 'abs-5'],
-    id: 'p4', section: 'paper', minutes: 4, title: '理論基礎與預期',
+    id: 'p4', section: 'paper', minutes: 3, title: '理論基礎與預期',
     left: () => <Bullets items={[
       '資訊處理觀點：新聞文字傳遞財務報表以外的訊息',
       '負面偏誤：負面消息對價格的影響大於正面消息',
@@ -243,7 +319,7 @@ export const DECK: DeckSlide[] = [
   },
   {
     quotes: ['theory-10'],
-    id: 'p5', section: 'paper', minutes: 4, title: '混合方法設計（表 4.2 判定）',
+    id: 'p5', section: 'paper', minutes: 3, title: '混合方法設計（表 4.2 判定）',
     left: () => <KV rows={[
       ['質性資料', '《華爾街日報》新聞文字'],
       ['量化資料', 'Compustat 財務指標、股價報酬'],
@@ -260,7 +336,7 @@ export const DECK: DeckSlide[] = [
   },
   {
     quotes: ['abs-3', 'intro-18'],
-    id: 'p6', section: 'paper', minutes: 4, title: '資料與樣本',
+    id: 'p6', section: 'paper', minutes: 2, title: '資料與樣本',
     left: () => <KV rows={[
       ['公司', 'S&P 500 成分股'],
       ['新聞', '《華爾街日報》2013–2016 年相關報導'],
@@ -277,7 +353,7 @@ export const DECK: DeckSlide[] = [
   },
   {
     quotes: ['methods-7'],
-    id: 'p7', section: 'paper', minutes: 4, title: '變數定義',
+    id: 'p7', section: 'paper', minutes: 3, title: '變數定義',
     left: () => <MiniTable dense headers={['變數', '原著定義']} rows={[
       ['SCAR', '標準化累積超額報酬'],
       ['Positive / Negative', 'LM 詞典正面／負面詞比例'],
@@ -300,7 +376,7 @@ export const DECK: DeckSlide[] = [
   },
   {
     quotes: ['methods-10', 'methods-13'],
-    id: 'p8', section: 'paper', minutes: 3, title: '情緒分析方法',
+    id: 'p8', section: 'paper', minutes: 2, title: '情緒分析方法',
     left: () => <Bullets items={[
       'Loughran–McDonald 金融情緒詞典',
       '計算每篇文章正面詞、負面詞占總詞數的比例',
@@ -315,7 +391,7 @@ export const DECK: DeckSlide[] = [
   },
   {
     quotes: ['methods-15'],
-    id: 'p9', section: 'paper', minutes: 4, title: '計量模型：GEE',
+    id: 'p9', section: 'paper', minutes: 2, title: '計量模型：GEE',
     left: () => <Bullets items={[
       '廣義估計方程式（GEE），處理同一公司跨期觀測值的相關性',
       '比較三種工作相關結構：Independent、AR(1)、Exchangeable',
@@ -332,7 +408,7 @@ export const DECK: DeckSlide[] = [
   },
   {
     quotes: ['abs-4', 'results-5'],
-    id: 'p10', section: 'paper', minutes: 4, title: '原著主要結果（表 2）',
+    id: 'p10', section: 'paper', minutes: 2, title: '原著主要結果（表 2）',
     left: () => (
       <div className="space-y-2">
         <PaperCoefTable terms={['Positive', 'Negative', 'Sales_growth', 'Sales_growth X Positive', 'Sales_growth X Negative', 'MB_ratio X Negative']} />
@@ -340,14 +416,14 @@ export const DECK: DeckSlide[] = [
       </div>
     ),
     right: () => <Bullets items={[
-      '台股的同一張表在第二部分（第 20–23 頁）報告',
+      '台股的同一張表在第二部分逐列報告',
       '屆時會逐列放在原著旁邊，並標示「一致／方向相同但不顯著／相反」',
     ]} />,
     notes: '解讀原著表 2：負面情緒顯著降低超額報酬；營收成長與正面情緒的交互作用顯著為負，也就是基本面已好時，利多新聞的效果遞減。',
   },
   {
     quotes: ['results-14'],
-    id: 'p11', section: 'paper', minutes: 3, title: '原著機器學習結果與結論',
+    id: 'p11', section: 'paper', minutes: 2, title: '原著機器學習結果與結論',
     left: () => (
       <div className="space-y-2">
         <MiniTable dense headers={['演算法', '純量化', '加入情緒']} rows={(T78?.rows || []).slice(0, 4).map((r) => [String(r[0]).replace(/ \(.*\)/, ''), String(r[1]), String(r[2]).replace(/💥.*$/, '').trim()])} />
@@ -379,8 +455,35 @@ export const DECK: DeckSlide[] = [
     notes: '第二部分開場：說明我們要檢驗哪些主張，以及確保真實性的三個原則。',
   },
   {
+    quotes: ['methods-8', 'methods-9'],
+    id: 'r0', section: 'replication', minutes: 4, title: '資料蒐集流程與執行紀錄',
+    left: () => <Bullets items={['以 Python 程式擷取《華爾街日報》新聞', '以 R 進行文字探勘與 LM 詞典情緒計分', '財務資料取自 Compustat、報酬取自 Eventus']} />,
+    right: (ctx) => {
+      const rl = ctx.data?.runLog;
+      const hist = ctx.history || [];
+      const first = hist[0];
+      return <div className="space-y-3">
+        <ol className="list-decimal pl-5 space-y-1 text-[0.92em]">
+          <li>FinMind 新聞逐日查詢：{ctx.data ? `${ctx.data.stocks.length} 檔 × ${Math.round((Date.parse(ctx.data.period.end) - Date.parse(ctx.data.period.start)) / 864e5) + 1} 天` : '10 檔 × 365 天'}（每次只回傳一檔一天，約 3,650 次查詢；每檔每天最多採用 {ctx.data?.maxPerDay ?? 8} 則）</li>
+          <li>另查詢股價、月營收、本益比／淨值比、市值（各檔各 1 次，含 0050 基準）</li>
+          <li>Gemini Flash-Lite 判讀標題情緒（每次 80 則）</li>
+          <li>對齊交易日、建立面板 → GEE（表 2）→ 機器學習（表 7–8）</li>
+          <li>GitHub Actions 自動執行、寫回結果並上架；每個交易日 22:10 更新</li>
+        </ol>
+        {first && <KV rows={[
+          ['首次完整抓取', `${String(first.startedAt).replace('T', ' ').slice(0, 16)}，耗時 ${fmtSecs(first.totalSeconds)}`],
+          ['FinMind 方案', 'Sponsor（每小時 6,000 次查詢）'],
+          ['取得資料', `${(first.articles ?? 0).toLocaleString()} 則新聞、${(first.samples ?? 0).toLocaleString()} 筆個股 × 交易日樣本`],
+        ]} />}
+        {rl && <p className="text-[0.82em]">最近一次更新：{String(rl.startedAt).replace('T', ' ').slice(0, 16)}，耗時 {fmtSecs(rl.totalSeconds)}；FinMind 新查詢 {rl.finmindQueries?.new ?? '—'} 次、沿用快取 {rl.finmindQueries?.fromCache ?? '—'} 次；Gemini 呼叫 {rl.geminiCalls ?? '—'} 次。</p>}
+        {(rl?.runUrl || first?.runUrl) && <p className="text-[0.8em] break-all">執行紀錄：<a className="underline" href={rl?.runUrl || first?.runUrl} target="_blank" rel="noreferrer">{rl?.runUrl || first?.runUrl}</a></p>}
+      </div>;
+    },
+    notes: '說明資料是怎麼來的：查詢次數、方案額度、實際耗時，以及每天自動更新的機制。口委若質疑資料真實性，可直接點開 GitHub Actions 的執行紀錄。',
+  },
+  {
     quotes: ['intro-18'],
-    id: 'r2', section: 'replication', minutes: 4, title: '樣本股票',
+    id: 'r2', section: 'replication', minutes: 3, title: '樣本股票',
     left: () => <KV rows={[['樣本', 'S&P 500 成分股（大型權值股）'], ['期間', '2013–2016']]} />,
     right: (ctx) => ctx.data ? (
       <MiniTable dense headers={['股票', '新聞則數', '平均情緒']} rows={(ctx.data.stocks || []).map((s: any) => [`${s.name} ${s.id}`, (s.articles ?? 0).toLocaleString(), num(s.meanSentiment, 2)])} />
@@ -420,7 +523,7 @@ export const DECK: DeckSlide[] = [
   },
   {
     quotes: ['methods-3'],
-    id: 'r5', section: 'replication', minutes: 4, title: '財務變數敘述統計',
+    id: 'r5', section: 'replication', minutes: 3, title: '財務變數敘述統計',
     left: () => <p>原著財務變數來自 Compustat 年度資料（見表 1 定義）。</p>,
     right: (ctx) => {
       const d = gee(ctx)?.descriptives;
@@ -500,7 +603,7 @@ export const DECK: DeckSlide[] = [
   },
   {
     quotes: ['results-7', 'results-8'],
-    id: 'r11', section: 'replication', minutes: 4, title: '其他交互作用項',
+    id: 'r11', section: 'replication', minutes: 3, title: '其他交互作用項',
     left: () => <div className="space-y-2"><PaperCoefTable terms={['PE_ratio X Positive', 'MB_ratio X Positive', 'PE_ratio X Negative', 'Sales_growth X Negative', 'MB_ratio X Negative']} /><SourceNote /></div>,
     right: (ctx) => <OurCoefTable ctx={ctx} terms={['PE_ratio X Positive', 'MB_ratio X Positive', 'PE_ratio X Negative', 'Sales_growth X Negative', 'MB_ratio X Negative']} />,
     notes: '比較其餘五個交互作用項，指出哪些與原著方向一致、哪些不一致。',
@@ -549,12 +652,15 @@ export const DECK: DeckSlide[] = [
       if (!ctx.data?.rows) return <Pending what="基準比較" />;
       const base = parseFloat(ctx.data.split.baselineAcc);
       const best = ctx.data.rows.reduce((a: any, r: any) => (r.raw.textAcc > a.raw.textAcc ? r : a));
-      const beat = best.raw.textAcc * 100 > base;
+      const gap = best.raw.textAcc * 100 - base;
+      const auc = best.raw.textAuc * 100;
       return <Bullets items={[
         `基準準確率（全部猜多數類別）：${ctx.data.split.baselineAcc}`,
         `加入情緒後最佳模型：${best.algorithm.replace(/ \(.*\)/, '')}，準確率 ${best.quantTextAcc}、AUC ${best.quantTextAuc}`,
-        beat ? '最佳模型高於基準，但仍需檢驗差距是否穩定' : '最佳模型未高於基準：以現有特徵，新聞情緒對短期報酬的預測力有限',
-        'AUC 接近 50% 表示幾乎沒有區辨力',
+        gap >= 2 ? `最佳模型高於基準 ${gap.toFixed(1)} 個百分點，仍需檢驗是否穩定`
+          : gap > 0 ? `最佳模型僅比基準高 ${gap.toFixed(1)} 個百分點，實質預測力有限`
+          : '最佳模型未高於基準：以現有特徵，新聞情緒對短期報酬的預測力有限',
+        auc < 55 ? `AUC ${auc.toFixed(1)}% 接近 50%，幾乎沒有區辨力` : auc < 60 ? `AUC ${auc.toFixed(1)}%，區辨力偏弱` : `AUC ${auc.toFixed(1)}%，具一定區辨力`,
       ]} />;
     },
     notes: '這頁回答「模型到底有沒有用」。若沒有贏過基準，這本身就是重要且誠實的發現。',
@@ -581,7 +687,7 @@ export const DECK: DeckSlide[] = [
   },
   {
     quotes: ['disc-8'],
-    id: 'r17', section: 'replication', minutes: 4, title: '復刻的限制',
+    id: 'r17', section: 'replication', minutes: 3, title: '復刻的限制',
     left: () => <Bullets items={['原著的限制：單一新聞來源（WSJ）、美國市場、2013–2016 年']} />,
     right: () => <Bullets items={[
       '情緒以「新聞標題」判讀，非全文；以則數比例代替詞比例',

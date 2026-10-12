@@ -108,13 +108,19 @@ def finmind(dataset, params, token, retries=3):
 
 
 _cache_lock = threading.Lock()
+# 執行紀錄：寫進結果檔，供報告「資料蒐集流程」頁使用
+STATS = {"finmindNew": 0, "finmindCached": 0, "geminiCalls": 0, "steps": {}}
 
 
 def cached(path, fn):
     if os.path.exists(path):
+        with _cache_lock:
+            STATS["finmindCached"] += 1
         with open(path, encoding="utf-8") as f:
             return json.load(f)
     data = fn()
+    with _cache_lock:
+        STATS["finmindNew"] += 1
     with _cache_lock:
         os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
@@ -132,7 +138,12 @@ def fetch_news(stocks, start, end, token, max_per_day, workers=8):
         sid, d = job
         path = f"{CACHE}/news/{sid}/{d}.json"
         fetch = lambda: finmind("TaiwanStockNews", {"data_id": sid, "start_date": d}, token)
-        items = fetch() if d == today else cached(path, fetch)
+        if d == today:
+            items = fetch()
+            with _cache_lock:
+                STATS["finmindNew"] += 1
+        else:
+            items = cached(path, fetch)
         seen, out = set(), []
         for it in items:
             t = str(it.get("title", "")).strip()
@@ -248,6 +259,7 @@ def score_titles(titles):
         scores = {}
         if key:
             try:
+                STATS["geminiCalls"] += 1
                 scores = gemini_batch(batch, key)
             except Exception as e:
                 log(f"\n  ⚠️ Gemini 失敗（{e}），此批改用關鍵詞")
@@ -499,6 +511,14 @@ def main():
         sys.exit("請先設定 FinMind Token：export FINMIND_API_TOKEN=你的Token")
 
     end = datetime.now(timezone(timedelta(hours=8))).date()
+    t_start = time.time()
+    started_at = datetime.now(timezone(timedelta(hours=8))).isoformat(timespec="seconds")
+    mark = {"t": time.time()}
+
+    def step_done(name):
+        STATS["steps"][name] = round(time.time() - mark["t"], 1)
+        mark["t"] = time.time()
+
     try:
         log("▶ Step 1 新聞資料")
         if args.input:
@@ -514,13 +534,16 @@ def main():
         news = pd.DataFrame(news_rows).drop_duplicates(["stock_id", "date", "title"])
         news = news[news.title.str.len() > 0]
         log(f"  共 {len(news)} 則不重複新聞")
+        step_done("news")
 
         log("▶ Step 2 情緒判讀")
         news["score"], engine = score_titles(news.title.tolist())
+        step_done("sentiment")
 
         log("▶ Step 3 股價、月營收、本益比/淨值比、市值")
         px = fetch_prices(stocks, start - timedelta(days=120), end, token)
         rev, per, mv, missing = fetch_fundamentals(stocks, start - timedelta(days=120), end, token)
+        step_done("financials")
     except RateLimitError as e:
         sys.exit(f"\n⚠️ FinMind 回報已達請求上限：{e}\n   已抓到的資料都存在 {CACHE}/，請等一小時後再執行同一個指令，會從中斷處繼續。")
 
@@ -529,6 +552,7 @@ def main():
 
     log("▶ Step 4 表 2 復刻（GEE）")
     gee = run_gee(panel)
+    step_done("gee")
     if gee:
         m = gee["models"].get("exchangeable") or next(iter(gee["models"].values()))
         for r in m["rows"]:
@@ -536,6 +560,7 @@ def main():
 
     log("▶ Step 5 表 7–8 復刻（機器學習，時間切分 70/30）")
     rows, split, quant = evaluate(panel)
+    step_done("ml")
     for r in rows:
         log(f"  {r['algorithm']:<42} 準確率 {r['quantOnlyAcc']} → {r['quantTextAcc']}｜AUC {r['quantOnlyAuc']} → {r['quantTextAuc']}")
     log(f"  基準（全部猜多數類別）準確率：{split['baselineAcc']}")
@@ -559,12 +584,39 @@ def main():
         "features": {"quant": quant, "sentiment": SENT},
         "rows": rows,
         "gee": gee,
+        "runLog": {
+            "startedAt": started_at,
+            "totalSeconds": round(time.time() - t_start, 1),
+            "stepSeconds": STATS["steps"],
+            "finmindQueries": {"new": STATS["finmindNew"], "fromCache": STATS["finmindCached"]},
+            "newsQueriesPlanned": len(stocks) * ((end - start).days + 1) if not args.input else 0,
+            "geminiCalls": STATS["geminiCalls"],
+            "datasets": ["TaiwanStockNews", "TaiwanStockPrice", "TaiwanStockMonthRevenue", "TaiwanStockPER", "TaiwanStockMarketValue"],
+            "runner": "GitHub Actions" if os.environ.get("GITHUB_ACTIONS") else "本機／Cloud Shell",
+            "runUrl": (f"{os.environ.get('GITHUB_SERVER_URL')}/{os.environ.get('GITHUB_REPOSITORY')}/actions/runs/{os.environ.get('GITHUB_RUN_ID')}"
+                       if os.environ.get("GITHUB_RUN_ID") else None),
+        },
         "articles": [{"stock_id": r.stock_id, "date": r.date, "title": r.title, "source": r.source, "link": r.link,
                       "score": round(float(r.score), 2)} for r in news.sort_values("date", ascending=False).head(3000).itertuples()],
     }
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=1)
+
+    # 執行歷史（保留最近 60 次），報告可呈現「首次完整抓取」與每日更新的紀錄
+    hist_path = os.path.join(os.path.dirname(args.out), "run_history.json")
+    try:
+        history = json.load(open(hist_path, encoding="utf-8"))
+    except Exception:
+        history = []
+    history.append({
+        "startedAt": out["runLog"]["startedAt"], "totalSeconds": out["runLog"]["totalSeconds"],
+        "finmindNew": STATS["finmindNew"], "finmindFromCache": STATS["finmindCached"],
+        "geminiCalls": STATS["geminiCalls"], "articles": out["articleCount"], "samples": out["sampleCount"],
+        "runner": out["runLog"]["runner"], "runUrl": out["runLog"]["runUrl"],
+    })
+    with open(hist_path, "w", encoding="utf-8") as f:
+        json.dump(history[-60:], f, ensure_ascii=False, indent=1)
     log(f"\n✅ 完成！結果已寫入 {args.out}")
     log("   推送到 GitHub 後（git add / commit / push），網站會自動更新「論文報告」與「台股復刻」的真實結果。")
 
