@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ManuscriptBody } from './ManuscriptBody.tsx';
+import type { RepLink } from '../data/deckLinks.ts';
 import { 
   Presentation, 
   FileText, 
@@ -57,7 +58,7 @@ export interface SlideMappingItem {
 
 interface ThesisReportViewProps {
   onAskGemini: (prompt: string) => void;
-  onNavigateToReplication?: (slideNum?: number) => void;
+  onNavigateToReplication?: (slideNum?: number, link?: RepLink) => void;
   onNavigateToReader?: (section?: string, slideNum?: number) => void;
   initialSlide?: number;
   onSlideChange?: (slide: number) => void;
@@ -336,6 +337,8 @@ export const ThesisReportView: React.FC<ThesisReportViewProps> = ({
               onSlideChange={(n) => { setCurrentSlide(n); onSlideChange?.(n); }}
               elapsedSeconds={timerDurationMinutes * 60 - timerSecondsLeft}
               timerActive={isTimerRunning}
+              onJumpReplication={(link, n) => onNavigateToReplication?.(n, link)}
+              onJumpReader={(section, n) => onNavigateToReader?.(section, n)}
             />
           </div>
         )}

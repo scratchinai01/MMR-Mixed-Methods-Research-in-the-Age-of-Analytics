@@ -9,6 +9,7 @@ import { useMlResults } from '../services/mlResults.ts';
 import { RealReplicationFacts } from './RealReplicationFacts.tsx';
 import { ReplicationReplay } from './ReplicationReplay.tsx';
 import { NewsDownload } from './NewsDownload.tsx';
+import { RepQuickBar, useAnchorJump } from './RepQuickBar.tsx';
 import { PAPER_TABLES } from '../data/paperContent.ts';
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
 import { 
@@ -45,7 +46,9 @@ interface FinMindReplicationProps {
   onNavigateToCritique?: (tab?: string) => void;
   onNavigateToReader?: (sectionId?: string) => void;
   returnToThesisSlide?: number | null;
-  onReturnToThesis?: () => void;
+  onReturnToThesis?: (slide?: number) => void;
+  /** 從簡報跳過來時要定位的區塊 */
+  jumpTo?: { anchor: string; step?: number; nonce: number } | null;
 }
 
 export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
@@ -56,9 +59,11 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
   onNavigateToReader,
   returnToThesisSlide,
   onReturnToThesis,
+  jumpTo,
 }) => {
   // 機器學習比較表：有真實計算結果就用真實結果，否則顯示標示清楚的示範數字
   const mlResults = useMlResults();
+  useAnchorJump(jumpTo);
   const mlTop = mlResults.rows[0];
   const [selectedStockCode, setSelectedStockCode] = useState<string>('2330');
   const [tokenInput, setTokenInput] = useState<string>('');
@@ -641,7 +646,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
             </div>
           </div>
           <button
-            onClick={onReturnToThesis}
+            onClick={() => onReturnToThesis()}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-md shadow-amber-300/40 border border-amber-300 transition-all active:scale-95 cursor-pointer group"
             title="一鍵返回口試簡報（或鍵盤按 Esc）"
           >
@@ -653,6 +658,9 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
           </button>
         </div>
       )}
+
+      {/* 快速標籤：跳到各區塊，並可回到簡報對應頁 */}
+      <RepQuickBar returnToThesisSlide={returnToThesisSlide ?? null} onReturnToThesis={onReturnToThesis} />
 
       {/* FinMind Tool Hero Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
@@ -753,6 +761,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
           </div>
 
           {/* Dual-Column Replication Comparison Board: 左 (真實論文 藍) vs 右 (我們台股復刻 綠) */}
+          <div id="rep-compare" className="scroll-mt-48" />
           <div className="p-6 rounded-3xl bg-slate-900/95 border border-indigo-500/40 shadow-xl space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-3.5">
               <div className="space-y-1">
@@ -895,6 +904,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
       </div>
 
       {/* Stock Selection Bar */}
+      <div id="rep-stocks" className="scroll-mt-48" />
       <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -1138,6 +1148,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
       </div>
 
       {/* Live Machine Learning Training Pipeline Sandbox */}
+      <div id="rep-replay" className="scroll-mt-48" />
       <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white rounded-3xl p-6 sm:p-8 border border-indigo-500/30 shadow-xl space-y-6">
         <div className="border-b border-slate-800 pb-4">
           <div className="flex items-center gap-2 flex-wrap">
@@ -1150,7 +1161,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
           </p>
         </div>
 
-        <ReplicationReplay data={mlResults.isDemo ? null : mlResults.data} />
+        <ReplicationReplay data={mlResults.isDemo ? null : mlResults.data} jump={jumpTo?.anchor === 'rep-replay' && jumpTo.step ? { step: jumpTo.step, nonce: jumpTo.nonce } : null} />
 
         {/* Academic Insight Card: Does Large-N determine research outcome? */}
         <div className="bg-slate-900 p-5 rounded-2xl border border-indigo-500/30 space-y-3 text-xs">
@@ -1175,6 +1186,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
       </div>
 
       {/* Phase 2: Explain - Taiwan Stock GEE Panel Model Table */}
+      <div id="rep-gee" className="scroll-mt-48" />
       <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
         <div className="border-b border-slate-100 pb-4">
           <div className="flex items-center gap-2">
@@ -1233,6 +1245,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
       </div>
 
       {/* Phase 3: Predict - Machine Learning Benchmark on Taiwan Stocks */}
+      <div id="rep-ml" className="scroll-mt-48" />
       <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
         <div className="border-b border-slate-100 pb-4">
           <div className="flex items-center gap-2">

@@ -33,6 +33,8 @@ export default function App() {
   // Thesis PPT Navigation Tracking (支援從 PPT 跳轉至沉浸式翻譯或台股，並快速返回)
   const [lastThesisSlide, setLastThesisSlide] = useState<number>(1);
   const [navigatedFromThesis, setNavigatedFromThesis] = useState<boolean>(false);
+  // 從簡報跳到台股復刻時要定位的區塊（nonce 讓同一區塊也能重複觸發）
+  const [repJump, setRepJump] = useState<{ anchor: string; step?: number; nonce: number } | null>(null);
 
   // Global Escape key listener: 一鍵返回 PPT 口試簡報
   React.useEffect(() => {
@@ -190,9 +192,10 @@ export default function App() {
             onAskGemini={handleAskAi}
             initialSlide={lastThesisSlide}
             onSlideChange={(s) => setLastThesisSlide(s)}
-            onNavigateToReplication={(slideNum) => {
+            onNavigateToReplication={(slideNum, link) => {
               setNavigatedFromThesis(true);
               if (slideNum) setLastThesisSlide(slideNum);
+              setRepJump(link ? { anchor: link.anchor, step: link.step, nonce: Date.now() } : null);
               setCurrentTab('replication');
             }}
             onNavigateToReader={(section, slideNum) => {
@@ -241,13 +244,14 @@ export default function App() {
               setCurrentTab('reader');
             }}
             returnToThesisSlide={navigatedFromThesis ? lastThesisSlide : null}
-            onReturnToThesis={() => setCurrentTab('thesis_report')}
+            onReturnToThesis={(slide?: number) => { if (slide) setLastThesisSlide(slide); setCurrentTab('thesis_report'); }}
+            jumpTo={repJump}
           />
         )}
       </main>
 
       {/* Persistent Floating Return to PPT Button (當從簡報跳轉至論文或台股時常駐顯示) */}
-      {navigatedFromThesis && currentTab !== 'thesis_report' && (
+      {navigatedFromThesis && currentTab !== 'thesis_report' && currentTab !== 'replication' && (
         <div className="fixed bottom-20 right-4 sm:right-6 z-40 animate-in slide-in-from-bottom duration-300">
           <button
             onClick={() => setCurrentTab('thesis_report')}

@@ -27,13 +27,20 @@ const STEPS = [
 
 const fmtSecs = (s?: number) => (s == null ? '—' : s >= 60 ? `${Math.floor(s / 60)} 分 ${Math.round(s % 60)} 秒` : `${Math.round(s)} 秒`);
 
-export function ReplicationReplay({ data }: { data: any | null }) {
+export function ReplicationReplay({ data, jump }: { data: any | null; jump?: { step: number; nonce: number } | null }) {
   const [step, setStep] = useState(-1); // -1 = 尚未開始
   const [playing, setPlaying] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
   const [updateMsg, setUpdateMsg] = useState('');
   const [updating, setUpdating] = useState(false);
   const timer = useRef<any>(null);
+
+  // 從簡報跳過來：直接停在指定步驟（並把前面的步驟一起展開）
+  useEffect(() => {
+    if (!jump) return;
+    setPlaying(false);
+    setStep(Math.min(Math.max(jump.step - 1, 0), STEPS.length - 1));
+  }, [jump?.nonce]);
 
   useEffect(() => {
     fetch(`/data/run_history.json?t=${Date.now()}`, { cache: 'no-store' })
@@ -313,7 +320,7 @@ export function ReplicationReplay({ data }: { data: any | null }) {
 
 function StepCard({ i, active, children }: { i: number; active: boolean; children: React.ReactNode }) {
   return (
-    <div className={`p-5 rounded-2xl border text-sm text-slate-200 leading-relaxed animate-in fade-in slide-in-from-bottom-2 duration-500 ${active ? 'bg-slate-950/80 border-amber-400/60' : 'bg-slate-950/50 border-white/10'}`}>
+    <div id={`replay-step-${i + 1}`} className={`scroll-mt-48 p-5 rounded-2xl border text-sm text-slate-200 leading-relaxed animate-in fade-in slide-in-from-bottom-2 duration-500 ${active ? 'bg-slate-950/80 border-amber-400/60' : 'bg-slate-950/50 border-white/10'}`}>
       <div className="flex items-baseline gap-2 mb-2">
         <span className="text-[11px] font-mono text-amber-300">步驟 {i + 1}</span>
         <span className="font-bold text-white">{STEPS[i].title}</span>

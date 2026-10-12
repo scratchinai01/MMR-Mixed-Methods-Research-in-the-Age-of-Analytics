@@ -9,6 +9,7 @@ import { DECK, SECTION_META, DECK_TOTAL_MINUTES, DeckSection } from '../data/the
 import { useMlResults } from '../services/mlResults.ts';
 import { PAPER_PARAGRAPHS } from '../data/paperContent.ts';
 import { scriptFor } from '../data/deckScripts.ts';
+import { SLIDE_LINKS, READER_SECTION_LABEL, repLinkLabel, RepLink } from '../data/deckLinks.ts';
 import { PARA_EXPLAIN } from '../data/paraExplain.ts';
 
 /** 論文原文段落（英文）＋中譯，附 PDF 頁碼；摘要段落已與公開摘要核對 */
@@ -57,6 +58,10 @@ interface ThesisDeckProps {
   onSlideChange?: (n: number) => void;
   elapsedSeconds?: number; // 計時器已經過的秒數，用來比對進度
   timerActive?: boolean;
+  /** 跳到台股復刻的對應區塊（帶上目前頁碼，方便返回） */
+  onJumpReplication?: (link: RepLink, slideNum: number) => void;
+  /** 跳到論文翻譯的對應章節 */
+  onJumpReader?: (section: string, slideNum: number) => void;
 }
 
 const SECTIONS: DeckSection[] = ['paper', 'replication', 'compare'];
@@ -73,7 +78,7 @@ const SCHEDULE = (() => {
 
 const fmtMin = (m: number) => `${Math.floor(m / 60)}:${String(Math.round(m % 60)).padStart(2, '0')}`;
 
-export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlideChange, elapsedSeconds = 0, timerActive = false }) => {
+export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlideChange, elapsedSeconds = 0, timerActive = false, onJumpReplication, onJumpReader }) => {
   const [idx, setIdx] = useState(() => Math.min(Math.max(initialSlide, 1), DECK.length) - 1);
   const [showNotes, setShowNotes] = useState(true);
   const [showList, setShowList] = useState(false);
@@ -108,6 +113,7 @@ export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlid
   }, []);
 
   const slide = DECK[idx];
+  const links = SLIDE_LINKS[slide.id];
   const script = useMemo(() => scriptFor(slide.id, ctx as any), [slide.id, ctx]);
   const sched = SCHEDULE[idx];
   const meta = SECTION_META[slide.section];
@@ -206,7 +212,16 @@ export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlid
               <span className="font-bold text-blue-900 flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />原著論文
               </span>
-              <span className="text-xs text-blue-800/70">Raman et al. (2022)・美股</span>
+              <span className="flex items-center gap-2">
+                {links?.read && onJumpReader && (
+                  <button onClick={() => onJumpReader(links.read!, idx + 1)}
+                    className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white hover:bg-blue-700"
+                    title="跳到論文翻譯的對應章節（可再返回本頁）">
+                    📖 原文：{READER_SECTION_LABEL[links.read] || links.read} ↗
+                  </button>
+                )}
+                <span className="text-xs text-blue-800/70 hidden lg:inline">Raman et al. (2022)・美股</span>
+              </span>
             </div>
             <div>{slide.left(ctx)}</div>
             {slide.quotes && slide.quotes.length > 0 && (
@@ -226,6 +241,18 @@ export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlid
                 {ctx.data ? `FinMind 真實資料・${String(ctx.data.generatedAt || '').slice(0, 10)} 計算` : 'FinMind 真實資料・尚未計算'}
               </span>
             </div>
+            {links?.rep && onJumpReplication && (
+              <div className="flex flex-wrap items-center gap-1.5 -mt-1">
+                <span className="text-[11px] font-bold text-emerald-800">到台股復刻看：</span>
+                {links.rep.map((l, i) => (
+                  <button key={i} onClick={() => onJumpReplication(l, idx + 1)}
+                    className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700"
+                    title="跳到台股復刻頁的對應區塊（可再返回本頁）">
+                    {repLinkLabel(l)} ↗
+                  </button>
+                ))}
+              </div>
+            )}
             <div>{slide.right(ctx)}</div>
           </section>
         </div>
