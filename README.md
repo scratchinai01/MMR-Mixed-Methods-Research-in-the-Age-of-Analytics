@@ -14,6 +14,18 @@ AI 解析由 **Groq** 提供（Gemini 為備援），台股新聞與股價來自
    - `GEMINI_API_KEY`（可選）：Groq 失敗時的備援，上傳 PDF 時優先使用
 3. 啟動：`npm run dev`，開啟 http://localhost:3000
 
+## 上架到 Google Cloud Run
+
+1. 開啟 Google Cloud 主控台，確認專案是 `PayFireBase`，並已連結帳單帳戶（Cloud Run 需要，小流量通常在免費額度內）。
+2. 按右上角「啟用 Cloud Shell」圖示，在下方終端機貼上：
+   ```bash
+   git clone https://github.com/scratchinai01/MMR-Mixed-Methods-Research-in-the-Age-of-Analytics.git mmr
+   cd mmr && bash deploy.sh
+   ```
+3. 依提示貼上金鑰（畫面不會顯示），等待 3～6 分鐘，最後會印出網址。
+
+更新版本：`cd mmr && git pull && bash deploy.sh`，金鑰直接按 Enter 會沿用上次設定。
+
 ## AI 呼叫順序
 
 Groq ➔ Gemini ➔ 本地知識庫備援。三者都沒有金鑰時仍可運作，只是回覆來自內建範本。
