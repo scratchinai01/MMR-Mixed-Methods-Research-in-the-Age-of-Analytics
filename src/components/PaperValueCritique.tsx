@@ -1,3 +1,4 @@
+import { MmrControversy } from './MmrControversy';
 import React, { useState } from 'react';
 import { 
   AlertTriangle, 
@@ -208,7 +209,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
               className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-500/25 hover:bg-emerald-500/35 text-xs backdrop-blur-md text-emerald-200 border border-emerald-400/40 transition-all font-bold shadow-sm cursor-pointer ring-2 ring-emerald-400/20"
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>論文判定：✅ MMR 標竿文獻 (點擊查看 7 項全文證據與整合流程圖)</span>
+              <span>論文判定：⚖️ 是否屬於 MMR 有爭議（點擊查看正反論點）</span>
             </button>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-xs backdrop-blur-md text-slate-200 border border-white/10">
               <span className="w-2 h-2 rounded-full bg-indigo-400" />
@@ -238,11 +239,11 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
             }`}
           >
             <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-            <span>判定：✅ MMR 核心文獻判定</span>
+            <span>判定：是否屬於 MMR</span>
             <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
               critiqueTab === 'mmr_verdict' ? 'bg-amber-400 text-slate-950' : 'bg-emerald-600 text-white'
             }`}>
-              96分 YES
+              有爭議
             </span>
           </button>
 
@@ -311,29 +312,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
       {/* Tab: MMR Verdict & Full-Text Evidence */}
       {critiqueTab === 'mmr_verdict' && (
         <div className="space-y-6 animate-in fade-in duration-150">
-          {/* Header Banner */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-emerald-950 via-slate-900 to-teal-950 text-white shadow-xl border border-emerald-800/40 space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-400 text-slate-950 flex items-center gap-1.5 shadow-sm">
-                <CheckCircle2 className="w-4 h-4 fill-slate-950 text-emerald-400" />
-                <span>判定：✅ MMR 核心文獻</span>
-              </span>
-              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                信心度：96 / 100 (高信心判定)
-              </span>
-              <span className="text-xs text-emerald-300/80">
-                SSCI 頂級期刊 IJIM 64 (2022) 102451 實證檢定
-              </span>
-            </div>
-
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight">
-              這篇可以列為 <span className="text-emerald-400">Mixed Methods Research (MMR)</span> 文獻！
-            </h2>
-
-            <p className="text-sm sm:text-base text-slate-200 leading-relaxed max-w-4xl">
-              而且<strong>不是「只有標題寫 Mixed-methods」</strong>；正文中有相當明確的混合資料、混合方法與整合架構證據。文章標題本身就直接是 <em>“Mixed-methods research in the age of analytics”</em>，而且摘要說明其將商業期刊的文字分析與量化財務指標結合，用來解釋超額報酬 (Abnormal Returns)。
-            </p>
-          </div>
+          <MmrControversy />
 
           {/* MMR Design Classification Section: /MMR類型 */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
@@ -343,11 +322,11 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                   /MMR類型
                 </span>
                 <h3 className="text-xl font-extrabold text-slate-900 mt-1">
-                  🎯 MMR 具體設計類型精準判定：Concurrent / Convergent Integrated Design
+                  🎯 正方觀點：若列為 MMR，最接近哪一種設計？
                 </h3>
               </div>
               <span className="text-xs font-bold px-3 py-1 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-300">
-                信心度 93% • 排除 Sequential
+                正方論證，反方不接受此前提
               </span>
             </div>
 
@@ -419,7 +398,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
             </div>
 
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-              針對 Raman et al. (2022) 全文進行深度結構剖析，我們依據「<strong>資料取得 ➔ 分析 ➔ 整合 ➔ 結果</strong>」進行嚴格判定：本研究<strong>不是 Sequential（循序式）</strong>，也不是 Embedded（嵌入式），而是典型的 <strong>Concurrent / Convergent Integrated Design（並行／收斂整合型設計）</strong>！
+              針對 Raman et al. (2022) 全文進行深度結構剖析，我們依據「<strong>資料取得 ➔ 分析 ➔ 整合 ➔ 結果</strong>」做分類：若接受本篇為 MMR，它<strong>不是 Sequential（循序式）</strong>，也不是 Embedded（嵌入式），最接近 <strong>Concurrent / Convergent（並行／收斂）設計中的資料轉換變體</strong>。反方則認為本篇沒有獨立的質性分析軌，談不上收斂。
             </p>
 
             {/* Design Evaluation Table */}
@@ -429,39 +408,33 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                   <tr className="bg-slate-100 text-slate-900 border-b border-slate-200 font-bold">
                     <th className="p-3.5">MMR 設計類型 (Design)</th>
                     <th className="p-3.5 text-center w-28">判定結果</th>
-                    <th className="p-3.5 text-center w-20">信心度</th>
-                    <th className="p-3.5">全文證據與方法學理由</th>
+                                        <th className="p-3.5">全文證據與方法學理由</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 font-sans text-xs">
                   <tr className="hover:bg-slate-50 transition-colors">
                     <td className="p-3.5 font-bold text-slate-900">Sequential Design (循序式)</td>
                     <td className="p-3.5 text-center"><span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">❌ 否定</span></td>
-                    <td className="p-3.5 text-center font-mono font-semibold text-slate-700">95%</td>
                     <td className="p-3.5 text-slate-700">無 QUAN ➔ qual 或 QUAL ➔ quan 的前後研究鏈（儘管文章提及 phases，但第一階段已同時獲取雙軌資料）。</td>
                   </tr>
                   <tr className="hover:bg-indigo-50/50 transition-colors font-bold">
                     <td className="p-3.5 text-indigo-950">Concurrent / Convergent (並行／收斂整合)</td>
-                    <td className="p-3.5 text-center"><span className="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold">🟢 YES</span></td>
-                    <td className="p-3.5 text-center font-mono font-bold text-emerald-700">93%</td>
+                    <td className="p-3.5 text-center"><span className="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold">最接近（正方）</span></td>
                     <td className="p-3.5 text-indigo-950">Quantitative financial data 與 Textual/Qualitative data 同時進入同一分析與交互模型。</td>
                   </tr>
                   <tr className="hover:bg-slate-50 transition-colors">
                     <td className="p-3.5 font-bold text-slate-900">Embedded Design (嵌入式)</td>
                     <td className="p-3.5 text-center"><span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">❌ 否定</span></td>
-                    <td className="p-3.5 text-center font-mono font-semibold text-slate-700">94%</td>
                     <td className="p-3.5 text-slate-700">無任何方法被明確「嵌入」另一主要研究設計中，雙軌地位對等。</td>
                   </tr>
                   <tr className="hover:bg-slate-50 transition-colors">
                     <td className="p-3.5 font-bold text-slate-900">Transformative Design (轉化性)</td>
                     <td className="p-3.5 text-center"><span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">❌ 否定</span></td>
-                    <td className="p-3.5 text-center font-mono font-semibold text-slate-700">97%</td>
                     <td className="p-3.5 text-slate-700">未以批判理論或社會正義作為研究主軸。</td>
                   </tr>
                   <tr className="hover:bg-slate-50 transition-colors">
                     <td className="p-3.5 font-bold text-slate-900">Multiphase Design (多階段)</td>
                     <td className="p-3.5 text-center"><span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">⚠️ 部分特徵</span></td>
-                    <td className="p-3.5 text-center font-mono font-semibold text-slate-700">75%</td>
                     <td className="p-3.5 text-slate-700">具備 Identify ➔ Explain ➔ Predict 三階段架構，但屬於巨集觀分析 framework 而非典型 Multiphase MMR。</td>
                   </tr>
                 </tbody>
@@ -483,7 +456,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
               <div className="p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2.5">
                 <div className="font-bold text-emerald-950 flex items-center gap-2 text-sm">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>最強的 Integration 證據：Model A vs. Model B</span>
+                  <span>正方的整合證據：Model A vs. Model B（反方：這是變數消融比較，不是詮釋整合）</span>
                 </div>
                 <p className="text-xs text-emerald-900 leading-relaxed">
                   作者明確比較了 <strong>Model A (Quantitative only ➔ ML ➔ SCAR)</strong> 與 <strong>Model B (Quantitative + Textual ➔ ML ➔ SCAR)</strong>。加入文字情緒後，預測準確率顯著提升（例如 Two-Class Bayes Point Machine 從 70.7% 躍升至 84.0%），證明 Textual info 實質改變並補充了計量模型！
@@ -495,7 +468,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
             <div className="p-5 rounded-2xl bg-slate-900 text-slate-100 space-y-3 font-sans">
               <div className="text-amber-300 font-bold text-sm flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-amber-400" />
-                <span>🎓 博士論文引用時之標準建議寫法</span>
+                <span>🎓 正方的引用寫法（反方會質疑「並行處理質性資料」這一句）</span>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed italic bg-slate-950 p-4 rounded-xl border border-slate-800">
                 "Raman et al. (2022) 採用一種以 analytics 為基礎的整合型混合方法架構（Concurrent / Convergent Integrated Design），並行處理量化財務資料與企業新聞文字資料，透過 sentiment analysis、計量經濟模型與 machine learning 進行整合分析，以檢驗文字情緒與財務指標對累積異常報酬（SCAR）的直接及交互作用。"
@@ -519,7 +492,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                 </h3>
               </div>
               <span className="text-xs font-bold px-3 py-1 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-300">
-                Integration Score: 93 / 100 (Strong)
+                整合層次：分析層（詮釋層缺）
               </span>
             </div>
 
@@ -606,11 +579,11 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs font-mono">
                 <div className="p-3 bg-slate-900 rounded-xl border border-slate-800">
                   <div className="text-slate-400">MMR 判定</div>
-                  <div className="text-emerald-400 font-bold mt-0.5">✅ YES (核心文獻)</div>
+                  <div className="text-amber-300 font-bold mt-0.5">⚖️ 有爭議（依定義而定）</div>
                 </div>
                 <div className="p-3 bg-slate-900 rounded-xl border border-slate-800">
                   <div className="text-slate-400">Design 類型</div>
-                  <div className="text-indigo-300 font-bold mt-0.5">Concurrent / Convergent</div>
+                  <div className="text-indigo-300 font-bold mt-0.5">正方：收斂設計／資料轉換</div>
                 </div>
                 <div className="p-3 bg-slate-900 rounded-xl border border-slate-800">
                   <div className="text-slate-400">QUAN : QUAL 比例</div>
@@ -994,7 +967,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                     <td className="p-3 font-mono font-bold text-indigo-700 bg-indigo-50/50">/MMR判定</td>
                     <td className="p-3 text-slate-800 font-medium">判斷文章是否屬於 Mixed Methods Research</td>
                     <td className="p-3 text-slate-600">S&P 500 財務資料 (Compustat) ＋ WSJ 2,500 篇新聞文本 ＋ GEE 與機器學習</td>
-                    <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">✅ MMR YES (96%)</span></td>
+                    <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900">⚖️ 有爭議</span></td>
                     <td className="p-3 text-center">
                       <button onClick={() => onAskGemini('請依據 /MMR判定，詳細解析 Raman et al. (2022) 判定為 Mixed Methods Research 的全部證據？')} className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px]">解析</button>
                     </td>
@@ -1003,7 +976,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                     <td className="p-3 font-mono font-bold text-slate-500 text-center">02</td>
                     <td className="p-3 font-mono font-bold text-indigo-700 bg-indigo-50/50">/MMR類型</td>
                     <td className="p-3 text-slate-800 font-medium">判斷 Sequential / Concurrent / Embedded / Transformative</td>
-                    <td className="p-3 text-slate-600">排除 Sequential；確立為 Concurrent / Convergent Integrated Design (資料轉化模式)</td>
+                    <td className="p-3 text-slate-600">正方：收斂設計的資料轉換變體；反方：無獨立質性軌，屬準混合</td>
                     <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">🟢 Convergent</span></td>
                     <td className="p-3 text-center">
                       <button onClick={() => onAskGemini('請依據 /MMR類型，說明為何 Raman et al. (2022) 是 Concurrent Integrated Design 而非 Sequential？')} className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px]">解析</button>
@@ -1199,10 +1172,10 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Target className="w-5 h-5 text-emerald-600" />
-                <span>MMR 嚴格判定表（依據正文全文證據檢驗）</span>
+                <span>正方的 7 項判準（反方對第 2、5、6 項有異議）</span>
               </h3>
               <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
-                7 項核心判準全部達成
+                正方觀點
               </span>
             </div>
 
@@ -1268,9 +1241,9 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                   <tr className="bg-emerald-50/70 border-t-2 border-emerald-300">
                     <td className="p-3.5 font-extrabold text-emerald-950 text-sm">MMR 總體判定</td>
                     <td className="p-3.5 text-center">
-                      <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-600 text-white shadow-xs">🟢 YES</span>
+                      <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-400 text-slate-950 shadow-xs">⚖️ 有爭議</span>
                     </td>
-                    <td className="p-3.5 font-bold text-emerald-900">高信心判定（96/100）：確立為 Analytics-based MMR 頂刊典範！</td>
+                    <td className="p-3.5 font-bold text-emerald-900">正方判定為 Analytics-based MMR；嚴格定義下為量化研究或準混合設計（見上方正反論點）。</td>
                   </tr>
                 </tbody>
               </table>
@@ -1281,7 +1254,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
             <h3 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
               <Zap className="w-5 h-5 text-amber-500" />
-              <span>🔬 為什麼這篇可以判定 MMR？三大關鍵證據深度剖析</span>
+              <span>🔬 正方的三大論據（以及反方的回應）</span>
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -1309,7 +1282,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                 </div>
                 <h4 className="font-bold text-slate-900 text-sm">WSJ 自然語言文本與情緒</h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  質性部分不是傳統訪談，而是 <strong>Wall Street Journal 的自然語言非結構化文字</strong>。抓取約 2,500 篇文章進行 sentiment analysis，且在 Methods 明確區分 quantitative measures 與 qualitative data。這點對博士論文建立非傳統質性採集至關重要！
+                  質性部分不是傳統訪談，而是 <strong>Wall Street Journal 的自然語言非結構化文字</strong>。抓取約 2,500 篇文章進行 sentiment analysis，且在 Methods 明確區分 quantitative measures 與 qualitative data。反方回應：文本隨即被詞典計數成分數，沒有詮釋性分析，因此是「文字資料」而非「質性研究」。
                 </p>
               </div>
 
@@ -1323,7 +1296,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                 </div>
                 <h4 className="font-bold text-slate-900 text-sm">雙軌有機整合而非各行其是</h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  作者不是把兩種資料各做一次分析各自結束，而是直接建立交互項（如 Sales_growth × Positive），並比較「quantitative only」與「quantitative + text」模型。<strong>文字資料實質改變並大幅改善了財務計量預測</strong>，這是最無可爭議的整合證據！
+                  作者不是把兩種資料各做一次分析各自結束，而是直接建立交互項（如 Sales_growth × Positive），並比較「quantitative only」與「quantitative + text」模型。<strong>正方認為這是整合的證據</strong>。反方回應：這是加入一組變數的模型比較，屬於分析層面的合併，不是質性與量化結果的詮釋整合。
                 </p>
               </div>
             </div>
@@ -1338,7 +1311,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                   <code className="px-2 py-0.5 bg-amber-100/80 rounded font-mono font-bold text-amber-950">
                     "our framework offers guidance with leveraging mixed-methods"
                   </code><br />
-                  作者直接把這個三階段架構定位為 mixed-methods。因此在您的博士論文或學術文獻分類中，可以<strong>理直氣壯地將其列為「🟢 MMR 核心代表文獻」</strong>，絕非「⚠️ 疑似 MMR」！
+                  作者直接把這個三階段架構定位為 mixed-methods。反方提醒：作者自稱不等於符合方法論定義，引用時建議同時註明爭議（見上方的中性寫法）。
                 </p>
               </div>
             </div>
@@ -1401,15 +1374,15 @@ Quantitative Data              Textual Data
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-slate-300 py-1">
                   <div>QUAN 資料：<span className="text-emerald-400 font-bold">✅ 100%</span></div>
-                  <div>QUAL / Text：<span className="text-emerald-400 font-bold">✅ 100%</span></div>
+                  <div>QUAL / Text：<span className="text-amber-300 font-bold">⚠️ 只有文字資料，無質性分析</span></div>
                   <div>QUAN + QUAL：<span className="text-emerald-400 font-bold">✅ 確立</span></div>
-                  <div>Integration：<span className="text-emerald-400 font-bold">✅ 實質改善</span></div>
+                  <div>Integration：<span className="text-amber-300 font-bold">⚠️ 僅分析層面</span></div>
                   <div>MMR 框架：<span className="text-emerald-400 font-bold">✅ 三階段協同</span></div>
                   <div>作者自稱 MMR：<span className="text-emerald-400 font-bold">✅ Section 5.1</span></div>
                 </div>
                 <div className="border-t border-slate-800 pt-2 flex items-center justify-between text-xs font-bold">
                   <span>MMR 判定結論：</span>
-                  <span className="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-bold">🟢 YES (96 / 100)</span>
+                  <span className="px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-bold">⚖️ 有爭議</span>
                 </div>
                 <div className="text-[11px] text-slate-400 pt-1">
                   • 類型：Analytics-based MMR<br />
