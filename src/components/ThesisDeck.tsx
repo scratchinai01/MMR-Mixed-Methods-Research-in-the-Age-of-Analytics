@@ -9,6 +9,8 @@ import { DECK, SECTION_META, DECK_TOTAL_MINUTES, DeckSection } from '../data/the
 import { useMlResults } from '../services/mlResults.ts';
 import { PAPER_PARAGRAPHS } from '../data/paperContent.ts';
 import { scriptFor } from '../data/deckScripts.ts';
+import { talkFor } from '../data/deckTalk.ts';
+import { makeUtterance } from '../services/ttsVoice.ts';
 import { SLIDE_LINKS, READER_SECTION_LABEL, repLinkLabel, RepLink } from '../data/deckLinks.ts';
 import { PARA_EXPLAIN } from '../data/paraExplain.ts';
 
@@ -80,7 +82,7 @@ const fmtMin = (m: number) => `${Math.floor(m / 60)}:${String(Math.round(m % 60)
 
 export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlideChange, elapsedSeconds = 0, timerActive = false, onJumpReplication, onJumpReader }) => {
   const [idx, setIdx] = useState(() => Math.min(Math.max(initialSlide, 1), DECK.length) - 1);
-  const [showNotes, setShowNotes] = useState(true);
+  const [showNotes, setShowNotes] = useState(false);
   const [showList, setShowList] = useState(false);
   const [scriptOpen, setScriptOpen] = useState(true);
   const ml = useMlResults();
@@ -114,6 +116,19 @@ export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlid
 
   const slide = DECK[idx];
   const links = SLIDE_LINKS[slide.id];
+  const talk = useMemo(() => talkFor(slide.id, ctx as any), [slide.id, ctx]);
+  const [talkSpeaking, setTalkSpeaking] = useState(false);
+  useEffect(() => { try { window.speechSynthesis?.cancel(); } catch { /* 無語音 */ } setTalkSpeaking(false); }, [slide.id]);
+  const speakTalk = (text: string) => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    if (talkSpeaking) { setTalkSpeaking(false); return; }
+    const u = makeUtterance(text, 'zh');
+    u.onend = () => setTalkSpeaking(false);
+    u.onerror = () => setTalkSpeaking(false);
+    setTalkSpeaking(true);
+    window.speechSynthesis.speak(u);
+  };
   const script = useMemo(() => scriptFor(slide.id, ctx as any), [slide.id, ctx]);
   const sched = SCHEDULE[idx];
   const meta = SECTION_META[slide.section];
@@ -254,6 +269,19 @@ export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlid
               </div>
             )}
             <div>{slide.right(ctx)}</div>
+            {talk && (
+              <div className="rounded-xl border border-orange-200 bg-orange-50/90 p-3.5 space-y-2 text-slate-800">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-extrabold text-orange-800">生活化台詞（可直接對台下說）</span>
+                  <button onClick={() => speakTalk(`${talk.say}${talk.ex}`)}
+                    className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-orange-500 hover:bg-orange-600 text-white">
+                    {talkSpeaking ? '停止' : '朗讀'}
+                  </button>
+                </div>
+                <p className="font-bold text-slate-900 leading-relaxed">「{talk.say}」</p>
+                <p className="leading-relaxed text-[0.95em]"><span className="font-bold text-orange-800">舉例：</span>{talk.ex}</p>
+              </div>
+            )}
           </section>
         </div>
 
