@@ -68,11 +68,35 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
   // Active critique tab
   const [critiqueTab, setCritiqueTab] = useState<'traps' | 'real_value' | 'diagnostic' | 'gemini_critique' | 'phd_report' | 'mmr_verdict'>(initialTab);
 
+  type CritKey = 'traps' | 'real_value' | 'diagnostic' | 'gemini_critique' | 'phd_report' | 'mmr_verdict';
+  const SECTION_ORDER: CritKey[] = ['mmr_verdict', 'traps', 'real_value', 'diagnostic', 'gemini_critique', 'phd_report'];
+  // 一頁式：上方標籤只負責捲動到對應段落，並隨捲動自動亮起
+  const goSection = (key: CritKey) => {
+    setCritiqueTab(key);
+    document.getElementById(`crit-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   React.useEffect(() => {
-    if (initialTab) {
+    if (initialTab && initialTab !== 'mmr_verdict') {
+      const t = setTimeout(() => document.getElementById(`crit-${initialTab}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
       setCritiqueTab(initialTab);
+      return () => clearTimeout(t);
     }
   }, [initialTab]);
+
+  React.useEffect(() => {
+    const onScroll = () => {
+      let cur: CritKey = 'mmr_verdict';
+      let best = -Infinity;
+      for (const k of SECTION_ORDER) {
+        const top = document.getElementById(`crit-${k}`)?.getBoundingClientRect().top;
+        if (top !== undefined && top < 240 && top > best) { best = top; cur = k; }
+      }
+      setCritiqueTab(cur);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // Gemini consultation states
   const [critiqueQuestion, setCritiqueQuestion] = useState<string>('');
@@ -206,7 +230,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
-              onClick={() => setCritiqueTab('mmr_verdict')}
+              onClick={() => goSection('mmr_verdict')}
               className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-500/25 hover:bg-emerald-500/35 text-xs backdrop-blur-md text-emerald-200 border border-emerald-400/40 transition-all font-bold shadow-sm cursor-pointer ring-2 ring-emerald-400/20"
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -228,11 +252,11 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
         </div>
       </div>
 
-      {/* Main Tab Navigation */}
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2.5 rounded-2xl shadow-xs">
+      {/* 段落導覽（一頁式，點了捲到該段） */}
+      <div className="sticky top-[117px] z-20 flex items-center justify-between border border-slate-200 bg-white/95 backdrop-blur px-4 py-2.5 rounded-2xl shadow-md">
         <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
           <button
-            onClick={() => setCritiqueTab('mmr_verdict')}
+            onClick={() => goSection('mmr_verdict')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
               critiqueTab === 'mmr_verdict'
                 ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-md'
@@ -249,7 +273,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
           </button>
 
           <button
-            onClick={() => setCritiqueTab('traps')}
+            onClick={() => goSection('traps')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
               critiqueTab === 'traps'
                 ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-xs'
@@ -261,7 +285,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
           </button>
 
           <button
-            onClick={() => setCritiqueTab('real_value')}
+            onClick={() => goSection('real_value')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
               critiqueTab === 'real_value'
                 ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-xs'
@@ -273,7 +297,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
           </button>
 
           <button
-            onClick={() => setCritiqueTab('diagnostic')}
+            onClick={() => goSection('diagnostic')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
               critiqueTab === 'diagnostic'
                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs'
@@ -285,7 +309,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
           </button>
 
           <button
-            onClick={() => setCritiqueTab('gemini_critique')}
+            onClick={() => goSection('gemini_critique')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
               critiqueTab === 'gemini_critique'
                 ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-xs'
@@ -297,7 +321,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
           </button>
 
           <button
-            onClick={() => setCritiqueTab('phd_report')}
+            onClick={() => goSection('phd_report')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
               critiqueTab === 'phd_report'
                 ? 'bg-amber-100 text-amber-900 border border-amber-300 shadow-xs'
@@ -311,7 +335,8 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
       </div>
 
       {/* Tab: MMR Verdict & Full-Text Evidence */}
-      {critiqueTab === 'mmr_verdict' && (
+      <div id="crit-mmr_verdict" className="scroll-mt-48" />
+      {true && (
         <div className="space-y-6 animate-in fade-in duration-150">
           <MmrControversy />
 
@@ -1724,7 +1749,8 @@ Quantitative Data              Textual Data
       )}
 
       {/* Tab 1: The 5 Methodological Reflections for Substantive Value */}
-      {critiqueTab === 'traps' && (
+      <div id="crit-traps" className="scroll-mt-48" />
+      {true && (
         <div className="space-y-6 animate-in fade-in duration-150">
           <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs">
             <div className="max-w-3xl">
@@ -1743,7 +1769,8 @@ Quantitative Data              Textual Data
       )}
 
       {/* Tab 2: The 4 Real Value Breakthroughs */}
-      {critiqueTab === 'real_value' && (
+      <div id="crit-real_value" className="scroll-mt-48" />
+      {true && (
         <div className="space-y-6 animate-in fade-in duration-150">
           <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs">
             <div className="max-w-3xl mb-6">
@@ -1903,7 +1930,8 @@ Quantitative Data              Textual Data
       )}
 
       {/* Tab 3: Interactive Value Diagnostic Tool */}
-      {critiqueTab === 'diagnostic' && (
+      <div id="crit-diagnostic" className="scroll-mt-48" />
+      {true && (
         <div className="space-y-6 animate-in fade-in duration-150">
           <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs">
             <div className="max-w-3xl mb-6">
@@ -2075,7 +2103,7 @@ Quantitative Data              Textual Data
 
                 <button
                   onClick={() => {
-                    setCritiqueTab('gemini_critique');
+                    goSection('gemini_critique');
                     handleAskCritique(`請針對我當前的研究架構診斷評分（總分 ${totalScore} 分：因果 ${causality}%、交互 ${interaction}%、元推論 ${metaInference}%、台股適配 ${marketAdaptation}%、實戰Alpha ${alphaValue}%），進行深度剖析：如何消滅空洞架構，提煉出類似 Raman et al. (2022) 的真價值研究？`);
                   }}
                   className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
@@ -2091,7 +2119,8 @@ Quantitative Data              Textual Data
       )}
 
       {/* Tab 4: Gemini Deep Critique Conversation */}
-      {critiqueTab === 'gemini_critique' && (
+      <div id="crit-gemini_critique" className="scroll-mt-48" />
+      {true && (
         <div className="space-y-6 animate-in fade-in duration-150">
           <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
             <div className="max-w-3xl">
@@ -2173,7 +2202,8 @@ Quantitative Data              Textual Data
       )}
 
       {/* Tab 5: Ph.D. Seminar & Methodology Report */}
-      {critiqueTab === 'phd_report' && (
+      <div id="crit-phd_report" className="scroll-mt-48" />
+      {true && (
         <div className="space-y-6">
           {/* 🎯 /MMR判定 執行捷徑卡片 */}
           <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl border border-indigo-500/30">
