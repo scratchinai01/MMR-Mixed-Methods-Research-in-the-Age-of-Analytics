@@ -10,5 +10,16 @@
   "runner": "GitHub Actions",
   "runUrl": "https://github.com/scratchinai01/MMR-Mixed-Methods-Research-in-the-Age-of-Analytics/actions/runs/38207385371",
   "note": "首次完整抓取（快取為空，全部向 FinMind 重新查詢；本次尚未記錄查詢次數與 Gemini 呼叫次數，時間取自 GitHub Actions 步驟紀錄）"
+ },
+ {
+  "startedAt": "2026-10-12T15:07:37+08:00",
+  "totalSeconds": 7.3,
+  "finmindNew": 10,
+  "finmindFromCache": 3681,
+  "geminiCalls": 1,
+  "articles": 16993,
+  "samples": 2250,
+  "runner": "GitHub Actions",
+  "runUrl": "https://github.com/scratchinai01/MMR-Mixed-Methods-Research-in-the-Age-of-Analytics/actions/runs/38215948590"
  }
 ]
