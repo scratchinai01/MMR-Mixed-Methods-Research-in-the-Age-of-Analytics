@@ -40,6 +40,7 @@ import { PdfImmersiveReader } from './PdfImmersiveReader.tsx';
 import { PARA_EXPLAIN, buildExplainMarkdown } from '../data/paraExplain.ts';
 import { findTerms } from '../data/termVocab.ts';
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
+import { PARA_KIND_LABEL } from '../data/paperAudit.ts';
 
 interface PaperReaderProps {
   onAskGemini: (context: string) => void;
@@ -77,6 +78,13 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
     }
   }, [initialSection]);
   const [readingMode, setReadingMode] = useState<'bilingual' | 'zh' | 'en'>('bilingual');
+  // 預設只顯示論文原文（含依原文表格整理與參考文獻）；延伸解說可自行打開
+  const [showExtended, setShowExtended] = useState<boolean>(() => {
+    try { return localStorage.getItem('reader-show-extended') === '1'; } catch { return false; }
+  });
+  const toggleExtended = () => {
+    setShowExtended((v) => { try { localStorage.setItem('reader-show-extended', v ? '0' : '1'); } catch { /* 無法儲存 */ } return !v; });
+  };
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [fontSize, setFontSize] = useState<'normal' | 'large'>('normal');
   const [showSourceModal, setShowSourceModal] = useState<boolean>(false);
@@ -142,14 +150,14 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
   // Filter paragraphs based on section and search
   const filteredParagraphs = useMemo(() => {
     return PAPER_PARAGRAPHS.filter((p) => {
-      const matchesSection = true; // 一頁式：所有章節依序排開
+      const matchesSection = showExtended || p.kind !== 'extended'; // 一頁式：所有章節依序排開；延伸解說可隱藏
       const matchesSearch =
         searchQuery.trim() === '' ||
         p.en.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.zh.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSection && matchesSearch;
     });
-  }, [activeSection, searchQuery, selectedPaperId, PAPER_PARAGRAPHS]);
+  }, [activeSection, searchQuery, selectedPaperId, PAPER_PARAGRAPHS, showExtended]);
 
   const handleCopyApa = () => {
     navigator.clipboard.writeText(ORIGINAL_PAPER_SOURCE.apaCitation);
@@ -314,6 +322,17 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                 <span>English</span>
               </button>
             </div>
+
+            {/* 延伸解說顯示切換 */}
+            {selectedPaperId === 'raman_2022' && (
+              <button
+                onClick={toggleExtended}
+                className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${showExtended ? 'bg-slate-700 text-white border-slate-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                title="原文段落已與期刊正式版 PDF 逐字核對；延伸解說是本平台補充，不是論文內容"
+              >
+                {showExtended ? '隱藏延伸解說' : '顯示延伸解說'}
+              </button>
+            )}
 
             {/* Font Size Toggle */}
             <button
@@ -900,16 +919,24 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
               {/* PDF Original Page Indicator & SubSection Title */}
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs border-b border-slate-100 pb-2.5">
                 <div className="flex items-center gap-2 flex-wrap">
+                  {para.kind && para.kind !== 'original' ? (
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${para.kind === 'extended' ? 'bg-slate-100 text-slate-600 border-slate-300 border-dashed' : 'bg-teal-50 text-teal-800 border-teal-200'}`}
+                      title={para.kind === 'extended' ? '本平台補充的解說，不是論文原文' : undefined}>
+                      {PARA_KIND_LABEL[para.kind]}
+                    </span>
+                  ) : null}
+                  {para.pdfPage !== '非原文' && (
                   <span className="font-mono text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
                     {para.pdfPage || 'PDF 原文位置'}
                   </span>
+                  )}
                   {para.subSection && (
                     <span className="text-xs font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">
                       {para.subSection}
                     </span>
                   )}
                 </div>
-                <a
+                {para.kind !== 'extended' && <a
                   href={ORIGINAL_PAPER_SOURCE.doiUrl}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -918,14 +945,14 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                 >
                   <ExternalLink className="w-3 h-3" />
                   <span>對照 Elsevier 原文</span>
-                </a>
+                </a>}
               </div>
 
               {/* English Version */}
               {(readingMode === 'bilingual' || readingMode === 'en') && (
                 <div className={`text-slate-800 leading-relaxed font-sans ${
                   fontSize === 'large' ? 'text-base sm:text-lg leading-relaxed' : 'text-sm sm:text-base leading-relaxed'
-                }`}>
+                } whitespace-pre-line`}>
                   {para.en}
                 </div>
               )}
@@ -936,7 +963,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                   readingMode === 'bilingual' ? 'pt-3 border-t border-slate-100 text-indigo-950/90' : ''
                 } ${
                   fontSize === 'large' ? 'text-base sm:text-lg leading-relaxed' : 'text-sm sm:text-base leading-relaxed'
-                }`}>
+                } whitespace-pre-line`}>
                   {para.zh}
                 </div>
               )}

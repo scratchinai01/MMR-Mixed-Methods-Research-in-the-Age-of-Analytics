@@ -7,6 +7,8 @@ export interface PaperParagraph {
   glossaryTerms?: string[];
   note?: string;
   pdfPage?: string;
+  /** 原文校對分類（見 paperAudit.ts） */
+  kind?: 'original' | 'table' | 'reference' | 'extended';
 }
 
 export interface PaperTableData {
@@ -20,24 +22,24 @@ export interface PaperTableData {
 }
 
 export const ORIGINAL_PAPER_SOURCE = {
-  titleEn: "Mixed Methods Research in the Age of Analytics: An Exemplar Leveraging Sentiments from News Articles to Predict Firm Performance",
+  titleEn: "Mixed-methods research in the age of analytics, an exemplar leveraging sentiments from news articles to predict firm performance",
   titleZh: "分析學時代的混合方法研究：以新聞情緒預測企業績效之典範",
   journal: "International Journal of Information Management (IJIM)",
   journalImpact: "SSCI Q1 頂級頂尖期刊 (Impact Factor: 18.9+)",
   volume: "Volume 64, June 2022, 102451",
   doi: "10.1016/j.ijinfomgt.2021.102451",
   doiUrl: "https://doi.org/10.1016/j.ijinfomgt.2021.102451",
-  scienceDirectUrl: "https://www.sciencedirect.com/science/article/pii/S026840122100185X",
+  scienceDirectUrl: "https://www.sciencedirect.com/science/article/pii/S0268401221001444",
   googleScholarUrl: "https://scholar.google.com/scholar?q=Mixed+Methods+Research+in+the+Age+of+Analytics+Raji+Raman+Viswanath+Venkatesh",
   authors: [
     { name: "Raji Raman", affil: "Pamplin College of Business, Virginia Tech" },
     { name: "Ruba Aljafari", affil: "Katz Graduate School of Business, University of Pittsburgh" },
-    { name: "Viswanath Venkatesh", affil: "Pamplin College of Business, Virginia Tech (資訊系統領域頂尖院士)" },
-    { name: "Vernon Richardson", affil: "Walton College of Business, University of Arkansas (頂級會計與財務權威)" }
+    { name: "Viswanath Venkatesh", affil: "Pamplin College of Business, Virginia Tech（通訊作者）" },
+    { name: "Vernon Richardson", affil: "Walton College of Business, University of Arkansas" }
   ],
-  apaCitation: "Raman, R., Aljafari, R., Venkatesh, V., & Richardson, V. (2022). Mixed methods research in the age of analytics: An exemplar leveraging sentiments from news articles to predict firm performance. International Journal of Information Management, 64, 102451.",
+  apaCitation: "Raman, R., Aljafari, R., Venkatesh, V., & Richardson, V. (2022). Mixed-methods research in the age of analytics, an exemplar leveraging sentiments from news articles to predict firm performance. International Journal of Information Management, 64, 102451.",
   bibtex: `@article{raman2022mixed,
-  title={Mixed methods research in the age of analytics: An exemplar leveraging sentiments from news articles to predict firm performance},
+  title={Mixed-methods research in the age of analytics, an exemplar leveraging sentiments from news articles to predict firm performance},
   author={Raman, Raji and Aljafari, Ruba and Venkatesh, Viswanath and Richardson, Vernon},
   journal={International Journal of Information Management},
   volume={64},
@@ -336,6 +338,7 @@ export const GLOSSARY_DICT: Record<string, { termZh: string; definition: string;
   },
 };
 
+import { PAPER_AUDIT } from './paperAudit.ts';
 import { INTRO_PARAGRAPHS } from './sections/intro.ts';
 import { THEORY_PARAGRAPHS } from './sections/theory.ts';
 import { METHODS_PARAGRAPHS } from './sections/methods.ts';
@@ -418,6 +421,7 @@ export const ABSTRACT_PARAGRAPHS: PaperParagraph[] = [
   },
 ];
 
+// 依原文 PDF 校對結果覆寫英文、中譯、頁碼與分類（延伸內容會標示「非原文」）
 export const PAPER_PARAGRAPHS: PaperParagraph[] = [
   ...META_PARAGRAPHS,
   ...ABSTRACT_PARAGRAPHS,
@@ -427,32 +431,37 @@ export const PAPER_PARAGRAPHS: PaperParagraph[] = [
   ...RESULTS_PARAGRAPHS,
   ...DISCUSSION_PARAGRAPHS,
   ...CONCLUSION_PARAGRAPHS,
-];
+].map((p) => {
+  const a = PAPER_AUDIT[p.id] || { kind: 'extended' as const, pdfPage: '非原文' };
+  // 原文段落不掛「三角檢驗／實用主義」等原文沒有使用的術語標籤
+  const glossaryTerms = a.kind === 'original' ? (p.glossaryTerms || []).filter((t) => !['Triangulation', 'Pragmatism', 'Meta-Inference'].includes(t)) : p.glossaryTerms;
+  return { ...p, ...a, glossaryTerms };
+});
 
 export const PAPER_TABLES: PaperTableData[] = [
   {
     id: 'table-1',
     titleEn: 'Table 1. Financial data variable list',
     titleZh: '表 1. 財務量化數據變數定義清單 (Compustat & Eventus)',
-    description: '本研究所採納之 Compustat 財務變數與依據 GAAP 準則之計算公式',
+    description: '原文表 1（PDF 第 4 頁）逐字列出；中文欄為翻譯，公式取自原文 3.1 節。',
     headers: ['變數代號 (Variable)', '英文說明 (Description)', '中文定義與公式'],
     rows: [
-      ['Datadate', 'Fiscal year end date', '會計年度結算日'],
-      ['Fyear', 'Fiscal year', '會計年度 (2013-2016)'],
-      ['Tic', 'Company code / ticker symbol', '股票代號 (如 AAPL, MSFT)'],
-      ['Conm', 'Company name', '公司法定名稱'],
-      ['Csho', 'Common shares outstanding', '會計年度流通在外普通股股數'],
-      ['Ib', 'Income before extraordinary items', '非經常性項目計入前淨利潤'],
-      ['Revt', 'Total revenues for a fiscal year', '該會計年度總營收收入'],
-      ['Teq', "Stockholders' equity", '股東權益帳面總值'],
-      ['Xsga', 'Selling, general & administrative expenses', '推銷、管理與行政總費用 (SG&A)'],
-      ['Mkvalt', 'Total market value', '企業總市值 (用作公司規模 Size 之代理變數)'],
-      ['prcc_f', 'Fiscal year closing price', '會計年度收盤價'],
-      ['Returns', 'Annual stock returns', '年度股價報酬率: [prcc_f(t) - prcc_f(t-1)] / prcc_f(t-1)'],
-      ['price to earning ratio', 'PE ratio', '本益比: mkvalt(t) / ib(t)'],
-      ['market to book ratio', 'MB ratio (PB)', '市值淨值比: mkvalt(t) / teq(t)'],
-      ['sales growth', 'Sales growth rate', '營收年增率: [revt(t) - revt(t-1)] / revt(t-1)'],
-      ['SCAR', 'Standardized cumulative abnormal returns', '標準化累積超額報酬率 (經 CAPM 與波動度標準化)'],
+      ['Datadate', 'fiscal year end date', '會計年度結束日'],
+      ['Fyear', 'fiscal year', '會計年度'],
+      ['Tic', 'company code/ ticker symbol', '公司代碼／股票代號'],
+      ['Conm', 'company name', '公司名稱'],
+      ['Csho', 'common shares outstanding for fiscal year', '該會計年度流通在外普通股股數'],
+      ['Ib', 'income before extraordinary items for fiscal year', '該會計年度非常項目前淨利'],
+      ['Revt', 'total revenues for a fiscal year', '該會計年度總營收'],
+      ['Teq', 'stockholders’ equity', '股東權益'],
+      ['Xsga', 'selling, general and administrative expenses', '銷售、一般及管理費用（SG&A）'],
+      ['Mkvalt', 'total market value (also used as a proxy for firm size)', '總市值（也作為公司規模的代理變數）'],
+      ['Prcc_f', 'fiscal year closing price', '會計年度收盤價'],
+      ['Returns', 'change in fiscal year closing price as a percentage of previous fiscal year closing price', '報酬率：[prcc_f(t) − prcc_f(t−1)] / prcc_f(t−1)'],
+      ['Price to earnings ratio', 'proportion of total market to the income before extraordinary items for given fiscal year', '本益比：mkvalt(t) / ib(t)'],
+      ['Market to book ratio', 'proportion of total market to the stockholders’ equity for given fiscal year', '市值淨值比：mkvalt(t) / teq(t)'],
+      ['sales growth', 'change in total revenues for fiscal year as percentage of previous fiscal year total revenues', '營收成長率：[revt(t) − revt(t−1)] / revt(t−1)'],
+      ['SCAR', 'standardized cumulative abnormal returns', '標準化累積異常報酬（原文未說明預期報酬模型與標準化方式）'],
     ],
   },
   {
@@ -477,7 +486,7 @@ export const PAPER_TABLES: PaperTableData[] = [
       ['MB_ratio X Negative', '-0.052** (0.081)', '-0.052** (0.081)', '-0.052** (0.081)'],
       ['Goodness of Fit (QIC)', '1442.801', '1442.801', '1442.802'],
     ],
-    footer: '註記: +p < .1; *p < .05; **p < .01; ***p < .001。括號內為穩健標準誤。所有交互作用項變數皆已先進行平均數中心化處理。',
+    footer: '原文註：+p < 0.1；*p < 0.05；**p < 0.01；***p < 0.001。（原文表 2 未說明括號內數字的性質；表 3、表 4 註明為標準誤。正文 3.2 節說明變數已做平均數中心化。）校對提醒：部分星號與括號數字不一致，例如 MB_ratio × Positive 0.027*（0.093）、MB_ratio × Negative −0.052**（0.081）、PE_ratio × Negative −0.044**（0.037）、Sales_growth × Negative −30.020*（19.796），若括號為標準誤，這些係數按一般 z 檢定並不顯著。獨立與 AR(1) 兩欄數字完全相同。',
   },
   {
     id: 'table-3',
@@ -540,7 +549,7 @@ export const PAPER_TABLES: PaperTableData[] = [
       ['Bayesian Linear Regression (貝氏線性)', '0.538', '0.388', '3.425', '2.770', '-55.259'],
       ['Linear Regression (經典線性迴歸)', '0.430', '0.372', '2.358', '2.490', '-44.446'],
     ],
-    footer: '實證結論：決策森林迴歸在加入情緒指標後獲得最低之 MAE (0.217) 與最高之判定係數 R² (0.149)。',
+    footer: '依原文表 5、表 6 整理（PDF 第 7 頁）。決策森林迴歸加入文字後 MAE 最低（0.217），也是唯一判定係數為正（0.149）的模型；其餘模型判定係數皆為負，類神經網路與提升決策樹的 RMSE 反而上升。',
   },
   {
     id: 'table-7-8',
@@ -557,8 +566,9 @@ export const PAPER_TABLES: PaperTableData[] = [
       ['Two-Class Support Vector Machine (SVM)', '72.1%', '78.2%', '49.5%', '78.7%'],
       ['Two-Class Averaged Perceptron (平均感知器)', '70.0%', '78.4%', '58.2%', '79.0%'],
       ['Two-Class Neural Network (神經網路)', '71.4%', '79.7%', '51.5%', '74.0%'],
+      ['Two-Class Locally-Deep Support Vector Machine (局部深層 SVM)', '69.3%', '80.6%', '54.1%', '81.8%'],
     ],
-    footer: '實證震撼結論：加入新聞情緒特徵後，提升決策樹 (Boosted Decision Tree) 分類準確率從 67.9% 飆升至 99.7%，AUC 達到 99.9%，證明新聞情緒大幅解決了純量化資料之模糊不可分界限！',
+    footer: '依原文表 7、表 8 整理（PDF 第 7 頁），九種演算法全列。提升決策樹加入文字後達 99.7%（AUC 99.9%），高得不尋常；原文沒有說明 60/40 是否依時間切分，解讀時宜留意資料洩漏的可能。',
   },
 ];
 

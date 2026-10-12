@@ -640,7 +640,7 @@ export const DECK: DeckSlide[] = [
     notes: '說明我們以 0050 作為市場基準，並用個股自身波動度標準化，概念上對應原著的 SCAR。',
   },
   {
-    quotes: ['methods-22'],
+    quotes: ['methods-18', 'methods-22'],
     id: 'r7', section: 'replication', minutes: 3, title: '避免前視偏誤',
     left: () => <p>原著使用年度財務資料與事件後報酬，時間順序清楚。</p>,
     right: () => <Bullets items={[
@@ -736,7 +736,7 @@ export const DECK: DeckSlide[] = [
     notes: '箭頭左邊是純財務、右邊是加入情緒。逐一說明哪些模型因加入情緒而改善。',
   },
   {
-    quotes: ['results-15'],
+    quotes: ['results-14'],
     id: 'r15', section: 'replication', minutes: 3, title: '模型是否優於基準',
     left: () => <p>原著未報告「全猜多數類別」的基準準確率。</p>,
     right: (ctx) => {
@@ -837,7 +837,7 @@ export const DECK: DeckSlide[] = [
     notes: '聚焦原著最核心的發現，說明台股證據支持、部分支持或不支持。',
   },
   {
-    quotes: ['results-16'],
+    quotes: ['results-12'],
     id: 'c4', section: 'compare', minutes: 3, title: '新聞情緒的預測增益',
     left: () => <p>原著：加入情緒後各模型準確率與 AUC 均大幅提升（例如提升決策樹 {String(T78?.rows?.[0]?.[1] ?? '')} → {String(T78?.rows?.[0]?.[2] ?? '').replace(/💥.*$/, '').trim()}）。</p>,
     right: (ctx) => {
@@ -853,7 +853,7 @@ export const DECK: DeckSlide[] = [
     notes: '比較預測增益的幅度，並討論為何原著的提升遠大於我們（資料洩漏的可能、市場差異、樣本規模）。',
   },
   {
-    quotes: ['theory-19'],
+    quotes: ['disc-7'],
     id: 'c5', section: 'compare', minutes: 4, title: '差異來源與混合方法元推論',
     left: () => <Bullets items={[
       '原著元推論：質性文字補足財務數字無法反映的資訊',

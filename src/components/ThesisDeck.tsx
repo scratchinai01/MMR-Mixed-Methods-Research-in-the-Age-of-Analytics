@@ -14,6 +14,7 @@ import { talkFor } from '../data/deckTalk.ts';
 import { makeUtterance } from '../services/ttsVoice.ts';
 import { SLIDE_LINKS, READER_SECTION_LABEL, repLinkLabel, RepLink } from '../data/deckLinks.ts';
 import { PARA_EXPLAIN } from '../data/paraExplain.ts';
+import { PARA_KIND_LABEL } from '../data/paperAudit.ts';
 
 /** 論文原文段落（英文）＋中譯，附 PDF 頁碼；摘要段落已與公開摘要核對 */
 const QuoteBlock: React.FC<{ id: string }> = ({ id }) => {
@@ -24,11 +25,12 @@ const QuoteBlock: React.FC<{ id: string }> = ({ id }) => {
   const LIMIT = 220;
   const long = para.en.length > LIMIT || para.zh.length > LIMIT;
   const cut = (t: string) => (open || t.length <= LIMIT ? t : `${t.slice(0, LIMIT)}…`);
-  const verified = id.startsWith('abs-');
+  const nonOriginal = para.kind && para.kind !== 'original';
   return (
-    <figure className="rounded-xl bg-white/80 border border-blue-200 p-3 space-y-1.5 text-[0.82em] leading-relaxed">
-      <blockquote lang="en" className="italic text-slate-700 border-l-4 border-blue-400 pl-3">{cut(para.en)}</blockquote>
-      <p className="text-blue-950 pl-4">{cut(para.zh)}</p>
+    <figure className={`rounded-xl p-3 space-y-1.5 text-[0.82em] leading-relaxed ${nonOriginal ? 'bg-slate-50 border border-dashed border-slate-300' : 'bg-white/80 border border-blue-200'}`}>
+      {nonOriginal && <div className="text-[0.85em] font-bold text-slate-500">{PARA_KIND_LABEL[para.kind!]}（不是論文句子）</div>}
+      <blockquote lang="en" className={`italic text-slate-700 border-l-4 pl-3 whitespace-pre-line ${nonOriginal ? 'border-slate-300' : 'border-blue-400'}`}>{cut(para.en)}</blockquote>
+      <p className="text-blue-950 pl-4 whitespace-pre-line">{cut(para.zh)}</p>
       {plainOpen && PARA_EXPLAIN[id] && (
         <div className="ml-4 rounded-lg border border-amber-200 bg-amber-50/80 p-2.5 space-y-1.5 text-slate-800">
           <div><span className="font-bold text-amber-900">白話說　</span>{PARA_EXPLAIN[id].p}</div>
@@ -38,7 +40,7 @@ const QuoteBlock: React.FC<{ id: string }> = ({ id }) => {
         </div>
       )}
       <figcaption className="flex flex-wrap items-center justify-between gap-2 pl-4 text-[0.9em] text-blue-800/80">
-        <span>{para.pdfPage}{verified ? '｜已與公開摘要核對' : '｜請以原文 PDF 核對'}</span>
+        <span>{para.pdfPage}{nonOriginal ? '' : '｜已與期刊正式版 PDF 逐字核對'}</span>
         <span className="flex items-center gap-3">
           {PARA_EXPLAIN[id] && (
             <button onClick={() => setPlainOpen(!plainOpen)} className="font-semibold text-amber-700 hover:underline">
