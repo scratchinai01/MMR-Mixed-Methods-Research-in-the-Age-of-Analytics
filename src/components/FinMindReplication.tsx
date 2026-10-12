@@ -3,10 +3,10 @@ import {
   TAIWAN_BENCHMARK_STOCKS, 
   FINMIND_PRO_FEATURES, 
   TAIWAN_REPLICATION_GEE_TABLE, 
-  TAIWAN_ML_BENCHMARK,
   PYTHON_REPLICATION_SCRIPT,
   TaiwanStockItem
 } from '../data/finmindTaiwanData.ts';
+import { useMlResults } from '../services/mlResults.ts';
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
 import { 
   Zap, 
@@ -54,6 +54,9 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
   returnToThesisSlide,
   onReturnToThesis,
 }) => {
+  // 機器學習比較表：有真實計算結果就用真實結果，否則顯示標示清楚的示範數字
+  const mlResults = useMlResults();
+  const mlTop = mlResults.rows[0];
   const [selectedStockCode, setSelectedStockCode] = useState<string>('2330');
   const [tokenInput, setTokenInput] = useState<string>('');
   const [tokenStatusMsg, setTokenStatusMsg] = useState<string | null>(null);
@@ -1621,7 +1624,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700 font-mono">
-              {TAIWAN_ML_BENCHMARK.map((ml, idx) => (
+              {mlResults.rows.map((ml, idx) => (
                 <tr key={idx} className={ml.algorithm.includes('Boosted') ? 'bg-indigo-50/70 font-semibold text-indigo-950' : 'hover:bg-slate-50'}>
                   <td className="px-4 py-3 font-sans font-medium">{ml.algorithm}</td>
                   <td className="px-4 py-3 text-slate-500">{ml.quantOnlyAcc}</td>
@@ -1634,6 +1637,9 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
             </tbody>
           </table>
         </div>
+        <p className={`text-[11px] leading-relaxed px-3 py-2 rounded-xl border ${mlResults.isDemo ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'}`}>
+          {mlResults.sourceLabel}
+        </p>
 
         {/* Accuracy Comparison Bar Display */}
         <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
@@ -1644,25 +1650,27 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
             <div>
               <div className="flex justify-between text-xs text-slate-600 mb-1">
                 <span>純量化財務指標 (Quant Only)</span>
-                <span className="font-mono font-bold">68.2%</span>
+                <span className="font-mono font-bold">{mlTop.quantOnlyAcc}</span>
               </div>
               <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden">
-                <div className="h-full bg-slate-400 rounded-full" style={{ width: '68.2%' }}></div>
+                <div className="h-full bg-slate-400 rounded-full" style={{ width: mlTop.quantOnlyAcc }}></div>
               </div>
             </div>
 
             <div>
               <div className="flex justify-between text-xs text-indigo-700 font-semibold mb-1">
                 <span>量化 + FinMind 新聞情緒 (Quant + Sentiment)</span>
-                <span className="font-mono font-bold">99.4% (接近完美可分)</span>
+                <span className="font-mono font-bold">{mlTop.quantTextAcc}{mlResults.isDemo ? '（示範數字）' : ''}</span>
               </div>
               <div className="h-3.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full" style={{ width: '99.4%' }}></div>
+                <div className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full" style={{ width: mlTop.quantTextAcc }}></div>
               </div>
             </div>
           </div>
           <p className="text-[11px] text-slate-500 italic">
-            結論證實：純財務指標無法區分業績良好但遭遇訴訟或訂單突發取消的公司，而新聞文本情緒提供了關鍵的邊界超平面分割資訊！
+            {mlResults.isDemo
+              ? '示範數字來自原論文。實務上用新聞預測股價，準確率穩定超過 55%～60% 已屬不易；若出現 99% 這類數字，通常代表資料洩漏（模型偷看到未來資訊），值得帶學生一起檢討。'
+              : `真實結果：比較「純量化」與「量化＋情緒」兩列，看加入新聞情緒後是否真的贏過基準準確率 ${mlResults.baselineAcc}（全部猜多數類別）。差距很小或反而變差，也是有意義的實證發現。`}
           </p>
         </div>
       </div>

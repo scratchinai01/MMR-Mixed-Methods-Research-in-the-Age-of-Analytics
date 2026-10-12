@@ -37,7 +37,8 @@ import {
   Type
 } from 'lucide-react';
 import { MathRenderer } from './MathRenderer.tsx';
-import { TAIWAN_ML_BENCHMARK, TAIWAN_REPLICATION_GEE_TABLE } from '../data/finmindTaiwanData.ts';
+import { TAIWAN_REPLICATION_GEE_TABLE } from '../data/finmindTaiwanData.ts';
+import { useMlResults } from '../services/mlResults.ts';
 
 export interface SlideMappingItem {
   id: number;
@@ -148,6 +149,8 @@ export const ThesisReportView: React.FC<ThesisReportViewProps> = ({
   initialSlide = 1,
   onSlideChange,
 }) => {
+  // 機器學習比較表：有真實計算結果就用真實結果，否則顯示示範數字
+  const mlResults = useMlResults();
   // Mode: 'slides' (簡報投影片投影模式) | 'manuscript' (學術書面報告書模式)
   const [viewMode, setViewMode] = useState<'slides' | 'manuscript'>('slides');
   const [currentSlide, setCurrentSlide] = useState<number>(initialSlide);
@@ -1370,7 +1373,7 @@ RQ3: 透過資料轉化模式（QUAL into quan）之整合元推論（Meta-Infer
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200">
-                        {TAIWAN_ML_BENCHMARK.map((b, idx) => (
+                        {mlResults.rows.map((b, idx) => (
                           <tr key={idx} className={idx === 0 ? 'bg-amber-50/60 font-bold' : ''}>
                             <td className="py-3 px-3.5 font-semibold text-slate-900">{b.algorithm}</td>
                             <td className="py-3 px-3.5 text-center font-mono text-slate-500">{b.quantOnlyAcc}</td>
@@ -1383,6 +1386,9 @@ RQ3: 透過資料轉化模式（QUAL into quan）之整合元推論（Meta-Infer
                       </tbody>
                     </table>
                   </div>
+                  <p className={`text-[11px] leading-relaxed px-3 py-2 rounded-xl border ${mlResults.isDemo ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'}`}>
+                    {mlResults.sourceLabel}
+                  </p>
 
                   {/* Dual-Column Callout: 左 (原著美股 ML 基準 藍) vs 右 (我們台股 Colab 復刻 綠) */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -2182,7 +2188,7 @@ RQ3: 透過資料轉化模式（QUAL into quan）之整合元推論（Meta-Infer
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
-                      {TAIWAN_ML_BENCHMARK.map((b, i) => (
+                      {mlResults.rows.map((b, i) => (
                         <tr key={i} className="hover:bg-slate-50">
                           <td className="py-2 px-3 font-semibold">{b.algorithm}</td>
                           <td className="py-2 px-3 text-center font-mono text-slate-500">{b.quantOnlyAcc}</td>

@@ -26,6 +26,23 @@ AI 解析由 **Groq** 提供（Gemini 為備援），台股新聞與股價來自
 
 更新版本：`cd mmr && git pull && bash deploy.sh`，金鑰直接按 Enter 會沿用上次設定。
 
+## 以真實新聞重算機器學習比較表
+
+網頁上「台股機器學習預測精度對比」預設顯示原論文的示範數字（會標示「示範數字」）。
+在 Cloud Shell 執行下列指令，就會用 FinMind 真實新聞（4 支股票 × 90 天，通常超過 500 則）重新計算：
+
+```bash
+cd ~/mmr && git pull
+pip install --user pandas scikit-learn requests
+export FINMIND_API_TOKEN=你的Token
+export GROQ_API_KEY=你的Groq金鑰   # 可省略，省略則用關鍵詞判讀情緒
+python3 news_ml_study.py --stocks 2330,2454,2317,2382 --days 90
+bash deploy.sh
+```
+
+結果存在 `public/data/ml_results.json`，網頁會自動改顯示真實結果，並附上樣本數、期間與基準準確率。
+抓過的新聞存在 `.cache/`，若碰到 FinMind 請求上限，一小時後重跑同一指令即可從中斷處繼續。
+
 ## AI 呼叫順序
 
 Groq ➔ Gemini ➔ 本地知識庫備援。三者都沒有金鑰時仍可運作，只是回覆來自內建範本。
