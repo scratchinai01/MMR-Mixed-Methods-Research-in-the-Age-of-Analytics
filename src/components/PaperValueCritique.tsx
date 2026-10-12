@@ -1,4 +1,5 @@
 import { MmrControversy } from './MmrControversy';
+import { ReflectionCards } from './ReflectionCards';
 import React, { useState } from 'react';
 import { 
   AlertTriangle, 
@@ -1732,91 +1733,11 @@ Quantitative Data              Textual Data
                 <span>深入剖析：研究方法如何避免「形式化」，回歸實質因果洞見？</span>
               </h2>
               <p className="text-sm text-slate-600 mt-2">
-                在國際頂級學術評審（Peer Review）與量化投資實務中，評審與決策者最看重的是實質的經濟因果與深層洞察。以下彙整 5 個關鍵的方法論思辨要點：
+                在國際頂級學術評審（Peer Review）與量化投資實務中，評審與決策者最看重的是實質的經濟因果與深層洞察。以下彙整 5 個關鍵的方法論思辨要點，點選卡片即可展開進階解說與口試建議回答：
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
-              {/* Trap 1 */}
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-indigo-300 transition-colors">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-indigo-100 text-indigo-800">
-                    思辨 01
-                  </span>
-                  <span className="text-xs text-slate-500 font-medium">實質因果優先</span>
-                </div>
-                <h3 className="text-base font-bold text-slate-900 mb-2">
-                  超越工具堆疊，聚焦經濟真理 (Beyond Tool Stacking)
-                </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  研究者即使運用了 GEE、XGBoost 或多元 MMR 設計圖，最關鍵的核心依然是：<strong>「撇開複雜演算法，研究到底揭示了什麼傳統方法看不見的經濟真理與因果機制？」</strong>唯有將焦點放回因果發現，工具才能發揮真正的乘數效應。
-                </p>
-              </div>
-
-              {/* Trap 2 */}
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-indigo-300 transition-colors">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-indigo-100 text-indigo-800">
-                    思辨 02
-                  </span>
-                  <span className="text-xs text-slate-500 font-medium">兼顧預測與解釋</span>
-                </div>
-                <h3 className="text-base font-bold text-slate-900 mb-2">
-                  兼顧預測精度與經濟可解釋性 (Balancing Prediction & Causality)
-                </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  純黑箱機器學習即使測試集 RMSE 表現優異，實務決策仍需理解：<strong>「驅動報酬變化的底層經濟邏輯為何？在何種邊界條件下關係會逆轉？」</strong>結合可解釋的計量模型與因果論述，能大幅提升研究的穩健性。
-                </p>
-              </div>
-
-              {/* Trap 3 */}
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-indigo-300 transition-colors">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-indigo-100 text-indigo-800">
-                    思辨 03
-                  </span>
-                  <span className="text-xs text-slate-500 font-medium">語境與預期動態</span>
-                </div>
-                <h3 className="text-base font-bold text-slate-900 mb-2">
-                  捕捉語境深意與預期反轉 (Context & Expectation Gap)
-                </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  情緒指標不能僅止於詞頻統計，更需辨識市場最具影響力的<strong>「預期差」與「利多出盡」</strong>機制。透過捕捉預期透支與非線性調節，模型才能更準確地反映真實市場動態。
-                </p>
-              </div>
-
-              {/* Trap 4 */}
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-indigo-300 transition-colors">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-indigo-100 text-indigo-800">
-                    思辨 04
-                  </span>
-                  <span className="text-xs text-slate-500 font-medium">深度質量整合</span>
-                </div>
-                <h3 className="text-base font-bold text-slate-900 mb-2">
-                  落實真正質量整合的元推論 (True Meta-Inference Integration)
-                </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  MMR 的核心精髓在於讓質性與量化產生深層對話：<strong>「當量化指標顯示低估值但質性文本出現重大風險訊號時，兩者如何交叉印證？」</strong>藉由元推論整合，方能產生超越單一方法的整體洞察。
-                </p>
-              </div>
-
-              {/* Trap 5 */}
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-indigo-300 transition-colors md:col-span-2">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-indigo-100 text-indigo-800">
-                    思辨 05
-                  </span>
-                  <span className="text-xs text-slate-500 font-medium">在地化市場調適</span>
-                </div>
-                <h3 className="text-base font-bold text-slate-900 mb-2">
-                  在地化適應與微觀市場結構 (Context-Aware Market Adaptation)
-                </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  將美股文獻模型遷移至台股或其他新興市場時，需深度考量<strong>散戶參與度、三大法人籌碼互動與半導體供應鏈溢出效應</strong>。結合 FinMind 等在地數據工具進行微觀結構調適，才能讓實證結果兼具理論深度與實踐價值。
-                </p>
-              </div>
-            </div>
+            <ReflectionCards />
           </div>
         </div>
       )}

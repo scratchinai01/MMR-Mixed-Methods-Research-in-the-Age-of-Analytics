@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, MessageSquare, ListOrdered } from 'lucide-re
 import { DECK, SECTION_META, DECK_TOTAL_MINUTES, DeckSection } from '../data/thesisDeck.tsx';
 import { useMlResults } from '../services/mlResults.ts';
 import { PAPER_PARAGRAPHS } from '../data/paperContent.ts';
+import { scriptFor } from '../data/deckScripts.ts';
 
 /** 論文原文段落（英文）＋中譯，附 PDF 頁碼；摘要段落已與公開摘要核對 */
 const QuoteBlock: React.FC<{ id: string }> = ({ id }) => {
@@ -59,6 +60,7 @@ export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlid
   const [idx, setIdx] = useState(() => Math.min(Math.max(initialSlide, 1), DECK.length) - 1);
   const [showNotes, setShowNotes] = useState(true);
   const [showList, setShowList] = useState(false);
+  const [scriptOpen, setScriptOpen] = useState(true);
   const ml = useMlResults();
   // 每次計算的執行紀錄（資料蒐集流程頁使用）
   const [history, setHistory] = useState<any[]>([]);
@@ -89,6 +91,7 @@ export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlid
   }, []);
 
   const slide = DECK[idx];
+  const script = useMemo(() => scriptFor(slide.id, ctx as any), [slide.id, ctx]);
   const sched = SCHEDULE[idx];
   const meta = SECTION_META[slide.section];
   const sectionSlides = DECK.filter((s) => s.section === slide.section);
@@ -228,6 +231,21 @@ export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlid
             )}
           </div>
           <p className="leading-relaxed">{slide.notes}</p>
+          {script.length > 0 && (
+            <div className="pt-2 border-t border-amber-200">
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <span className="font-bold">逐字講稿（約 {script.join('').length} 字，可直接照念）</span>
+                <button onClick={() => setScriptOpen(!scriptOpen)} className="text-xs font-semibold text-amber-800 hover:underline">
+                  {scriptOpen ? '收合' : '展開'}
+                </button>
+              </div>
+              {scriptOpen && (
+                <div className="space-y-2 leading-[1.9] text-[0.98em]">
+                  {script.map((t, i) => <p key={i}>{t}</p>)}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -235,7 +253,7 @@ export const ThesisDeck: React.FC<ThesisDeckProps> = ({ initialSlide = 1, onSlid
 };
 
 /** 產生完整逐頁講稿（供「複製口試講稿」使用） */
-export function buildDeckScript(): string {
+export function buildDeckScript(ctx: { data: any; history?: any[] } = { data: null }): string {
   const lines: string[] = ['【論文報告講稿】（原文報告 40 分｜台股復刻 60 分｜復刻後比較 20 分）', ''];
   let section = '';
   DECK.forEach((s, i) => {
@@ -244,7 +262,10 @@ export function buildDeckScript(): string {
       lines.push(`═══ ${section}（${SECTION_META[s.section].minutes} 分鐘）═══`);
     }
     lines.push(`第 ${i + 1} 頁｜${s.title}（${s.minutes} 分鐘，預計 ${fmtMin(SCHEDULE[i].start)} 開始）`);
-    lines.push(s.notes, '');
+    lines.push(`【重點】${s.notes}`);
+    const sc = scriptFor(s.id, ctx as any);
+    if (sc.length) lines.push('【逐字講稿】', ...sc);
+    lines.push('');
   });
   return lines.join('\n');
 }

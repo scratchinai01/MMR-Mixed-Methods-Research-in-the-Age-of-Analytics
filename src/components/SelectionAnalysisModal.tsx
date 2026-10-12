@@ -61,7 +61,9 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
   const [copiedSelection, setCopiedSelection] = useState<boolean>(false);
 
   const modalBodyRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const threadEndRef = useRef<HTMLDivElement>(null);
+  const [pasteHint, setPasteHint] = useState<string>('');
 
   // Stage progression state
   const [currentStage, setCurrentStage] = useState<number>(1);
@@ -75,64 +77,74 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
     '🛡️ 階段 2：如何用固定效果 (Fixed Effects) 與動態面板 GMM 排除未觀察企業異質性？'
   ]);
 
-  // Handle in-modal text selection for continuous speech & question asking
+  // 視窗內選字：滑鼠、觸控、鍵盤選取都支援；只有點到泡泡以外的地方且沒有選取時才收起
   useEffect(() => {
     if (!isOpen) return;
+    let timer: any = null;
 
-    const handleMouseUp = () => {
-      setTimeout(() => {
+    const readSelection = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
         const selection = window.getSelection();
-        if (!selection || selection.isCollapsed) {
-          return;
-        }
-
+        if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
         const text = selection.toString().trim();
-        if (text.length < 2) {
-          setModalSelectedText('');
-          setModalSelectionPos(null);
-          return;
-        }
-
+        if (text.length < 2) return;
         try {
           const range = selection.getRangeAt(0);
+          if (!modalBodyRef.current || !modalBodyRef.current.contains(range.commonAncestorContainer)) return;
           const rect = range.getBoundingClientRect();
-          if (rect.width < 5 || rect.height < 5) return;
-
-          // Check if selection is inside our modal body
-          if (modalBodyRef.current && modalBodyRef.current.contains(range.commonAncestorContainer)) {
-            setModalSelectedText(text);
-            setModalSelectionPos({
-              x: Math.max(10, rect.left + rect.width / 2),
-              y: Math.max(10, rect.top - 10)
-            });
-          }
+          if (rect.width < 2 && rect.height < 2) return;
+          const placeBelow = rect.top < 70;
+          setModalSelectedText(text);
+          setModalSelectionPos({
+            x: Math.min(window.innerWidth - 150, Math.max(150, rect.left + rect.width / 2)),
+            y: placeBelow ? rect.bottom + 52 : rect.top - 10,
+          });
         } catch (e) {
           console.warn('In-modal selection error:', e);
         }
-      }, 100);
+      }, 180);
     };
 
-    const handleMouseDown = (e: MouseEvent) => {
+    const handlePointerDown = (e: Event) => {
       const target = e.target as HTMLElement;
-      if (!target.closest('#in-modal-selection-popover')) {
-        setTimeout(() => {
-          const sel = window.getSelection();
-          if (!sel || sel.isCollapsed) {
-            setModalSelectedText('');
-            setModalSelectionPos(null);
-          }
-        }, 150);
-      }
+      if (target.closest('#in-modal-selection-popover')) return;
+      setTimeout(() => {
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed) {
+          setModalSelectedText('');
+          setModalSelectionPos(null);
+        }
+      }, 250);
     };
 
-    document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('mousedown', handleMouseDown);
-
+    document.addEventListener('mouseup', readSelection);
+    document.addEventListener('touchend', readSelection);
+    document.addEventListener('selectionchange', readSelection);
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown);
     return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('mousedown', handleMouseDown);
+      clearTimeout(timer);
+      document.removeEventListener('mouseup', readSelection);
+      document.removeEventListener('touchend', readSelection);
+      document.removeEventListener('selectionchange', readSelection);
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
     };
   }, [isOpen]);
+
+  // 新回應出現時捲到最新一則
+  useEffect(() => {
+    if (messages.length > 1) threadEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [messages.length]);
+
+  // 輸入框隨內容自動長高（貼上長段文字時可完整看到）
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
+  }, [followupInput]);
 
   // Stage-by-stage dynamic 4-question generator using Gemini AI
   const fetchDynamicQuestions = async (targetStage: number, lastQ?: string, lastAns?: string) => {
@@ -184,7 +196,7 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
   };
 
   const handleQuoteSelectedTextInInput = (quote: string) => {
-    setFollowupInput(`針對這段文字「${quote.slice(0, 120)}${quote.length > 120 ? '...' : ''}」，請問：`);
+    setFollowupInput((prev) => `${prev ? prev + '\n' : ''}針對這段文字「${quote.slice(0, 300)}${quote.length > 300 ? '…' : ''}」，請問：`);
     setModalSelectedText('');
     setModalSelectionPos(null);
     if (inputRef.current) {
@@ -194,7 +206,7 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
 
   const handleSendRelay = async (queryText?: string) => {
     const promptText = queryText || followupInput;
-    if (!promptText.trim() || relayLoading) return;
+    if (!promptText.trim() || relayLoading || loading) return;
 
     const userQuery = promptText.trim();
     setMessages(prev => [...prev, { role: 'user', text: userQuery }]);
@@ -203,9 +215,10 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
 
     try {
       const conversationContext = messages.map(m => `${m.role === 'user' ? '用戶提問' : 'AI解析'}: ${m.text}`).join('\n\n');
+      // 保留最近約 6000 字的對話，讓 AI 能接著上一則回應繼續
       const data = await callAiApi('/api/gemini/explain', {
         question: userQuery,
-        context: `針對先前討論之原文：「${sourceText}」\n\n【先前對話歷史紀錄】：\n${conversationContext.slice(-1500)}`,
+        context: `針對先前討論之原文：「${sourceText}」\n\n【先前對話歷史紀錄】：\n${conversationContext.slice(-6000)}`,
         isFollowup: true,
       });
 
@@ -342,7 +355,7 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-200">
+    <div data-no-widget="true" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-200">
       <div 
         className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden text-slate-800 relative"
         onClick={(e) => e.stopPropagation()}
@@ -358,6 +371,8 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
               transform: 'translate(-50%, -100%)',
               zIndex: 100,
             }}
+            onMouseDown={(e) => e.preventDefault()}
+            onTouchStart={(e) => e.stopPropagation()}
             className="animate-in fade-in zoom-in-95 duration-150 bg-slate-900 text-white px-2 py-1.5 rounded-xl shadow-2xl border border-indigo-400/50 backdrop-blur-md flex items-center gap-1 text-xs"
           >
             <button
@@ -527,6 +542,7 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
               </div>
             ))}
 
+            <div ref={threadEndRef} />
             {/* Loading Spinner */}
             {(loading || relayLoading) && (
               <div className="py-8 flex flex-col items-center justify-center gap-3 text-slate-500">
@@ -625,28 +641,54 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
               e.preventDefault();
               handleSendRelay();
             }}
-            className="flex items-center gap-2"
+            className="flex items-end gap-2"
           >
             <div className="relative flex-1">
-              <input
+              <textarea
                 ref={inputRef}
-                type="text"
+                rows={1}
                 value={followupInput}
                 onChange={(e) => setFollowupInput(e.target.value)}
-                placeholder="💬 自由詢問 Gemini 2.5 Flash（支援繁中計量、公式推導、Python代碼，按 Enter 送出）..."
-                disabled={relayLoading || loading}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 text-xs sm:text-sm outline-hidden bg-white shadow-inner disabled:opacity-50 pr-8"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && !(e.nativeEvent as any).isComposing) {
+                    e.preventDefault();
+                    handleSendRelay();
+                  }
+                }}
+                placeholder="💬 輸入問題或貼上 AI 回應接著問（Enter 送出）"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 text-xs sm:text-sm outline-hidden bg-white shadow-inner pr-8 resize-none leading-relaxed block"
               />
               {followupInput && (
                 <button
                   type="button"
                   onClick={() => setFollowupInput('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                  className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 p-0.5"
+                  title="清除"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
+
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const t = await navigator.clipboard.readText();
+                  if (t) setFollowupInput((prev) => (prev ? prev + '\n' : '') + t);
+                  inputRef.current?.focus();
+                } catch {
+                  setPasteHint('瀏覽器不允許直接讀取剪貼簿，請在輸入框長按或按 Ctrl/⌘+V 貼上');
+                  setTimeout(() => setPasteHint(''), 3500);
+                  inputRef.current?.focus();
+                }
+              }}
+              className="px-3 py-2.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs sm:text-sm font-semibold shrink-0 flex items-center gap-1"
+              title="貼上剪貼簿內容"
+            >
+              <Copy className="w-4 h-4" />
+              <span className="hidden sm:inline">貼上</span>
+            </button>
 
             <button
               type="submit"
@@ -658,10 +700,11 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
             </button>
           </form>
 
+          {pasteHint && <div className="text-[11px] text-amber-700">{pasteHint}</div>}
           <div className="flex items-center justify-between text-[11px] text-slate-500">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Gemini 2.5 Flash 接力對話中 • 所有追問已自動同步至 Firebase</span>
+              <span>Gemini 接力對話中 • 會帶著前面的對話一起回答</span>
             </div>
             <button
               type="button"

@@ -33,9 +33,12 @@ export const SelectionTTSWidget: React.FC<SelectionTTSWidgetProps> = ({ onAskGem
   const [analysisEngine, setAnalysisEngine] = useState<string>('');
   const [analysisLatency, setAnalysisLatency] = useState<number | undefined>(undefined);
   const [isSpeakingAnalysis, setIsSpeakingAnalysis] = useState<boolean>(false);
+  // 開啟分析視窗時固定住的原文；之後在視窗內選字不會改到它
+  const [analysisSource, setAnalysisSource] = useState<string>('');
 
   const handleTranslateSelection = async () => {
     if (!selectedText.trim()) return;
+    setAnalysisSource(selectedText);
     setAnalysisTitle('🌐 框選文字高精度學術翻譯');
     setAnalysisContent('');
     setAnalysisEngine('');
@@ -62,6 +65,7 @@ export const SelectionTTSWidget: React.FC<SelectionTTSWidgetProps> = ({ onAskGem
 
   const handleDeepGeminiAnalysis = async () => {
     if (!selectedText.trim()) return;
+    setAnalysisSource(selectedText);
     setAnalysisTitle('💡 框選文字深度學術與微結構解析');
     setAnalysisContent('');
     setAnalysisEngine('');
@@ -339,7 +343,8 @@ export const SelectionTTSWidget: React.FC<SelectionTTSWidgetProps> = ({ onAskGem
     }
   };
 
-  if (!isVisible && !isPlaying && !isPaused) return null;
+  // 分析視窗獨立於選字工具列：工具列收起時視窗不能跟著消失
+  if (!isVisible && !isPlaying && !isPaused && !analysisModalOpen) return null;
 
   return (
     <>
@@ -565,7 +570,7 @@ export const SelectionTTSWidget: React.FC<SelectionTTSWidgetProps> = ({ onAskGem
           }
         }}
         title={analysisTitle}
-        sourceText={selectedText}
+        sourceText={analysisSource}
         analysisContent={analysisContent}
         loading={analysisLoading}
         engineUsed={analysisEngine}

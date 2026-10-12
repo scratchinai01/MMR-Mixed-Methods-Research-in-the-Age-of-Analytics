@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { 
   TAIWAN_BENCHMARK_STOCKS, 
   FINMIND_PRO_FEATURES, 
-  TAIWAN_REPLICATION_GEE_TABLE, 
   PYTHON_REPLICATION_SCRIPT,
   TaiwanStockItem
 } from '../data/finmindTaiwanData.ts';
 import { useMlResults } from '../services/mlResults.ts';
+import { RealReplicationFacts } from './RealReplicationFacts.tsx';
+import { ReplicationReplay } from './ReplicationReplay.tsx';
+import { NewsDownload } from './NewsDownload.tsx';
+import { PAPER_TABLES } from '../data/paperContent.ts';
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
 import { 
   Zap, 
@@ -212,11 +215,26 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
   const [analyzingHeadline, setAnalyzingHeadline] = useState<boolean>(false);
   const [headlineResult, setHeadlineResult] = useState<any>(null);
 
-  const selectedStock: TaiwanStockItem = 
-    TAIWAN_BENCHMARK_STOCKS.find((s) => s.code === selectedStockCode) || TAIWAN_BENCHMARK_STOCKS[0];
+  const REAL_NAMES: Record<string, string> = Object.fromEntries(((mlResults.isDemo ? [] : mlResults.data?.stocks) || []).map((x: any) => [x.id, x.name]));
+  const baseStock = TAIWAN_BENCHMARK_STOCKS.find((s) => s.code === selectedStockCode) || TAIWAN_BENCHMARK_STOCKS[0];
+  // 代號與名稱一律以真實選取的個股為準（其餘欄位僅供舊功能使用，不再顯示）
+  const selectedStock: TaiwanStockItem = { ...baseStock, code: selectedStockCode, name: REAL_NAMES[selectedStockCode] || baseStock.name };
 
   // Active headlines: check if live-fetched exists for this stock
-  const currentHeadlines = liveNewsData[selectedStock.code] || selectedStock.recentHeadlines;
+  // 真實資料：個股新聞統計與新聞樣本（與簡報同一份 ml_results.json）
+  const realData: any = mlResults.isDemo ? null : mlResults.data;
+  const realStocks: Array<{ id: string; name: string; articles: number; meanSentiment: number }> = realData?.stocks || [];
+  const realStock = realStocks.find((s) => s.id === selectedStockCode) || realStocks[0];
+  const realArticles: any[] = (realData?.articles || []).filter((a: any) => a.stock_id === (realStock?.id || selectedStockCode));
+  const realSample = realArticles.length;
+  const realPos = realSample ? realArticles.filter((a) => a.score > 0.15).length / realSample : 0;
+  const realNeg = realSample ? realArticles.filter((a) => a.score < -0.15).length / realSample : 0;
+  const realHeadlines = realArticles
+    .slice()
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+    .slice(0, 6)
+    .map((a) => ({ date: a.date, title: a.title, sentiment: a.score > 0.15 ? 'positive' : a.score < -0.15 ? 'negative' : 'neutral', score: a.score, link: a.link }));
+  const currentHeadlines: any[] = liveNewsData[selectedStockCode] || (realHeadlines.length ? realHeadlines : selectedStock.recentHeadlines);
 
   const handleFetchLiveNews = async () => {
     setFetchingLiveNews(true);
@@ -660,7 +678,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
                   )}
                 </div>
                 <p className="text-xs sm:text-sm text-slate-300 mt-1">
-                  運用 FinMind 金融數據接口，完整重現 Raman et al. (2022) 台股 500 檔個股與新聞情緒實證
+                  運用 FinMind 金融數據接口，以台股 10 檔權值股、一年真實新聞與財報復刻 Raman et al. (2022)
                 </p>
               </div>
             </div>
@@ -814,13 +832,13 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
                   <div className="flex items-start gap-2">
                     <span className="text-blue-300 font-bold shrink-0 w-20">計量實證:</span>
                     <span className="text-amber-300 font-mono font-bold">
-                      Table 2: Sales_growth × Positive = -102.094*** (p &lt; 0.001)
+                      Table 2 (Model 3): Sales_growth × Positive = {String(PAPER_TABLES.find((t) => t.id === 'table-2')?.rows.find((r) => String(r[0]).startsWith('Sales_growth X Positive'))?.[3] ?? '—')}
                     </span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-blue-300 font-bold shrink-0 w-20">機器學習:</span>
                     <span className="text-slate-300">
-                      5 大演算法基準實驗，加入文字情緒準確率提升 10%~25%
+                      5 種演算法比較「純量化」與「加入情緒」的預測表現（見原文表 7–8）
                     </span>
                   </div>
                 </div>
@@ -845,280 +863,11 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
                   </span>
                 </div>
 
-                <div className="space-y-2.5 text-xs">
-                  <div className="flex items-start gap-2">
-                    <span className="text-emerald-300 font-bold shrink-0 w-20">如何復刻:</span>
-                    <span className="text-slate-200 font-semibold">
-                      全套 Python 開源腳本 + 5 大 Google Colab 雲端實驗室
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-emerald-300 font-bold shrink-0 w-20">復刻市場:</span>
-                    <span className="text-slate-300">
-                      <strong>台灣 50 指數成分股</strong> × <strong>台積電 (2330.TW)</strong>
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-emerald-300 font-bold shrink-0 w-20">質性語料:</span>
-                    <span className="text-slate-300">
-                      FinMind 新聞 API + <strong>鉅亨網、經濟日報、中央社</strong> 即時財經新聞
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-emerald-300 font-bold shrink-0 w-20">量化財報:</span>
-                    <span className="text-slate-300">
-                      FinMind API 季報損益表月營收 YoY、本益比、淨值比與三大法人
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-emerald-300 font-bold shrink-0 w-20">情緒轉化:</span>
-                    <span className="text-slate-300">
-                      LM 財經情緒詞典中英對齊映射 + 繁體結巴斷詞情感評分標準化
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-emerald-300 font-bold shrink-0 w-20">復刻成果:</span>
-                    <span className="text-amber-300 font-mono font-bold">
-                      成功復刻: Sales_growth × Positive = -94.210** (p &lt; 0.01)
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-emerald-300 font-bold shrink-0 w-20">機器學習:</span>
-                    <span className="text-slate-300">
-                      LightGBM (99.4%)、Random Forest (75.2%)、DNN (80.5%) 直跑
-                    </span>
-                  </div>
-                </div>
+                <RealReplicationFacts data={mlResults.isDemo ? null : mlResults.data} />
 
                 <div className="pt-2 text-[11px] font-mono text-emerald-300/80 border-t border-emerald-500/20 flex items-center justify-between">
-                  <span>證實跨國泛化性與散戶籌碼背離特性</span>
+                  <span>真實計算結果（自動更新）</span>
                   <span className="text-emerald-400 font-bold">🟩 本研究台股復刻實驗組</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Four Step-by-Step Visual Reconstruction Cards (在頁面同時出現四張縮圖) */}
-          <div className="bg-slate-900/90 rounded-3xl p-6 sm:p-7 border border-indigo-500/30 shadow-2xl space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
-              <div>
-                <span className="text-amber-400 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 font-mono">
-                  <Sparkles className="w-4 h-4" />
-                  <span>🗺️ 逐步圖解・4 大核心復刻圖解同步呈現</span>
-                </span>
-                <h4 className="font-extrabold text-white text-base sm:text-lg mt-1">
-                  不需切換分頁：四張核心圖解完整攤開，教授可隨時檢視與點擊放大
-                </h4>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Card 1: Step 1 */}
-              <div className="bg-slate-950 rounded-2xl p-4 sm:p-5 border border-slate-800 space-y-4 flex flex-col justify-between">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 font-mono">
-                      步驟一：架構與蒐集 (Identify)
-                    </span>
-                    <button
-                      onClick={() => { setLightboxImgId('img1'); setLightboxOpen(true); }}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
-                    >
-                      <ZoomIn className="w-3.5 h-3.5" /> 放大檢視
-                    </button>
-                  </div>
-                  <h5 className="font-bold text-white text-sm">Research Framework & Data Collection</h5>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    並行收集財務量化數據與質性新聞文本（WSJ 與 FinMind 即時數據），建立雙軌並行研究基礎。
-                  </p>
-
-                  {/* Detailed Sub-Steps for Step 1 */}
-                  <div className="bg-slate-900/90 rounded-xl p-3 border border-indigo-500/30 space-y-2 text-xs">
-                    <div className="font-bold text-amber-300 text-[11px] uppercase tracking-wider flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>📌 步驟一詳細執行規格 (Raman et al., 2022 復刻)：</span>
-                    </div>
-                    <ul className="space-y-1.5 text-slate-300 text-[11px] list-disc list-inside leading-relaxed">
-                      <li><strong>1.1 樣本選取與過濾：</strong> 涵蓋台股 50 核心標的（台積電、聯發科、鴻海等），剔除金融保險業與全額交割股，確保樣本具備流動性與資訊透明度。</li>
-                      <li><strong>1.2 FinMind 財務量化對接：</strong> 自動呼叫 FinMind API 撈取每季財報與會計變數（如：營業收入成長率 Sales_growth、本益比 PE、市值淨值比 MB Ratio）。</li>
-                      <li><strong>1.3 新聞文本非結構化採集：</strong> 連線 FinMind 台灣新聞資料庫與鉅亨網、經濟日報，即時抓取財經頭條與主旨。</li>
-                      <li><strong>1.4 事件窗格設定：</strong> 定義財報發布日前後 [-3, +3] 交易日為事件窗格，計算標準化累積超額報酬 (SCAR) 作為應變數。</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div 
-                  onClick={() => { setLightboxImgId('img1'); setLightboxOpen(true); }}
-                  className="group relative rounded-2xl overflow-hidden border border-slate-800 cursor-pointer w-full aspect-[16/10] sm:aspect-[3/2] flex items-center justify-center bg-slate-950 mt-3 shadow-md"
-                >
-                  <img
-                    src="https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png"
-                    alt="步驟一：架構與蒐集"
-                    className="w-full h-full object-contain p-1 group-hover:scale-102 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/20 transition-all flex items-end justify-end p-2.5 pointer-events-none">
-                    <span className="px-3 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-white text-xs font-bold shadow-lg border border-white/10 flex items-center gap-1.5 group-hover:scale-105 group-hover:bg-indigo-600 transition-all">
-                      <ZoomIn className="w-3.5 h-3.5 text-amber-300" />
-                      <span>點擊放大檢視原圖</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 2: Step 2 */}
-              <div className="bg-slate-950 rounded-2xl p-4 sm:p-5 border border-slate-800 space-y-4 flex flex-col justify-between">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 font-mono">
-                      步驟二：資料轉化模式 (QUAL ➔ quan)
-                    </span>
-                    <button
-                      onClick={() => { setLightboxImgId('img8'); setLightboxOpen(true); }}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
-                    >
-                      <ZoomIn className="w-3.5 h-3.5" /> 放大檢視
-                    </button>
-                  </div>
-                  <h5 className="font-bold text-white text-sm">Data Transformation Model (Raman et al., 2022)</h5>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    將文字透過 Loughran-McDonald 詞典轉化為 quan 數值，與財報相互關聯進行 GEE 迴歸。
-                  </p>
-
-                  {/* Detailed Sub-Steps for Step 2 */}
-                  <div className="bg-slate-900/90 rounded-xl p-3 border border-indigo-500/30 space-y-2 text-xs">
-                    <div className="font-bold text-amber-300 text-[11px] uppercase tracking-wider flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>📌 步驟二詳細執行規格 (QUAL ➔ quan 轉化機制)：</span>
-                    </div>
-                    <ul className="space-y-1.5 text-slate-300 text-[11px] list-disc list-inside leading-relaxed">
-                      <li><strong>2.1 文本清洗與詞幹提取：</strong> 針對 FinMind 抓取的台股新聞標題與內文進行斷詞、標點符號與停用詞移除。</li>
-                      <li><strong>2.2 LM 財經情緒詞典對齊：</strong> 採用 Loughran-McDonald (2011) 金融專用情感詞典，精確識別財經語境下的正面 (Positive) 與負面 (Negative) 關鍵字。</li>
-                      <li><strong>2.3 QUAL ➔ quan 數值化：</strong> 計算文本正負面詞頻佔總詞數比例，將非結構化質性新聞 (QUAL) 轉化為標準化連續計量變數 (quan)。</li>
-                      <li><strong>2.4 交互項建構：</strong> 將轉化後之情緒變數與財報營收成長率 (`Sales_growth`) 相乘，建立交互項以捕捉預期踏車效應與邊際遞減。</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div 
-                  onClick={() => { setLightboxImgId('img8'); setLightboxOpen(true); }}
-                  className="group relative rounded-2xl overflow-hidden border border-slate-800 cursor-pointer w-full aspect-[16/10] sm:aspect-[16/9] flex items-center justify-center bg-slate-950 mt-3 shadow-md"
-                >
-                  <img
-                    src="https://cdn.gamma.app/qczcgzm3dplba12/ceace1f12f5f471d90b70107fa6747b5/original/image.png"
-                    alt="步驟二：資料轉化模式"
-                    className="w-full h-full object-contain p-1 group-hover:scale-102 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/20 transition-all flex items-end justify-end p-2.5 pointer-events-none">
-                    <span className="px-3 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-white text-xs font-bold shadow-lg border border-white/10 flex items-center gap-1.5 group-hover:scale-105 group-hover:bg-indigo-600 transition-all">
-                      <ZoomIn className="w-3.5 h-3.5 text-amber-300" />
-                      <span>點擊放大檢視原圖</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 3: Step 3 */}
-              <div className="bg-slate-950 rounded-2xl p-4 sm:p-5 border border-slate-800 space-y-4 flex flex-col justify-between">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 font-mono">
-                      步驟三：雙軌模型對比 (Predict)
-                    </span>
-                    <button
-                      onClick={() => { setLightboxImgId('img2'); setLightboxOpen(true); }}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
-                    >
-                      <ZoomIn className="w-3.5 h-3.5" /> 放大檢視
-                    </button>
-                  </div>
-                  <h5 className="font-bold text-white text-sm">Dual-Track Model Comparison (Model A vs B)</h5>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    對比純量化與量化加文本情緒模型，證實機器學習預測準確率顯著提升。
-                  </p>
-
-                  <div className="bg-slate-900/90 rounded-xl p-3 border border-indigo-500/30 space-y-2 text-xs">
-                    <div className="font-bold text-amber-300 text-[11px] uppercase tracking-wider flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>📌 步驟三詳細執行規格 (雙軌預測對比)：</span>
-                    </div>
-                    <ul className="space-y-1.5 text-slate-300 text-[11px] list-disc list-inside leading-relaxed">
-                      <li><strong>3.1 Model A (純量化基準)：</strong> 僅使用財報會計指標（PE、MB、ROE、營收成長率）進行極端報酬分類。</li>
-                      <li><strong>3.2 Model B (雙軌整合模型)：</strong> 結合 FinMind 新聞語意情緒與財務量化指標，透過提升決策樹訓練。</li>
-                      <li><strong>3.3 準確率顯著躍升：</strong> 驗證結合情緒文本後，分類準確率從 68.2% 提升至 99.4%，AUC 顯著增加。</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div 
-                  onClick={() => { setLightboxImgId('img2'); setLightboxOpen(true); }}
-                  className="group relative rounded-2xl overflow-hidden border border-slate-800 cursor-pointer w-full aspect-[16/10] sm:aspect-[16/9] flex items-center justify-center bg-slate-950 mt-3 shadow-md"
-                >
-                  <img
-                    src="https://cdn.gamma.app/qczcgzm3dplba12/dc0eae2c65c94d7abcfa76f3816afecc/original/image.png"
-                    alt="步驟三：雙軌模型對比"
-                    className="w-full h-full object-contain p-1 group-hover:scale-102 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/20 transition-all flex items-end justify-end p-2.5 pointer-events-none">
-                    <span className="px-3 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-white text-xs font-bold shadow-lg border border-white/10 flex items-center gap-1.5 group-hover:scale-105 group-hover:bg-indigo-600 transition-all">
-                      <ZoomIn className="w-3.5 h-3.5 text-amber-300" />
-                      <span>點擊放大檢視原圖</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 4: Step 4 */}
-              <div className="bg-slate-950 rounded-2xl p-4 sm:p-5 border border-slate-800 space-y-4 flex flex-col justify-between">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 font-mono">
-                      步驟四：真正價值真相 (Integration)
-                    </span>
-                    <button
-                      onClick={() => { setLightboxImgId('img9'); setLightboxOpen(true); }}
-                      className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1"
-                    >
-                      <ZoomIn className="w-3.5 h-3.5" /> 放大檢視
-                    </button>
-                  </div>
-                  <h5 className="font-bold text-white text-sm">True Value & Four Deep Economic Truths</h5>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    揭示情緒作為放大鏡與扭曲器之真理，揭露 Sales_growth × Positive = -102.094。
-                  </p>
-
-                  <div className="bg-slate-900/90 rounded-xl p-3 border border-amber-500/30 space-y-2 text-xs">
-                    <div className="font-bold text-amber-300 text-[11px] uppercase tracking-wider flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>📌 步驟四詳細執行規格 (四大深層經濟真相)：</span>
-                    </div>
-                    <ul className="space-y-1.5 text-slate-300 text-[11px] list-disc list-inside leading-relaxed">
-                      <li><strong>4.1 預期踏車效應 (Expectation Treadmill)：</strong> 高成長公司若僅符預期，股價反遭嚴厲懲罰。</li>
-                      <li><strong>4.2 非對稱資訊懲罰：</strong> 負面新聞帶來的股價暴跌幅度遠大於正面新聞帶來的漲幅。</li>
-                      <li><strong>4.3 係數實證真相：</strong> 確立核心交互系數 <code>Sales_growth × Positive = -102.094 (p &lt; 0.001)</code>。</li>
-                      <li><strong>4.4 實用主義哲學：</strong> 解構黑箱模型，證明混合方法 (MMR) 在台股高頻與機構研究的絕對優勢。</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div 
-                  onClick={() => { setLightboxImgId('img9'); setLightboxOpen(true); }}
-                  className="group relative rounded-2xl overflow-hidden border border-slate-800 cursor-pointer w-full aspect-[16/10] sm:aspect-[3/2] flex items-center justify-center bg-slate-950 mt-3 shadow-md"
-                >
-                  <img
-                    src="https://cdn.gamma.app/qczcgzm3dplba12/a258c799d57c43dbb989ede9ff39d03a/original/image.png"
-                    alt="步驟四：真正價值真相"
-                    className="w-full h-full object-contain p-1 group-hover:scale-102 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/20 transition-all flex items-end justify-end p-2.5 pointer-events-none">
-                    <span className="px-3 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-white text-xs font-bold shadow-lg border border-white/10 flex items-center gap-1.5 group-hover:scale-105 group-hover:bg-indigo-600 transition-all">
-                      <ZoomIn className="w-3.5 h-3.5 text-amber-300" />
-                      <span>點擊放大檢視原圖</span>
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1152,28 +901,24 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
             選擇台股代表性標的 (驗證基本面與新聞情緒交互作用)
           </div>
           <span className="text-xs text-indigo-600 font-medium">
-            已載入 8 檔台股 50 核心標的深度資料
+            {realStocks.length ? `真實資料：${realStocks.length} 檔，括號內為新聞則數` : '尚未計算'}
           </span>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {TAIWAN_BENCHMARK_STOCKS.map((stock) => {
-            const isSelected = stock.code === selectedStockCode;
+          {realStocks.map((stock) => {
+            const isSelected = stock.id === (realStock?.id || selectedStockCode);
             return (
               <button
-                key={stock.code}
-                onClick={() => setSelectedStockCode(stock.code)}
+                key={stock.id}
+                onClick={() => setSelectedStockCode(stock.id)}
                 className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 ${
-                  isSelected
-                    ? 'bg-indigo-600 text-white shadow-xs font-semibold'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  isSelected ? 'bg-indigo-600 text-white shadow-xs font-semibold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                 }`}
               >
-                <span>{stock.code} {stock.name}</span>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                  isSelected ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-200 text-slate-600'
-                }`}>
-                  {stock.currentScar >= 0 ? `+${stock.currentScar}%` : `${stock.currentScar}%`}
+                <span>{stock.id} {stock.name}</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded ${isSelected ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-200 text-slate-600'}`}>
+                  {stock.articles.toLocaleString()} 則
                 </span>
               </button>
             );
@@ -1190,16 +935,16 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
                 Phase 1: Identify
               </span>
               <h2 className="text-lg font-bold text-slate-900">
-                {selectedStock.name} ({selectedStock.code}) 財務指標與新聞情緒特徵工程
+                {realStock?.name || selectedStock.name} ({realStock?.id || selectedStock.code}) 新聞情緒特徵（真實資料）
               </h2>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              產業類別：{selectedStock.industry} • 總市值：{selectedStock.marketCapBillion.toLocaleString()} 億新台幣 • 新聞樣本數：{selectedStock.newsCount} 篇
+              {realStock ? `${realData?.period?.start}～${realData?.period?.end} 共 ${realStock.articles.toLocaleString()} 則新聞；以下比例依頁面保存的 ${realSample} 則樣本計算（情緒由 ${realData?.sentimentEngine} 判讀）` : '尚未計算'}
             </p>
           </div>
 
           <button
-            onClick={() => onAskGemini(`針對台股 ${selectedStock.name}(${selectedStock.code})，結合營收成長率 ${selectedStock.salesGrowth}% 與新聞正面情緒 ${selectedStock.sentimentPosPct}%，分析其超額報酬 (SCAR) 的形成機轉。`)}
+            onClick={() => onAskGemini(`針對台股 ${selectedStock.name}(${selectedStock.code})：過去一年 FinMind 新聞 ${realStock?.articles ?? '—'} 則、平均情緒 ${realStock?.meanSentiment ?? '—'}、樣本中正面新聞 ${(realPos * 100).toFixed(1)}%、負面 ${(realNeg * 100).toFixed(1)}%。請解讀這些情緒特徵對 GEE 模型中 Sentiment 與基本面交互作用的意涵，並提醒解讀限制。`)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors"
           >
             <Sparkles className="w-3.5 h-3.5 text-purple-600" />
@@ -1207,50 +952,29 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
           </button>
         </div>
 
-        {/* Metric Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <NewsDownload data={realData} />
+
+        {/* Metric Cards Grid（真實資料） */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <div className="text-[11px] text-slate-500 mb-1">本益比 (PE)</div>
-            <div className="text-lg font-bold text-slate-900 font-mono">{selectedStock.peRatio}x</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">mkvalt / ib</div>
+            <div className="text-[11px] text-slate-500 mb-1">一年新聞則數</div>
+            <div className="text-lg font-bold text-slate-900 font-mono">{realStock ? realStock.articles.toLocaleString() : '—'}</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">FinMind TaiwanStockNews</div>
           </div>
-
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <div className="text-[11px] text-slate-500 mb-1">淨值比 (MB/PB)</div>
-            <div className="text-lg font-bold text-slate-900 font-mono">{selectedStock.mbRatio}x</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">mkvalt / teq</div>
-          </div>
-
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <div className="text-[11px] text-slate-500 mb-1">營收年增率</div>
-            <div className={`text-lg font-bold font-mono ${
-              selectedStock.salesGrowth >= 0 ? 'text-emerald-600' : 'text-rose-600'
-            }`}>
-              {selectedStock.salesGrowth >= 0 ? `+${selectedStock.salesGrowth}%` : `${selectedStock.salesGrowth}%`}
-            </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Sales Growth</div>
-          </div>
-
-          <div className="bg-emerald-50/60 p-4 rounded-xl border border-emerald-200">
-            <div className="text-[11px] text-emerald-800 font-semibold mb-1">正面新聞情緒</div>
-            <div className="text-lg font-bold text-emerald-700 font-mono">{selectedStock.sentimentPosPct}%</div>
-            <div className="text-[10px] text-emerald-600 mt-0.5">LM Positive Words</div>
-          </div>
-
-          <div className="bg-rose-50/60 p-4 rounded-xl border border-rose-200">
-            <div className="text-[11px] text-rose-800 font-semibold mb-1">負面新聞情緒</div>
-            <div className="text-lg font-bold text-rose-700 font-mono">{selectedStock.sentimentNegPct}%</div>
-            <div className="text-[10px] text-rose-600 mt-0.5">LM Negative Words</div>
-          </div>
-
           <div className="bg-indigo-50/60 p-4 rounded-xl border border-indigo-200">
-            <div className="text-[11px] text-indigo-800 font-semibold mb-1">當期超額報酬 (SCAR)</div>
-            <div className={`text-lg font-bold font-mono ${
-              selectedStock.currentScar >= 0 ? 'text-indigo-700' : 'text-rose-700'
-            }`}>
-              {selectedStock.currentScar >= 0 ? `+${selectedStock.currentScar}%` : `${selectedStock.currentScar}%`}
-            </div>
-            <div className="text-[10px] text-indigo-600 mt-0.5">Standardized CAR</div>
+            <div className="text-[11px] text-indigo-800 font-semibold mb-1">平均情緒分數</div>
+            <div className="text-lg font-bold text-indigo-700 font-mono">{realStock ? realStock.meanSentiment.toFixed(3) : '—'}</div>
+            <div className="text-[10px] text-indigo-600 mt-0.5">−1（負面）～ +1（正面）</div>
+          </div>
+          <div className="bg-emerald-50/60 p-4 rounded-xl border border-emerald-200">
+            <div className="text-[11px] text-emerald-800 font-semibold mb-1">正面新聞比例</div>
+            <div className="text-lg font-bold text-emerald-700 font-mono">{realSample ? `${(realPos * 100).toFixed(1)}%` : '—'}</div>
+            <div className="text-[10px] text-emerald-600 mt-0.5">分數 &gt; 0.15</div>
+          </div>
+          <div className="bg-rose-50/60 p-4 rounded-xl border border-rose-200">
+            <div className="text-[11px] text-rose-800 font-semibold mb-1">負面新聞比例</div>
+            <div className="text-lg font-bold text-rose-700 font-mono">{realSample ? `${(realNeg * 100).toFixed(1)}%` : '—'}</div>
+            <div className="text-[10px] text-rose-600 mt-0.5">分數 &lt; −0.15</div>
           </div>
         </div>
 
@@ -1288,7 +1012,11 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
                   <span className="text-indigo-600 font-mono text-[11px] font-semibold shrink-0 bg-indigo-50 px-1.5 py-0.5 rounded">
                     {news.date}
                   </span>
-                  <span className="text-slate-800 font-medium">{news.title}</span>
+                  {news.link ? (
+                    <a href={news.link} target="_blank" rel="noreferrer" className="text-slate-800 font-medium hover:text-indigo-700 hover:underline">{news.title}</a>
+                  ) : (
+                    <span className="text-slate-800 font-medium">{news.title}</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
@@ -1411,108 +1139,18 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
 
       {/* Live Machine Learning Training Pipeline Sandbox */}
       <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white rounded-3xl p-6 sm:p-8 border border-indigo-500/30 shadow-xl space-y-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-400 text-slate-950 font-mono">
-                🤖 互動式機器學習沙盒
-              </span>
-              <span className="text-xs text-indigo-300 font-mono">
-                Live Feature Engineering & Classification Pipeline
-              </span>
-            </div>
-            <h3 className="text-xl font-extrabold text-white mt-2">
-              實時執行機器學習分類訓練（非假數據，動態展現資料採集與模型收斂過程）
-            </h3>
-            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-              點擊下方按鈕，系統將即時串接 FinMind 財經資料庫、執行 Loughran-McDonald 詞典分詞、擬合 GEE 交互項，並訓練梯度提升決策樹（Positive / Negative / Neutral 分類）。
-            </p>
+        <div className="border-b border-slate-800 pb-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-400 text-slate-950">🎬 復刻過程重播</span>
+            <span className="text-xs text-indigo-300 font-mono">Replay of the real computation</span>
           </div>
-
-          <button
-            onClick={handleRunMlPipeline}
-            disabled={mlRunning}
-            className="px-5 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 disabled:opacity-50 text-slate-950 rounded-2xl text-xs font-extrabold flex items-center gap-2 shadow-lg transition-transform active:scale-95 shrink-0"
-          >
-            {mlRunning ? <Cpu className="w-4 h-4 animate-spin text-slate-950" /> : <Sparkles className="w-4 h-4 text-slate-950" />}
-            <span>{mlRunning ? '正在執行 ML 訓練管線...' : '▶ 執行真實機器學習與分類訓練'}</span>
-          </button>
+          <h3 className="text-xl font-extrabold text-white mt-2">從抓資料到結果：六個步驟重現台股復刻</h3>
+          <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+            報告時可逐步展示：每一步的數字都來自實際計算結果，與「論文報告」簡報、下方 GEE 表和機器學習表是同一份資料。
+          </p>
         </div>
 
-        {/* Live Status Log Box */}
-        {(mlRunning || mlLogs.length > 0) && (
-          <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4 font-mono text-xs">
-            <div className="flex items-center justify-between text-slate-400 border-b border-slate-800 pb-2">
-              <span>執行狀態與即時訓練日誌 (Training Console Logs)</span>
-              <span className="text-emerald-400 font-bold">{mlRunning ? '🟢 訓練中...' : '✅ 訓練完成'}</span>
-            </div>
-
-            <div className="space-y-1.5 max-h-56 overflow-y-auto">
-              {mlLogs.map((log, idx) => (
-                <div key={idx} className="text-indigo-300 leading-relaxed">
-                  {log}
-                </div>
-              ))}
-            </div>
-
-            {mlResultMetrics && (
-              <div className="space-y-3">
-                <div className="mt-4 pt-4 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3 text-center font-sans">
-                  <div className="bg-slate-900 p-3 rounded-xl border border-slate-800">
-                    <div className="text-slate-400 text-xs">最終模型分類準確率</div>
-                    <div className="text-xl font-extrabold text-emerald-400 mt-1">{mlResultMetrics.accuracy}</div>
-                  </div>
-                  <div className="bg-slate-900 p-3 rounded-xl border border-slate-800">
-                    <div className="text-slate-400 text-xs">AUC 曲線擬合度</div>
-                    <div className="text-xl font-extrabold text-amber-300 mt-1">{mlResultMetrics.auc}</div>
-                  </div>
-                  <div className="bg-slate-900 p-3 rounded-xl border border-slate-800">
-                    <div className="text-slate-400 text-xs">預測精準度增益</div>
-                    <div className="text-xl font-extrabold text-indigo-300 mt-1">{mlResultMetrics.improvement}</div>
-                  </div>
-                </div>
-
-                {mlResultMetrics?.geeStats && (
-                  <div className="bg-slate-900 p-4 rounded-xl border border-indigo-500/30 text-xs space-y-3">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="font-bold text-amber-300 flex items-center gap-1.5">
-                        <Sliders className="w-4 h-4 text-amber-400" />
-                        <span>🔬 遠端 Python GEE 叢集矩陣反演與計量診斷報告 (Econometric Diagnostic Output)</span>
-                      </div>
-                      <button
-                        onClick={handleDownloadReport}
-                        className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs"
-                        title="下載完整 512 篇文本分析與 GEE 迴歸計量報告"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>📥 下載完整計量與 512 篇文本分析報告</span>
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 font-mono text-[11px]">
-                      <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                        <span className="text-slate-400 block">交互係數 (Coef)</span>
-                        <strong className="text-amber-300 text-sm">{mlResultMetrics.geeStats.interactionCoef}</strong>
-                      </div>
-                      <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                        <span className="text-slate-400 block">Z 統計量 (Z-Stat)</span>
-                        <strong className="text-emerald-400 text-sm">{mlResultMetrics.geeStats.zStat}</strong>
-                      </div>
-                      <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                        <span className="text-slate-400 block">顯著性 (p-value)</span>
-                        <strong className="text-indigo-300 text-sm">{mlResultMetrics.geeStats.pValue}</strong>
-                      </div>
-                      <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                        <span className="text-slate-400 block">工作相關結構</span>
-                        <strong className="text-purple-300 text-[10px]">{mlResultMetrics.geeStats.workingCorrelation}</strong>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        <ReplicationReplay data={mlResults.isDemo ? null : mlResults.data} />
 
         {/* Academic Insight Card: Does Large-N determine research outcome? */}
         <div className="bg-slate-900 p-5 rounded-2xl border border-indigo-500/30 space-y-3 text-xs">
@@ -1521,7 +1159,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
             <span>🎓 教授學術指導與計量思辨：大樣本 (Large-N) 是否決定研究成果的顯著性？</span>
           </div>
           <p className="text-slate-300 leading-relaxed">
-            <strong>絕對是關鍵！</strong> 在頂級 SSCI 會計與金融實證研究中（如 Raman et al., 2022 依賴超過 2,500 篇 WSJ 報導與龐大 Compustat 跨期面板數據）：
+            <strong>樣本數很重要，但不是唯一關鍵。</strong> 原著使用大型跨期面板；本研究的台股樣本見上方步驟 3：
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
             <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
@@ -1530,7 +1168,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
             </div>
             <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
               <span className="font-bold text-emerald-400">✅ 大樣本 (Large-N Panel) 的決定性：</span>
-              <p className="text-slate-400">透過跨產業、跨季度數萬筆觀測值的累積（如本沙盒底層對接的 512 篇新聞與跨期面板），大數法則與 GEE 模型能精準收斂噪聲，使如 -102.094 的非線性交互項達到 <strong className="text-amber-300">p &lt; 0.001</strong> 的鋼鐵般顯著性！</p>
+              <p className="text-slate-400">樣本越大，標準誤越小、越容易達到顯著；但樣本大也會讓很小、不具經濟意義的效果變得「顯著」。本研究的真實樣本與係數請見下方 GEE 表，解讀時請同時看係數大小與 p 值。</p>
             </div>
           </div>
         </div>
@@ -1555,7 +1193,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
             </h2>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            以 FinMind 工具調取之台股 500 檔個股縱向面板資料為樣本，驗證情緒與財務指標之直接效應與交互作用
+            {mlResults.isDemo ? '尚未計算' : `FinMind 真實資料：${mlResults.data?.gee?.firms} 檔、${mlResults.data?.gee?.n?.toLocaleString()} 筆股票-日樣本（${mlResults.data?.gee?.period?.start}～${mlResults.data?.gee?.period?.end}）；GEE Exchangeable 相關結構、以個股為群組；應變數：${mlResults.data?.gee?.dv}`}
           </p>
         </div>
 
@@ -1571,18 +1209,24 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700 font-mono">
-              {TAIWAN_REPLICATION_GEE_TABLE.map((row, idx) => {
-                const isHighlight = row.variable.includes('Sales_growth X Positive');
+              {(mlResults.isDemo ? [] : (mlResults.data?.gee?.models?.exchangeable?.rows || [])).map((row: any, idx: number) => {
+                const isHighlight = row.term === 'Sales_growth X Positive';
                 return (
                   <tr key={idx} className={isHighlight ? 'bg-amber-50 font-semibold text-amber-950' : 'hover:bg-slate-50'}>
-                    <td className="px-4 py-2.5 font-sans font-medium">{row.variable}</td>
-                    <td className="px-4 py-2.5">{row.coef}</td>
-                    <td className="px-4 py-2.5 text-slate-400">{row.stdErr}</td>
-                    <td className="px-4 py-2.5 text-indigo-600 font-sans">{row.pVal}</td>
-                    <td className="px-4 py-2.5 font-sans text-xs text-slate-600">{row.interpretation}</td>
+                    <td className="px-4 py-2.5 font-sans font-medium">{row.term}</td>
+                    <td className="px-4 py-2.5">{row.coef.toFixed(3)}{row.stars}</td>
+                    <td className="px-4 py-2.5 text-slate-400">({row.se.toFixed(3)})</td>
+                    <td className="px-4 py-2.5 text-indigo-600 font-sans">{row.p < 0.001 ? '< 0.001' : row.p.toFixed(3)}</td>
+                    <td className="px-4 py-2.5 font-sans text-xs text-slate-600">
+                      {row.p < 0.05 ? (row.coef > 0 ? '顯著正向' : '顯著負向') : '未達 5% 顯著'}
+                      {isHighlight ? (row.coef < 0 ? '；方向與原論文一致（原論文為負）' : '；方向與原論文相反') : ''}
+                    </td>
                   </tr>
                 );
               })}
+              {mlResults.isDemo && (
+                <tr><td colSpan={5} className="px-4 py-6 text-center font-sans text-slate-500">尚未計算：真實 GEE 結果產生後會自動顯示。</td></tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -1644,7 +1288,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
         {/* Accuracy Comparison Bar Display */}
         <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
           <div className="text-xs font-bold text-slate-800">
-            📊 視覺化對比：提升決策樹 (Boosted Decision Tree) 在台股資料庫上的分類突破
+            📊 提升決策樹 (Boosted Decision Tree)：加入新聞情緒前後的準確率
           </div>
           <div className="space-y-3">
             <div>
@@ -1832,7 +1476,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
         </div>
 
         <p className="text-xs text-slate-400">
-          此腳本封裝了 FinMind 數據工具調取、台股 500 檔財報特徵建構、中文化金融情緒詞典探勘，以及 GEE 與梯度提升決策樹訓練管線。
+          此腳本封裝了 FinMind 數據工具調取、台股財報特徵建構、中文化金融情緒詞典探勘，以及 GEE 與梯度提升決策樹訓練管線。
         </p>
 
         <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 overflow-x-auto max-h-96">
@@ -1849,6 +1493,10 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
           <h3 className="text-lg font-bold text-slate-800">
             台積電 (2330.TW) 機器學習雲端實戰工具專區 (Google Colab Notebooks)
           </h3>
+        </div>
+        <div className="text-xs px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
+          ⚠️ 教學示範區：以下工具卡中的表格、準確率與 CSV 範例都是<strong>虛構的示範資料</strong>，只用來說明程式怎麼跑，<strong>不是本研究的結果</strong>。
+          本研究的真實結果請看上方的 GEE 表與機器學習比較表（與「論文報告」簡報同一份資料）。
         </div>
         <p className="text-xs text-slate-500">
           提供免本地配置、在 Google 雲端即開即跑的完整 Python Notebook，涵蓋支持向量機 (SVM) 高維情緒空間超平面、深度神經網路 (MLP) 多層特徵交互抽取、二元邏輯迴歸 (Logistic Regression)、隨機森林 (Random Forest) 與梯度提升決策樹 (LightGBM)。

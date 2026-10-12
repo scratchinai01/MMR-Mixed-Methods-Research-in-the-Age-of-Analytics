@@ -603,6 +603,12 @@ def main():
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=1)
 
+    # 全部新聞與情緒分數（供網站「下載新聞數據」使用；utf-8-sig 讓 Excel 直接開啟不亂碼）
+    csv_path = os.path.join(os.path.dirname(args.out), "news_all.csv")
+    cols = [c for c in ["date", "stock_id", "title", "source", "link", "score"] if c in news.columns]
+    news.sort_values(["date", "stock_id"], ascending=[False, True])[cols].to_csv(csv_path, index=False, encoding="utf-8-sig")
+    log(f"   全部新聞已輸出：{csv_path}（{len(news):,} 則）")
+
     # 執行歷史（保留最近 60 次），報告可呈現「首次完整抓取」與每日更新的紀錄
     hist_path = os.path.join(os.path.dirname(args.out), "run_history.json")
     try:

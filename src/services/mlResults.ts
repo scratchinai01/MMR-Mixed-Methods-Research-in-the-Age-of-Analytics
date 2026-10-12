@@ -38,7 +38,7 @@ let cache: Promise<MlResults> | null = null;
 
 function loadMlResults(): Promise<MlResults> {
   if (!cache) {
-    cache = fetch('/data/ml_results.json', { cache: 'no-cache' })
+    cache = fetch(`/data/ml_results.json?t=${Date.now()}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((d: any): MlResults => {
         if (!Array.isArray(d?.rows) || d.rows.length === 0) return DEMO;
@@ -63,13 +63,25 @@ function loadMlResults(): Promise<MlResults> {
   return cache;
 }
 
+const listeners = new Set<(r: MlResults) => void>();
+
+/** 重新向伺服器讀取最新的 ml_results.json（「更新數據」按鈕使用），並通知所有頁面 */
+export async function reloadMlResults(): Promise<MlResults> {
+  cache = null;
+  const r = await loadMlResults();
+  listeners.forEach((fn) => fn(r));
+  return r;
+}
+
 /** React hook：先回傳示範數字，載入完成後若有真實結果就自動替換 */
 export function useMlResults(): MlResults {
   const [state, setState] = useState<MlResults>(DEMO);
   useEffect(() => {
     let alive = true;
     loadMlResults().then((r) => alive && setState(r));
-    return () => { alive = false; };
+    const fn = (r: MlResults) => alive && setState(r);
+    listeners.add(fn);
+    return () => { alive = false; listeners.delete(fn); };
   }, []);
   return state;
 }

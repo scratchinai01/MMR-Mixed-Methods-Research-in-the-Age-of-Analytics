@@ -11,6 +11,7 @@
 // 左欄原著數字取自本平台的論文翻譯（src/data/paperContent.ts），報告前請以原文 PDF 核對。
 // =====================================================================
 import React from 'react';
+import { NewsDownload } from '../components/NewsDownload.tsx';
 import { PAPER_TABLES, ORIGINAL_PAPER_SOURCE, PAPER_PARAGRAPHS } from './paperContent.ts';
 
 export type DeckSection = 'paper' | 'replication' | 'compare';
@@ -43,7 +44,7 @@ const T2 = table('table-2');
 const T78 = table('table-7-8');
 
 /** 取原著表 2 某一列（例如 'Sales_growth X Positive'）的 Model 3 (Exchangeable) 欄 */
-function paperCell(term: string, col = 3): string {
+export function paperCell(term: string, col = 3): string {
   const row = T2?.rows.find((r) => String(r[0]).startsWith(term));
   return row ? String(row[col]) : '—';
 }
@@ -58,13 +59,13 @@ function parsePaper(term: string) {
 // ── 台股結果讀取 ──
 const gee = (ctx: DeckContext) => ctx.data?.gee || null;
 const geeModel = (ctx: DeckContext, key = 'exchangeable') => gee(ctx)?.models?.[key] || null;
-function ourTerm(ctx: DeckContext, term: string, key = 'exchangeable') {
+export function ourTerm(ctx: DeckContext, term: string, key = 'exchangeable') {
   return geeModel(ctx, key)?.rows?.find((r: any) => r.term === term) || null;
 }
 
-type Verdict = '一致' | '方向相同但不顯著' | '相反' | '尚未計算';
+type Verdict = '一致' | '方向相同但不顯著' | '方向相反但不顯著' | '相反' | '尚未計算';
 
-/** 比較原著與台股：同號且 p<.05 → 一致；同號但不顯著；異號且顯著 → 相反 */
+/** 比較原著與台股：同號且 p<.05 → 一致；同號但不顯著；異號但不顯著；異號且顯著 → 相反 */
 export function verdictFor(ctx: DeckContext, term: string): Verdict {
   const ours = ourTerm(ctx, term);
   const paper = parsePaper(term);
@@ -72,7 +73,7 @@ export function verdictFor(ctx: DeckContext, term: string): Verdict {
   const same = Math.sign(ours.coef) === Math.sign(paper.coef);
   if (same && ours.p < 0.05) return '一致';
   if (!same && ours.p < 0.05) return '相反';
-  return '方向相同但不顯著';
+  return same ? '方向相同但不顯著' : '方向相反但不顯著';
 }
 
 // ─────────────────────────── 小元件 ───────────────────────────
@@ -126,6 +127,7 @@ const VerdictChip: React.FC<{ v: Verdict }> = ({ v }) => {
   const cls = v === '一致' ? 'bg-emerald-600 text-white'
     : v === '相反' ? 'bg-rose-600 text-white'
     : v === '方向相同但不顯著' ? 'bg-amber-400 text-slate-950'
+    : v === '方向相反但不顯著' ? 'bg-rose-100 text-rose-800'
     : 'bg-slate-200 text-slate-700';
   return <span className={`inline-block px-2 py-0.5 rounded-full text-[0.8em] font-bold whitespace-nowrap ${cls}`}>{v}</span>;
 };
@@ -324,7 +326,7 @@ export const DECK: DeckSlide[] = [
       ['質性資料', '《華爾街日報》新聞文字'],
       ['量化資料', 'Compustat 財務指標、股價報酬'],
       ['整合方式', '把文字轉成情緒數值，再與財務指標放入同一模型（資料轉化）'],
-      ['判定', '三角校正設計 → 資料轉化模式（QUAL → quan 轉換後整合）'],
+      ['判定', '作者定位為混合方法：收斂設計的資料轉化變體（是否算 MMR 學界有爭議，見方法論思辨頁）'],
     ]} />,
     right: () => <KV rows={[
       ['質性資料', 'FinMind 台股新聞標題'],
@@ -494,14 +496,14 @@ export const DECK: DeckSlide[] = [
     quotes: ['methods-8'],
     id: 'r3', section: 'replication', minutes: 4, title: '新聞語料概況',
     left: () => <KV rows={[['來源', '《華爾街日報》'], ['單位', '文章全文'], ['情緒', 'LM 詞比例']]} />,
-    right: (ctx) => ctx.data ? <KV rows={[
+    right: (ctx) => ctx.data ? <div className="space-y-3"><KV rows={[
       ['新聞總數', `${ctx.data.articleCount.toLocaleString()} 則`],
       ['期間', `${ctx.data.period.start}～${ctx.data.period.end}`],
       ['正面占比', pct(ctx.data.sentimentShare?.positive)],
       ['負面占比', pct(ctx.data.sentimentShare?.negative)],
       ['判讀引擎', ctx.data.sentimentEngine],
       ['計算時間', String(ctx.data.generatedAt || '').replace('T', ' ')],
-    ]} /> : <Pending what="新聞語料統計" />,
+    ]} /><NewsDownload data={ctx.data} /></div> : <Pending what="新聞語料統計" />,
     notes: '報告語料規模與正負面比例。若正面遠多於負面，可呼應原著「負面新聞較稀少但影響較大」的論點。',
   },
   {
