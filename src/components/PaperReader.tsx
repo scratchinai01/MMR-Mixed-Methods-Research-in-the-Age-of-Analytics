@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { PdfImmersiveReader } from './PdfImmersiveReader.tsx';
 import { PARA_EXPLAIN, buildExplainMarkdown } from '../data/paraExplain.ts';
+import { findTerms } from '../data/termVocab.ts';
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
 
 interface PaperReaderProps {
@@ -155,6 +156,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
 
   // 原文逐字閱讀器（使用者自行上傳 PDF，在瀏覽器中解析）
   const [pdfReaderOpen, setPdfReaderOpen] = useState(false);
+  const [deepParaId, setDeepParaId] = useState<string | null>(null);
 
   const handleCopyBibtex = () => {
     navigator.clipboard.writeText(ORIGINAL_PAPER_SOURCE.bibtex);
@@ -999,6 +1001,14 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                   ))}
 
                   {/* Ask AI Button */}
+                  <button
+                    onClick={() => setDeepParaId(deepParaId === para.id ? null : para.id)}
+                    className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-xl border transition-colors ${deepParaId === para.id ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-800'}`}
+                    title="本段英文專有名詞的中文與白話解釋（不使用 AI）"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>深入解說</span>
+                  </button>
                   {PARA_EXPLAIN[para.id] && onExplainPara ? (
                     <button
                       onClick={() => onExplainPara(`💡 白話解說：${para.subSection || '本段'}`, para.zh, buildExplainMarkdown(PARA_EXPLAIN[para.id]))}
@@ -1020,6 +1030,39 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                   )}
                 </div>
               </div>
+              {deepParaId === para.id && (() => {
+                const terms = findTerms(para.en);
+                return (
+                  <div className="mt-3 pt-3 border-t border-slate-100 animate-in fade-in duration-150">
+                    <div className="text-[11px] text-slate-400 mb-2">本段專有名詞 {terms.length} 個・點 🔊 聽英文發音</div>
+                    {terms.length ? (
+                      <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                        {terms.map((t) => (
+                          <div key={t.en} className="flex items-start gap-2 min-w-0">
+                            <button onClick={() => { try { window.speechSynthesis.cancel(); window.speechSynthesis.speak(makeUtterance(t.en, 'en')); } catch { /* 無語音 */ } }}
+                              className="shrink-0 text-slate-400 hover:text-indigo-600 mt-0.5" title="英文發音">
+                              <Volume2 className="w-3.5 h-3.5" />
+                            </button>
+                            <div className="min-w-0">
+                              <dt className="leading-snug">
+                                <span className="font-mono text-[12.5px] text-slate-500">{t.en}</span>
+                                <span className="mx-1.5 text-slate-300">·</span>
+                                <span className="font-semibold text-slate-800">{t.zh}</span>
+                                {t.g && (
+                                  <button onClick={() => onOpenGlossaryTerm(t.g!)} className="ml-1.5 text-[11px] text-indigo-500 hover:text-indigo-700 hover:underline">公式／例子</button>
+                                )}
+                              </dt>
+                              <dd className="text-slate-600 text-[13px] leading-relaxed">{t.x}</dd>
+                            </div>
+                          </div>
+                        ))}
+                      </dl>
+                    ) : (
+                      <p className="text-sm text-slate-500">本段沒有需要特別解釋的專有名詞。</p>
+                    )}
+                  </div>
+                );
+              })()}
             </article>
           ))}
 
