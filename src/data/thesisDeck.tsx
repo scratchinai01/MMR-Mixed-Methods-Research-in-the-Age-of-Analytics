@@ -172,6 +172,69 @@ const SourceNote: React.FC = () => (
 );
 
 
+
+/** 表 4.2 四大主要設計縮圖：標出本研究的位置 */
+function Table42Grid() {
+  const items: Array<[string, string, boolean]> = [
+    ['三角校正', '同時進行・通常並重', true],
+    ['嵌入式', '一軌嵌入另一軌', false],
+    ['解釋性', '先 QUAN 後 qual', false],
+    ['探索性', '先 QUAL 後 quan', false],
+  ];
+  return (
+    <div>
+      <div className="text-[0.78em] font-bold opacity-80 mb-1.5">表 4.2 四大主要設計（Creswell &amp; Plano Clark）</div>
+      <div className="grid grid-cols-4 gap-1.5 text-center">
+        {items.map(([name, sub, on]) => (
+          <div key={name} className={`rounded-lg border p-2 ${on ? 'bg-blue-600 text-white border-blue-600 shadow' : 'bg-white/70 border-slate-300 text-slate-600'}`}>
+            <div className="font-bold text-[0.85em]">{name}</div>
+            <div className="text-[0.7em] opacity-90 leading-snug">{sub}</div>
+          </div>
+        ))}
+      </div>
+      <div className="text-[0.72em] mt-1 opacity-80">本研究：三角校正設計中的「資料轉化」變體——文字與數字同時蒐集，文字先量化再一起分析。</div>
+    </div>
+  );
+}
+
+/** 資料轉化流程圖：質性文字 → 量化轉換 → 與量化資料合併 → 結果；虛線為缺少的質性詮釋軌 */
+function DesignFlow(p: { qual: string; convert: string; quanFromQual: string; quan: string; merge: string; result: string; tone: 'blue' | 'green' }) {
+  const c = p.tone === 'blue'
+    ? { qual: 'bg-violet-100 border-violet-300 text-violet-900', quan: 'bg-blue-100 border-blue-300 text-blue-900', merge: 'bg-blue-600 text-white border-blue-600' }
+    : { qual: 'bg-violet-100 border-violet-300 text-violet-900', quan: 'bg-emerald-100 border-emerald-300 text-emerald-900', merge: 'bg-emerald-600 text-white border-emerald-600' };
+  const Box = ({ cls, tag, text }: { cls: string; tag: string; text: string }) => (
+    <div className={`rounded-lg border px-2.5 py-1.5 ${cls}`}>
+      <div className="text-[0.68em] font-bold opacity-70">{tag}</div>
+      <div className="text-[0.82em] font-semibold leading-snug">{text}</div>
+    </div>
+  );
+  const Down = () => <div className="text-center leading-none opacity-60 text-[0.9em]">↓</div>;
+  return (
+    <div className="space-y-1">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Box cls={c.qual} tag="QUAL 質性資料" text={p.qual} />
+          <Down />
+          <Box cls="bg-amber-50 border-amber-300 text-amber-900" tag="資料轉化" text={p.convert} />
+          <Down />
+          <Box cls={c.quan} tag="quan 轉成數字" text={p.quanFromQual} />
+        </div>
+        <div className="space-y-1 flex flex-col">
+          <Box cls={c.quan} tag="QUAN 量化資料" text={p.quan} />
+          <div className="flex-1 rounded-lg border-2 border-dashed border-slate-400 px-2.5 py-1.5 text-slate-500 flex flex-col justify-center">
+            <div className="text-[0.68em] font-bold">缺少：質性詮釋軌</div>
+            <div className="text-[0.75em] leading-snug">閱讀新聞、編碼、找主題，再回頭解釋統計結果</div>
+          </div>
+        </div>
+      </div>
+      <div className="text-center leading-none opacity-60 text-[0.9em]">↘　↙</div>
+      <Box cls={c.merge} tag="整合（分析層）" text={p.merge} />
+      <Down />
+      <Box cls="bg-slate-800 text-white border-slate-800" tag="結果" text={p.result} />
+    </div>
+  );
+}
+
 /** 摘要逐句精讀：左欄完整英文原文＋中譯（摘要已與 Virginia Tech 典藏頁的公開摘要核對） */
 function AbstractFull({ id, focus }: { id: string; focus: string[] }) {
   const para = PAPER_PARAGRAPHS.find((p) => p.id === id);
@@ -321,20 +384,38 @@ export const DECK: DeckSlide[] = [
   },
   {
     quotes: ['theory-10'],
-    id: 'p5', section: 'paper', minutes: 3, title: '混合方法設計（表 4.2 判定）',
-    left: () => <KV rows={[
-      ['質性資料', '《華爾街日報》新聞文字'],
-      ['量化資料', 'Compustat 財務指標、股價報酬'],
-      ['整合方式', '把文字轉成情緒數值，再與財務指標放入同一模型（資料轉化）'],
-      ['判定', '作者定位為混合方法：收斂設計的資料轉化變體（是否算 MMR 學界有爭議，見方法論思辨頁）'],
-    ]} />,
-    right: () => <KV rows={[
-      ['質性資料', 'FinMind 台股新聞標題'],
-      ['量化資料', '股價、月營收、本益比／淨值比、市值'],
-      ['整合方式', '以 Gemini（或關鍵詞）把標題轉成正／負面，再計算每日比例'],
-      ['判定', '沿用相同的資料轉化模式，方便與原著比較'],
-    ]} />,
-    notes: '用 Creswell & Plano Clark 表 4.2 說明兩者都屬資料轉化：先把文字量化，再與財務變數整合分析。',
+    id: 'p5', section: 'paper', minutes: 3, title: '混合方法設計：表 4.2 定位與資料轉化流程',
+    left: () => (
+      <div className="space-y-4">
+        <Table42Grid />
+        <DesignFlow
+          qual="《華爾街日報》新聞全文"
+          convert="LM 金融詞典計數"
+          quanFromQual="正／負面詞比例"
+          quan="Compustat 財務指標＋股價報酬"
+          merge="GEE ＋ 機器學習（同一模型）"
+          result="解釋與預測超額報酬 SCAR"
+          tone="blue"
+        />
+      </div>
+    ),
+    right: () => (
+      <div className="space-y-4">
+        <DesignFlow
+          qual="FinMind 台股新聞標題"
+          convert="Gemini 判讀 −1～+1"
+          quanFromQual="每日正／負面新聞比例"
+          quan="股價、月營收、本益比／淨值比、市值"
+          merge="GEE ＋ 5 種機器學習（同一模型）"
+          result="解釋與預測 5 日 SCAR（相對 0050）"
+          tone="green"
+        />
+        <p className="text-[0.82em] leading-relaxed">
+          兩邊都是「先把文字量化，再和財務數字合併分析」。虛線框是嚴格定義下 MMR 應有、但兩邊都<strong>沒有</strong>的質性詮釋軌——這正是本篇是否算 MMR 的爭議所在。
+        </p>
+      </div>
+    ),
+    notes: '左上用表 4.2 定位：同時進行、兩股資料進同一分析，屬三角校正（收斂）設計的資料轉化變體。下方流程圖說明文字如何變成數字。右邊台股流程完全對應；虛線框指出兩邊都缺少質性詮釋軌。',
   },
   {
     quotes: ['abs-3', 'intro-18'],
