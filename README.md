@@ -26,6 +26,12 @@ AI 解析由 **Groq** 提供（Gemini 為備援），台股新聞與股價來自
 
 更新版本：`cd mmr && git pull && bash deploy.sh`，金鑰直接按 Enter 會沿用上次設定。
 
+### 自動更新（只需設定一次）
+
+在 Cloud Shell 執行 `cd ~/mmr && git pull && bash setup-auto-deploy.sh`。
+之後 GitHub 的 main 只要有新版本，GitHub Actions 就會自動重新部署（約 5 分鐘），進度在 GitHub 的「Actions」分頁。
+金鑰沿用 Cloud Run 上的設定；要更換金鑰時再執行一次 `bash deploy.sh` 即可。
+
 ## 以真實新聞重算機器學習比較表
 
 網頁上「台股機器學習預測精度對比」預設顯示原論文的示範數字（會標示「示範數字」）。

@@ -1,0 +1,43 @@
+# GitHub 的 main 有新版本時，自動重新部署到 Google Cloud Run
+# 第一次使用前，需在 Cloud Shell 執行一次：bash setup-auto-deploy.sh
+# 金鑰（GROQ、FinMind…）沿用 Cloud Run 上已設定的值，這裡不需要也不會碰到
+name: 自動部署到 Cloud Run
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch: {}   # 也可在 GitHub「Actions」分頁手動按「Run workflow」
+
+permissions:
+  contents: read
+  id-token: write          # 讓 GitHub 以 Workload Identity 登入 Google Cloud（不需金鑰檔）
+
+concurrency:
+  group: deploy-cloud-run
+  cancel-in-progress: true # 連續推送時，只部署最新一版
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 登入 Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/154274473112/locations/global/workloadIdentityPools/github/providers/github
+          service_account: github-deployer@payfirebase.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: 建置並部署
+        run: |
+          gcloud run deploy mmr-analytics \
+            --source . \
+            --region asia-east1 \
+            --project payfirebase \
+            --quiet
+          echo "網址：$(gcloud run services describe mmr-analytics --region asia-east1 --project payfirebase --format='value(status.url)')"
