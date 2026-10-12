@@ -267,7 +267,15 @@ export function ReplicationReplay({ data, jump }: { data: any | null; jump?: { s
               </tbody>
             </table>
           </div>
-          <p className="mt-2 text-slate-300">三種相關結構的方向一致，代表結果不是某一種設定碰巧產生的。完整係數見下方 GEE 表。</p>
+          <p className="mt-2 text-slate-300">
+            {KEY_TERMS.every((t) => {
+              const xs = Object.values(models).map((m: any) => m.rows.find((r: any) => r.term === t)).filter(Boolean);
+              return xs.every((x: any) => Math.sign(x.coef) === Math.sign(xs[0].coef) && (x.p < 0.05) === (xs[0].p < 0.05));
+            })
+              ? '三種相關結構的方向與顯著性一致，代表結果不是某一種設定碰巧產生的。'
+              : '獨立與可交換結構的結果接近，但 AR(1) 結構下部分係數的方向或顯著性不同，表示結果對相關結構設定有一定敏感性，解讀時要保守。'}
+            完整係數見下方 GEE 表。
+          </p>
         </StepCard>
       )}
 

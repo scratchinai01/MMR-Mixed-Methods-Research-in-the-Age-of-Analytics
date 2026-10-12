@@ -199,7 +199,7 @@ export const GLOSSARY_PLUS: Record<string, GlossItem> = {
     cat: '計量方法',
     p: '用來比較 GEE 不同相關結構哪一個比較合適的分數。數字越小越好。',
     e: '試穿三件衣服，用「不合身分數」來比，分數最低的最合身。',
-    calc: ['本研究台股三種結構的 QIC：Independence 2296.3、AR(1) 2411.9、Exchangeable 2344.2', 'Independence 最低，但三種的係數方向一致'],
+    calc: ['本研究台股三種結構的 QIC：Independence 2296.3、AR(1) 2411.9、Exchangeable 2344.2', 'Independence 最低；本研究依原著以 Exchangeable 為主要模型，AR(1) 下部分係數方向不同，解讀時需保守'],
     k: 'QIC 越小，模型越合適。',
   },
   Autocorrelation: {

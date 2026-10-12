@@ -126,10 +126,16 @@ export const DECK_TALK: Record<string, (c: DeckContext) => Talk> = {
       ? `其中「本益比 × 好消息」在台股是 ${disp(c, 'PE_ratio X Positive')}：本益比越高、市場越期待的公司，好消息越不稀奇，跟營收成長那頁是同一個道理。`
       : `其中「本益比 × 好消息」在台股是 ${disp(c, 'PE_ratio X Positive')}，沒有看到「期待越高、好消息越打折」的型態。`,
   }),
-  r12: () => ({
-    say: '我們換了三種不同的計算假設，結論的方向都一樣，所以不是碰巧算出來的。',
-    ex: '就像用三台不同的體重計量體重，三台都說差不多，你就比較相信這個數字。',
-  }),
+  r12: (c) => {
+    const ms: any[] = Object.values(c.data?.gee?.models || {});
+    const ok = ['Positive', 'Negative', 'Sales_growth X Positive'].every((t) => {
+      const xs = ms.map((m) => m.rows.find((r: any) => r.term === t)).filter(Boolean);
+      return xs.every((x: any) => Math.sign(x.coef) === Math.sign(xs[0].coef) && (x.p < 0.05) === (xs[0].p < 0.05));
+    });
+    return ok
+      ? { say: '我們換了三種不同的計算假設，結論的方向都一樣，所以不是碰巧算出來的。', ex: '就像用三台不同的體重計量體重，三台都說差不多，你就比較相信這個數字。' }
+      : { say: '我們換了三種計算假設：兩種結果接近，但 AR(1) 這種假設下有幾個係數變了，所以結論要講得保守一點。', ex: '就像用三台體重計，兩台說 60 公斤、一台說 58 公斤：大致可信，但不能說得太篤定。我們主要依原著採用「可交換」這一種。' };
+  },
   r13: (c) => ({
     say: '接著我們讓電腦自己學，看看加了新聞之後，能不能更準地猜出股票會不會跑贏大盤。',
     ex: `我們用前面約七成的日子讓電腦練習（${d(c)?.split?.trainN ?? '—'} 筆），再用後面的日子考試（${d(c)?.split?.testN ?? '—'} 筆）。就像用前幾次小考練習，再用沒看過的期末考測驗。`,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ManuscriptBody } from './ManuscriptBody.tsx';
+import { ConferencePaper } from './ConferencePaper.tsx';
 import type { RepLink } from '../data/deckLinks.ts';
 import { 
   Presentation, 
@@ -191,7 +191,8 @@ export const ThesisReportView: React.FC<ThesisReportViewProps> = ({
 
   // Copy speech draft handler
   const handleCopyDraft = () => {
-    const speechDraft = buildDeckScript({ data: mlResults.isDemo ? null : mlResults.data });
+    const paper = viewMode === 'manuscript' ? (document.querySelector('.manuscript-container article') as HTMLElement | null)?.innerText : null;
+    const speechDraft = paper || buildDeckScript({ data: mlResults.isDemo ? null : mlResults.data });
     navigator.clipboard.writeText(speechDraft);
     setCopiedDraft(true);
     setTimeout(() => setCopiedDraft(false), 2500);
@@ -384,48 +385,8 @@ export const ThesisReportView: React.FC<ThesisReportViewProps> = ({
               </div>
             </div>
 
-            {/* Formal Cover Title Header */}
-            <div className="text-center space-y-4 border-b-2 border-slate-900 pb-8">
-              <div className="text-xs uppercase tracking-widest font-mono text-slate-500">
-                ACADEMIC SEMINAR & THESIS DEFENSE EXECUTIVE REPORT
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight leading-snug">
-                分析時代下的混合方法研究：<br />
-                結合文本情緒與財務指標預測股票超額報酬之理論機制與台股實證
-              </h1>
-              <div className="text-sm text-slate-600 font-medium">
-                Mixed-Methods Research in the Age of Analytics: Using Textual Sentiment and Financial Indicators to Predict Abnormal Stock Returns
-              </div>
-
-              {/* Author & Seminar Meta */}
-              <div className="pt-4 text-xs text-slate-600 flex flex-wrap items-center justify-center gap-6">
-                <div><strong>標竿文獻：</strong> Raman et al. (2022), <em>IJIM</em> 64, 102451 (SSCI Q1)</div>
-                <div><strong>報告類型：</strong> 碩博士論文口試／期刊專題研討會報告書</div>
-                <div><strong>實證引擎：</strong> FinMind 台股高頻量化工具 API</div>
-              </div>
-            </div>
-
-            <ManuscriptBody data={mlResults.isDemo ? null : mlResults.data} />
-
-            {/* Chapter 6: References */}
-            <section className="space-y-3 border-t border-slate-200 pt-6">
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">
-                參考文獻 (Selected References - APA 7th)
-              </h2>
-              <div className="text-xs text-slate-600 space-y-1.5 pl-6 -indent-6">
-                <div>Creswell, J. W., & Plano Clark, V. L. (2018). <em>Designing and conducting mixed methods research</em> (3rd ed.). SAGE Publications.</div>
-                <div>Loughran, T., & McDonald, B. (2011). When is a liability not a liability? Textual analysis, dictionaries, and 10-Ks. <em>The Journal of Finance</em>, 66(1), 35-65.</div>
-                <div>Raman, R., Aljafari, R., Venkatesh, V., & Richardson, V. J. (2022). Mixed-methods research in the age of analytics, an exemplar leveraging sentiments from news articles to predict firm performance. <em>International Journal of Information Management</em>, 64, 102451.</div>
-                <div>Fetters, M. D., Curry, L. A., & Creswell, J. W. (2013). Achieving integration in mixed methods designs—Principles and practices. <em>Health Services Research</em>, 48(6pt2), 2134-2156.</div>
-                <div>Johnson, R. B., Onwuegbuzie, A. J., & Turner, L. A. (2007). Toward a definition of mixed methods research. <em>Journal of Mixed Methods Research</em>, 1(2), 112-133.</div>
-                <div>Venkatesh, V., Brown, S. A., & Bala, H. (2013). Bridging the qualitative-quantitative divide: Guidelines for conducting mixed methods research in information systems. <em>MIS Quarterly</em>, 37(1), 21-54.</div>
-              </div>
-            </section>
-
-            {/* Manuscript Footer Signature */}
-            <div className="border-t-2 border-slate-900 pt-4 flex flex-wrap items-center justify-between text-xs text-slate-500">
-              <div>論文口試／專題發表委員會審查專用本 • 規格符合 SSCI Q1 實證要求</div>
-              <div className="font-mono">Document Hash: MMR-IJIM-2022-TW2330-VERIFIED</div>
+            <div className={useSerifFont ? 'font-serif' : ''}>
+              <ConferencePaper data={mlResults.isDemo ? null : mlResults.data} />
             </div>
           </div>
         )}
