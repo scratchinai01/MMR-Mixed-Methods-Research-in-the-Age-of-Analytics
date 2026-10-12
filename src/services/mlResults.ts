@@ -25,6 +25,7 @@ export interface MlResults {
   articleCount?: number;
   sampleCount?: number;
   baselineAcc?: string;
+  data?: any; // ml_results.json 原始內容（GEE、個股統計、新聞樣本等），論文報告投影片使用
 }
 
 const DEMO: MlResults = {
@@ -49,6 +50,7 @@ function loadMlResults(): Promise<MlResults> {
           articleCount: d.articleCount,
           sampleCount: d.sampleCount,
           baselineAcc: d.split?.baselineAcc,
+          data: d,
           sourceLabel:
             `✅ 真實資料：FinMind 新聞 ${d.articleCount} 則（${stocks}，${d.period?.start}～${d.period?.end}）｜` +
             `情緒判讀：${d.sentimentEngine}｜預測目標：${d.target}｜` +

@@ -31,22 +31,28 @@
 之後 GitHub 的 main 只要有新版本，GitHub Actions 就會自動重新部署（約 5 分鐘），進度在 GitHub 的「Actions」分頁。
 金鑰沿用 Cloud Run 上的設定；要更換金鑰時再執行一次 `bash deploy.sh` 即可。
 
-## 以真實新聞重算機器學習比較表
+## 台股復刻（論文報告第二、三部分的真實數字）
 
-網頁上「台股機器學習預測精度對比」預設顯示原論文的示範數字（會標示「示範數字」）。
-在 Cloud Shell 執行下列指令，就會用 FinMind 真實新聞（4 支股票 × 90 天，通常超過 500 則）重新計算：
+「論文報告」為兩小時三段式簡報：原文報告 40 分、台股復刻 60 分、復刻後比較 20 分，每頁左邊是原著、右邊是台股復刻。
+右邊的數字全部來自 `public/data/ml_results.json`，由 `news_ml_study.py` 以 FinMind 真實資料計算；沒有這個檔案時一律顯示「尚未計算」。
+
+腳本會同時完成：
+- **表 2 復刻（GEE）**：SCAR（新聞日後 5 日、相對 0050、以 60 日波動度標準化）對 Positive / Negative、PE、MB、月營收年增率、Prior_SCAR、Size 與 6 個交互作用項，三種相關結構（Independent / AR(1) / Exchangeable）
+- **表 7–8 復刻（機器學習）**：預測 SCAR 是否為正，比較純財務與財務＋情緒，依時間切分並報告基準準確率
+
+在 Cloud Shell 執行（預設台灣 50 前 10 大權值股 × 最近 365 天，約 3,700 次 FinMind 查詢）：
 
 ```bash
 cd ~/mmr && git pull
-pip install --user pandas scikit-learn requests
+pip install --user pandas scikit-learn statsmodels requests
 export FINMIND_API_TOKEN=你的Token
 export GEMINI_API_KEY=你的Gemini金鑰   # 可省略，省略則用關鍵詞判讀情緒
-python3 news_ml_study.py --stocks 2330,2454,2317,2382 --days 90
-bash deploy.sh
+python3 news_ml_study.py
+git add public/data/ml_results.json && git commit -m "更新台股復刻結果" && git push
 ```
 
-結果存在 `public/data/ml_results.json`，網頁會自動改顯示真實結果，並附上樣本數、期間與基準準確率。
-抓過的新聞存在 `.cache/`，若碰到 FinMind 請求上限，一小時後重跑同一指令即可從中斷處繼續。
+推送後網站會自動重新部署（需先做過「自動更新」設定）。抓過的資料存在 `.cache/`，中斷後重跑同一指令會從中斷處繼續。
+可用 `--stocks`、`--days`、`--max-per-day` 調整樣本範圍。
 
 ## AI 模型與成本
 
