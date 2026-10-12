@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { makeUtterance } from '../services/ttsVoice.ts';
 import { 
   BENCHMARK_PAPERS,
   PAPER_SECTIONS, 
@@ -115,19 +116,8 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
     }
 
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang === 'zh' ? 'zh-TW' : 'en-US';
-    utterance.rate = 1.0;
-
-    // Pick appropriate voice
-    const voices = window.speechSynthesis.getVoices();
-    if (lang === 'zh') {
-      const zhVoice = voices.find(v => v.lang === 'zh-TW' || v.lang.includes('TW') || v.name.includes('Taiwan'));
-      if (zhVoice) utterance.voice = zhVoice;
-    } else {
-      const enVoice = voices.find(v => (v.lang === 'en-US' || v.lang === 'en-GB') && (v.name.includes('Google') || v.name.includes('Natural')));
-      if (enVoice) utterance.voice = enVoice;
-    }
+    // 使用全站「語音」設定所選的聲音與語速
+    const utterance = makeUtterance(text, lang === 'zh' ? 'zh' : 'en');
 
     utterance.onend = () => {
       setReadingParaId(null);

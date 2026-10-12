@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { makeUtterance } from './services/ttsVoice.ts';
 import { Header } from './components/Header.tsx';
 import { PaperReader } from './components/PaperReader.tsx';
 import { FinMindReplication } from './components/FinMindReplication.tsx';
@@ -125,8 +126,7 @@ export default function App() {
   const handleSpeakPara = (text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'zh-TW';
+    const utterance = makeUtterance(text);
     utterance.onend = () => setIsSpeakingPara(false);
     utterance.onerror = () => setIsSpeakingPara(false);
     setIsSpeakingPara(true);

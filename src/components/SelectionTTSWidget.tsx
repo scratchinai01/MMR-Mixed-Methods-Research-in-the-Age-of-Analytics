@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { makeUtterance, getTtsPrefs, setTtsPrefs } from '../services/ttsVoice.ts';
 import { 
   Volume2, 
   VolumeX, 
@@ -92,7 +93,7 @@ export const SelectionTTSWidget: React.FC<SelectionTTSWidgetProps> = ({ onAskGem
   // TTS State
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
-  const [speechRate, setSpeechRate] = useState<number>(1.0);
+  const [speechRate, setSpeechRate] = useState<number>(() => getTtsPrefs().rate);
   const [detectedLang, setDetectedLang] = useState<'en' | 'zh'>('en');
   const [autoSpeakOnSelect, setAutoSpeakOnSelect] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
@@ -142,29 +143,9 @@ export const SelectionTTSWidget: React.FC<SelectionTTSWidgetProps> = ({ onAskGem
     const lang = langOverride || detectLanguage(textToSpeak);
     const rate = rateOverride ?? speechRate;
 
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.rate = rate;
+    // 使用全站「語音」設定所選的聲音
+    const utterance = makeUtterance(textToSpeak, lang, rate);
     utterance.pitch = 1.0;
-
-    // Pick best voice
-    const voices = supportedVoices.length > 0 ? supportedVoices : window.speechSynthesis.getVoices();
-    if (lang === 'zh') {
-      utterance.lang = 'zh-TW';
-      const twVoice = voices.find(v => v.lang === 'zh-TW' || v.lang.includes('TW') || v.name.includes('Taiwan') || v.name.includes('HanHan') || v.name.includes('Yating'));
-      if (twVoice) utterance.voice = twVoice;
-      else {
-        const anyZh = voices.find(v => v.lang.startsWith('zh'));
-        if (anyZh) utterance.voice = anyZh;
-      }
-    } else {
-      utterance.lang = 'en-US';
-      const enVoice = voices.find(v => (v.lang === 'en-US' || v.lang === 'en-GB') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Karen')));
-      if (enVoice) utterance.voice = enVoice;
-      else {
-        const anyEn = voices.find(v => v.lang.startsWith('en'));
-        if (anyEn) utterance.voice = anyEn;
-      }
-    }
 
     utterance.onstart = () => {
       setIsPlaying(true);
@@ -329,6 +310,7 @@ export const SelectionTTSWidget: React.FC<SelectionTTSWidgetProps> = ({ onAskGem
   const cycleRate = () => {
     const nextRate = speechRate === 0.8 ? 1.0 : speechRate === 1.0 ? 1.25 : speechRate === 1.25 ? 1.5 : 0.8;
     setSpeechRate(nextRate);
+    setTtsPrefs({ rate: nextRate });
     if (isPlaying) {
       speakText(selectedText, detectedLang, nextRate);
     }

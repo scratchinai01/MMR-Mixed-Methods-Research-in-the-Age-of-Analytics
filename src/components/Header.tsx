@@ -1,4 +1,5 @@
 import React from 'react';
+import { VoicePickerButton } from './VoicePicker.tsx';
 import { 
   BookOpen, 
   TrendingUp, 
@@ -103,6 +104,8 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="font-bold">A+</span>
               <span className="hidden md:inline">{seniorMode ? '大字體 1.3x' : '大字體'}</span>
             </button>
+
+            <VoicePickerButton className={toolBtn} />
 
             <button
               onClick={onOpenGlossaryModal}
