@@ -184,7 +184,7 @@ function Table42Grid() {
   ];
   return (
     <div>
-      <div className="text-[0.78em] font-bold opacity-80 mb-1.5">表 4.2 四大主要設計（Creswell &amp; Plano Clark）</div>
+      <div className="text-[0.78em] font-bold opacity-80 mb-1.5">表 4.2 四大主要設計（Creswell &amp; Plano Clark 的分類，非原著內容）</div>
       <div className="grid grid-cols-4 gap-1.5 text-center">
         {items.map(([name, sub, on]) => (
           <div key={name} className={`rounded-lg border p-2 ${on ? 'bg-blue-600 text-white border-blue-600 shadow' : 'bg-white/70 border-slate-300 text-slate-600'}`}>
@@ -193,7 +193,7 @@ function Table42Grid() {
           </div>
         ))}
       </div>
-      <div className="text-[0.72em] mt-1 opacity-80">本研究：三角校正設計中的「資料轉化」變體——文字與數字同時蒐集，文字先量化再一起分析。</div>
+      <div className="text-[0.72em] mt-1 opacity-80">本報告判讀（原著沒有自行標示設計類型）：最接近三角校正設計中的「資料轉化」變體——新聞與財務數字涵蓋同一期間，文字先量化，再和財務數字放進同一組模型。</div>
     </div>
   );
 }
@@ -397,11 +397,11 @@ export const DECK: DeckSlide[] = [
       <div className="space-y-4">
         <Table42Grid />
         <DesignFlow
-          qual="《華爾街日報》新聞全文"
+          qual="《華爾街日報》新聞文本（約 2,500 篇）"
           convert="LM 金融詞典計數"
           quanFromQual="正／負面詞比例"
           quan="Compustat 財務指標＋股價報酬"
-          merge="GEE ＋ 機器學習（同一模型）"
+          merge="GEE 解釋 → 機器學習預測（同一組變數）"
           result="解釋與預測超額報酬 SCAR"
           tone="blue"
         />
@@ -414,7 +414,7 @@ export const DECK: DeckSlide[] = [
           convert="Gemini 判讀 −1～+1"
           quanFromQual="每日正／負面新聞比例"
           quan="股價、月營收、本益比／淨值比、市值"
-          merge="GEE ＋ 5 種機器學習（同一模型）"
+          merge="GEE 解釋 → 5 種機器學習預測（同一組變數）"
           result="解釋與預測 5 日 SCAR（相對 0050）"
           tone="green"
         />
@@ -423,7 +423,7 @@ export const DECK: DeckSlide[] = [
         </p>
       </div>
     ),
-    notes: '左上用表 4.2 定位：同時進行、兩股資料進同一分析，屬三角校正（收斂）設計的資料轉化變體。下方流程圖說明文字如何變成數字。右邊台股流程完全對應；虛線框指出兩邊都缺少質性詮釋軌。',
+    notes: '左上用表 4.2 定位（原著沒有自己標示設計類型，這是我們的判讀）：同時期資料、兩股資料進同一組模型，最接近三角校正（收斂）設計的資料轉化變體。原著流程是三階段：選變數 → GEE 解釋 → 機器學習預測。下方流程圖說明文字如何變成數字。右邊台股流程完全對應；虛線框指出兩邊都缺少質性詮釋軌。',
   },
   {
     quotes: ['abs-3', 'intro-18'],

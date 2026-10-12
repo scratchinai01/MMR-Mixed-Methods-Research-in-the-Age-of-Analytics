@@ -85,7 +85,7 @@ export const THEORY_PARAGRAPHS: PaperParagraph[] = [
     subSection: '2.2 協同整合架構概述 (Fig 1)',
     pdfPage: 'PDF P.7 (圖1 協同架構總綱)',
     en: '2.2. A Synergistic Framework of Information Sources and Methods: Motivated by theory-based insights from prior work and lack of studies that integrate sentiments from reputable business journals with summary financial measures, we leverage analytics to examine the interplay between quantitative financial measures and sentiments. Figure 1 depicts our proposed framework for leveraging information sources and methods to explain and predict firm performance.',
-    zh: '2.2. 資訊來源與研究方法之協同整合架構：基於先前理論洞見以及缺乏整合權威商業期刊情緒與財務總結指標之缺口，我們運用商業分析學檢視兩者間的非線性交互作用。圖 1 呈現了我們所提出的三階段協同架構，用以解釋並預測企業績效表現。',
+    zh: '2.2. 資訊來源與研究方法之協同架構：受到先前理論研究的啟發，加上目前缺乏將權威商業期刊的情緒與財務總結指標整合在一起的研究，我們運用分析方法檢視量化財務指標與情緒之間的交互關係。圖 1 呈現我們所提出的架構，說明如何運用各種資訊來源與方法來解釋並預測企業績效。',
     glossaryTerms: ['Mixed Methods Research', 'Triangulation'],
   },
   {

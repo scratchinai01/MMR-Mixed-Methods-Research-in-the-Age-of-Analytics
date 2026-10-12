@@ -1227,7 +1227,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                     <td className="p-3.5 text-center">
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">✅ 達成</span>
                     </td>
-                    <td className="p-3.5 text-slate-700">華爾街日報 (Wall Street Journal) 約 2,500 篇商業新聞全文內容、LM 專業金融詞典 sentiment。</td>
+                    <td className="p-3.5 text-slate-700">華爾街日報 (Wall Street Journal) 約 2,500 篇商業新聞文本、LM 專業金融詞典 sentiment。</td>
                   </tr>
                   <tr className="hover:bg-slate-50/80 transition-colors">
                     <td className="p-3.5 font-bold text-slate-900">同時處理 QUAN + QUAL/Text</td>
