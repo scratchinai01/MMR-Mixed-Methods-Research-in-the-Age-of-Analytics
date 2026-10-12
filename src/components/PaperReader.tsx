@@ -32,7 +32,9 @@ import {
   Zap,
   Presentation,
   ArrowLeft,
-  Lightbulb
+  Lightbulb,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 import { PdfImmersiveReader } from './PdfImmersiveReader.tsx';
 import { PARA_EXPLAIN, buildExplainMarkdown } from '../data/paraExplain.ts';
@@ -157,6 +159,19 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
 
   // 原文逐字閱讀器（使用者自行上傳 PDF，在瀏覽器中解析）
   const [pdfReaderOpen, setPdfReaderOpen] = useState(false);
+  // 左側目錄可收合（記住使用者的選擇）
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    try { return localStorage.getItem('reader-sidebar-open') !== '0'; } catch { return true; }
+  });
+  const toggleSidebar = (open: boolean) => {
+    setSidebarOpen(open);
+    try { localStorage.setItem('reader-sidebar-open', open ? '1' : '0'); } catch { /* 無法儲存 */ }
+  };
+  const goSec = (id: string) => {
+    setActiveSection(id);
+    setSearchQuery('');
+    setTimeout(() => document.getElementById(`sec-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  };
   const [deepParaId, setDeepParaId] = useState<string | null>(null);
 
   // 捲動時自動標示目前章節（左側大綱亮起）
@@ -589,11 +604,37 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
       )}
 
       {/* Main Grid: Left TOC Sidebar + Right Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className={`grid grid-cols-1 items-start ${sidebarOpen ? 'lg:grid-cols-12 gap-8' : 'lg:grid-cols-[56px_minmax(0,1fr)] gap-4 lg:gap-6'}`}>
+        {/* 收合狀態：細長章節列 */}
+        {!sidebarOpen && (
+          <nav className="flex lg:flex-col items-center gap-1.5 bg-white rounded-2xl border border-slate-200 shadow-xs p-1.5 overflow-x-auto lg:overflow-visible lg:sticky lg:top-[130px] no-scrollbar" aria-label="論文章節">
+            <button onClick={() => toggleSidebar(true)} title="展開目錄"
+              className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center text-slate-600 hover:bg-indigo-50 hover:text-indigo-700">
+              <PanelLeftOpen className="w-5 h-5" />
+            </button>
+            <div className="w-px h-6 lg:w-6 lg:h-px bg-slate-200 shrink-0" />
+            {PAPER_SECTIONS.map((sec) => {
+              const m = sec.titleZh.match(/^(\d+)/);
+              const short = m ? m[1] : sec.titleZh.slice(0, 1);
+              const on = activeSection === sec.id && !searchQuery;
+              return (
+                <button key={sec.id} onClick={() => goSec(sec.id)} title={sec.titleZh}
+                  className={`w-10 h-10 shrink-0 rounded-xl text-sm font-bold transition-colors ${on ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                  {short}
+                </button>
+              );
+            })}
+          </nav>
+        )}
         {/* Left Column: TOC Navigation (4 cols on lg) */}
-        <div className="lg:col-span-4 space-y-5 lg:sticky lg:top-[130px] lg:max-h-[calc(100vh-150px)] lg:overflow-y-auto no-scrollbar">
+        <div className={`lg:col-span-4 space-y-5 lg:sticky lg:top-[130px] lg:max-h-[calc(100vh-150px)] lg:overflow-y-auto no-scrollbar ${sidebarOpen ? '' : 'hidden'}`}>
           {/* Search Box */}
-          <div className="relative">
+          <div className="flex items-center gap-2">
+          <button onClick={() => toggleSidebar(false)} title="收起目錄"
+            className="w-11 h-11 shrink-0 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-indigo-700 hover:border-indigo-300">
+            <PanelLeftClose className="w-5 h-5" />
+          </button>
+          <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -610,6 +651,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                 清除
               </button>
             )}
+          </div>
           </div>
 
           {/* Quick Sidebar MMR Infographic Card */}
@@ -747,7 +789,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
         </div>
 
         {/* Right Column: Paragraph Content & Tables (8 cols on lg) */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className={`space-y-6 min-w-0 ${sidebarOpen ? 'lg:col-span-8' : ''}`}>
           {/* TTS Feature Prompt Banner */}
           <div className="p-3.5 rounded-2xl bg-gradient-to-r from-indigo-50/90 via-purple-50/70 to-sky-50/80 border border-indigo-200/80 flex items-center justify-between gap-3 text-xs shadow-xs">
             <div className="flex items-center gap-2.5">
