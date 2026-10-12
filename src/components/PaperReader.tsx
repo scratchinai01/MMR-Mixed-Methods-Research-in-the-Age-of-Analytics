@@ -1,0 +1,1372 @@
+import React, { useState, useMemo } from 'react';
+import { 
+  BENCHMARK_PAPERS,
+  PAPER_SECTIONS, 
+  GLOSSARY_DICT
+} from '../data/paperContent.ts';
+import { 
+  Search, 
+  Sparkles, 
+  BookOpen, 
+  Languages, 
+  Check, 
+  ExternalLink,
+  ChevronRight,
+  TrendingDown,
+  TrendingUp,
+  Table as TableIcon,
+  Info,
+  Layers,
+  Copy,
+  FileText,
+  X,
+  GraduationCap,
+  Globe,
+  Volume2,
+  VolumeX,
+  Image as ImageIcon,
+  Maximize2,
+  ZoomIn,
+  Zap,
+  Presentation,
+  ArrowLeft
+} from 'lucide-react';
+import { ImageLightboxModal } from './ImageLightboxModal.tsx';
+
+interface PaperReaderProps {
+  onAskGemini: (context: string) => void;
+  onOpenGlossaryTerm: (term: string) => void;
+  onNavigateToCritique?: () => void;
+  onOpenMmrModal?: () => void;
+  initialSection?: string;
+  returnToThesisSlide?: number | null;
+  onReturnToThesis?: () => void;
+}
+
+export const PaperReader: React.FC<PaperReaderProps> = ({
+  onAskGemini,
+  onOpenGlossaryTerm,
+  onNavigateToCritique,
+  onOpenMmrModal,
+  initialSection = 'abstract',
+  returnToThesisSlide,
+  onReturnToThesis,
+}) => {
+  const [selectedPaperId, setSelectedPaperId] = useState<string>('raman_2022');
+  const currentPaper = BENCHMARK_PAPERS.find(p => p.id === selectedPaperId) || BENCHMARK_PAPERS[0];
+  const ORIGINAL_PAPER_SOURCE = currentPaper.source;
+  const PAPER_PARAGRAPHS = currentPaper.paragraphs;
+  const PAPER_TABLES = currentPaper.tables;
+
+  const [activeSection, setActiveSection] = useState<string>(initialSection);
+
+  React.useEffect(() => {
+    if (initialSection) {
+      setActiveSection(initialSection);
+    }
+  }, [initialSection]);
+  const [readingMode, setReadingMode] = useState<'bilingual' | 'zh' | 'en'>('bilingual');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [fontSize, setFontSize] = useState<'normal' | 'large'>('normal');
+  const [showSourceModal, setShowSourceModal] = useState<boolean>(false);
+  const [copiedApa, setCopiedApa] = useState<boolean>(false);
+  const [copiedBibtex, setCopiedBibtex] = useState<boolean>(false);
+  const [showImageLightbox, setShowImageLightbox] = useState<boolean>(false);
+  const [selectedLightboxImgId, setSelectedLightboxImgId] = useState<string>('img1');
+  const [readingParaId, setReadingParaId] = useState<string | null>(null);
+  const [readingLang, setReadingLang] = useState<'en' | 'zh' | null>(null);
+  const [showMultiPaperBanner, setShowMultiPaperBanner] = useState<boolean>(true);
+
+  const openLightboxWithImage = (imgId: string) => {
+    setSelectedLightboxImgId(imgId);
+    setShowImageLightbox(true);
+  };
+
+  React.useEffect(() => {
+    const availableSections = new Set(PAPER_PARAGRAPHS.map((p) => p.section));
+    if (!availableSections.has(activeSection)) {
+      if (availableSections.has('abstract')) {
+        setActiveSection('abstract');
+      } else if (availableSections.has('meta')) {
+        setActiveSection('meta');
+      } else {
+        const first = PAPER_PARAGRAPHS[0]?.section;
+        if (first) setActiveSection(first);
+      }
+    }
+  }, [selectedPaperId, PAPER_PARAGRAPHS]);
+
+  const handleSpeakParagraph = (id: string, text: string, lang: 'en' | 'zh') => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      alert('您的瀏覽器不支援語音合成功能');
+      return;
+    }
+
+    if (readingParaId === id && readingLang === lang) {
+      window.speechSynthesis.cancel();
+      setReadingParaId(null);
+      setReadingLang(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang === 'zh' ? 'zh-TW' : 'en-US';
+    utterance.rate = 1.0;
+
+    // Pick appropriate voice
+    const voices = window.speechSynthesis.getVoices();
+    if (lang === 'zh') {
+      const zhVoice = voices.find(v => v.lang === 'zh-TW' || v.lang.includes('TW') || v.name.includes('Taiwan'));
+      if (zhVoice) utterance.voice = zhVoice;
+    } else {
+      const enVoice = voices.find(v => (v.lang === 'en-US' || v.lang === 'en-GB') && (v.name.includes('Google') || v.name.includes('Natural')));
+      if (enVoice) utterance.voice = enVoice;
+    }
+
+    utterance.onend = () => {
+      setReadingParaId(null);
+      setReadingLang(null);
+    };
+
+    utterance.onerror = () => {
+      setReadingParaId(null);
+      setReadingLang(null);
+    };
+
+    setReadingParaId(id);
+    setReadingLang(lang);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Filter paragraphs based on section and search
+  const filteredParagraphs = useMemo(() => {
+    return PAPER_PARAGRAPHS.filter((p) => {
+      const matchesSection = searchQuery.trim() !== '' ? true : p.section === activeSection;
+      const matchesSearch =
+        searchQuery.trim() === '' ||
+        p.en.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.zh.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSection && matchesSearch;
+    });
+  }, [activeSection, searchQuery, selectedPaperId, PAPER_PARAGRAPHS]);
+
+  const handleCopyApa = () => {
+    navigator.clipboard.writeText(ORIGINAL_PAPER_SOURCE.apaCitation);
+    setCopiedApa(true);
+    setTimeout(() => setCopiedApa(false), 2000);
+  };
+
+  const handleCopyBibtex = () => {
+    navigator.clipboard.writeText(ORIGINAL_PAPER_SOURCE.bibtex);
+    setCopiedBibtex(true);
+    setTimeout(() => setCopiedBibtex(false), 2000);
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {/* Return to Thesis Banner (若從口試簡報點擊跳轉至此，頂部清晰提供返回入口) */}
+      {returnToThesisSlide && onReturnToThesis && (
+        <div className="bg-gradient-to-r from-amber-500/15 via-indigo-600/15 to-transparent border border-amber-400/50 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-md backdrop-blur-md animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold shadow-md shadow-amber-300/40 shrink-0">
+              <Presentation className="w-5 h-5 text-slate-950" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-slate-900 text-sm">
+                  已為您定位口試簡報第 {returnToThesisSlide} 頁對應之論文原文
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-950">
+                  PPT 雙向聯動
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-0.5">
+                此處展示該頁之雙語對照內容與註釋。查閱完畢後，點擊右方按鈕即可隨時一鍵無縫返回簡報！
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onReturnToThesis}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-md shadow-amber-300/40 border border-amber-300 transition-all active:scale-95 cursor-pointer group"
+            title="一鍵返回口試簡報（或鍵盤按 Esc）"
+          >
+            <ArrowLeft className="w-4 h-4 text-slate-950 group-hover:-translate-x-0.5 transition-transform" />
+            <span>返回口試簡報 (Slide {returnToThesisSlide})</span>
+            <span className="px-1.5 py-0.5 rounded bg-slate-950/10 text-[10px] font-mono hidden md:inline">
+              Esc 返回
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Multi-Paper Selection Bar (Sticky & Prominent) */}
+      {showMultiPaperBanner ? (
+        <div className="relative sticky top-20 z-20 bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 text-white p-4 sm:p-5 rounded-2xl shadow-xl border border-indigo-500/40 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-300">
+          <div className="flex items-center gap-3 pr-8 sm:pr-0">
+            <div className="w-11 h-11 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold shadow-lg shadow-amber-400/20 shrink-0">
+              <BookOpen className="w-6 h-6 fill-slate-950" />
+            </div>
+            <div>
+              <div className="text-xs sm:text-sm font-extrabold text-white flex items-center gap-2 flex-wrap">
+                <span>標竿文獻沈浸式翻譯切換 (Multi-Paper Reader)</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 font-bold">
+                  SSCI Q1 旗艦文獻
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-300 mt-0.5">
+                點擊標竿文獻，即時切換載入對應的雙語全文、方法論與實證表格
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
+            {BENCHMARK_PAPERS.map((paper) => {
+              const isSelected = paper.id === selectedPaperId;
+              return (
+                <button
+                  key={paper.id}
+                  onClick={() => setSelectedPaperId(paper.id)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                    isSelected
+                      ? 'bg-amber-400 text-slate-950 shadow-lg font-extrabold scale-105'
+                      : 'bg-white/10 hover:bg-white/20 text-slate-200 border border-white/15'
+                  }`}
+                >
+                  <span>{paper.shortName}</span>
+                </button>
+              );
+            })}
+
+            {/* Close / Dismiss Button */}
+            <button
+              onClick={() => setShowMultiPaperBanner(false)}
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/15 transition-colors ml-1 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              title="關閉切換橫幅"
+              aria-label="關閉切換橫幅"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Reopen / Minimized Toggle Bar */
+        <div className="flex justify-between items-center bg-slate-900/90 backdrop-blur-md px-4 py-2.5 rounded-xl border border-indigo-500/30 text-white shadow-sm">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-slate-400">目前閱讀文獻：</span>
+            <span className="font-bold text-amber-400">{currentPaper.shortName}</span>
+            <span className="text-slate-400 text-[11px] hidden md:inline">({ORIGINAL_PAPER_SOURCE.journal} {ORIGINAL_PAPER_SOURCE.journalImpact})</span>
+          </div>
+          <button
+            onClick={() => setShowMultiPaperBanner(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-indigo-600/80 hover:bg-indigo-600 text-white border border-indigo-400/40 shadow-xs hover:shadow transition-all group"
+            title="開啟標竿文獻切換橫幅"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-300 group-hover:scale-110 transition-transform" />
+            <span>展開切換文獻選單</span>
+          </button>
+        </div>
+      )}
+
+      {/* Paper Hero Header */}
+      <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-3 py-1 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+              {ORIGINAL_PAPER_SOURCE.journal}
+            </span>
+            <span className="px-3 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+              {ORIGINAL_PAPER_SOURCE.journalImpact}
+            </span>
+            <a
+              href={ORIGINAL_PAPER_SOURCE.doiUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-mono font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 border border-slate-200 transition-colors"
+              title="點擊前往官方 DOI 原文頁面"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-indigo-500" />
+              <span>DOI: {ORIGINAL_PAPER_SOURCE.doi}</span>
+            </a>
+            <button
+              onClick={() => setShowSourceModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-xs"
+            >
+              <Globe className="w-3.5 h-3.5 text-amber-200" />
+              <span>查找原文位置與官方來源</span>
+            </button>
+          </div>
+
+          {/* Reading Controls */}
+          <div className="flex items-center gap-3">
+            {/* View Mode Switcher */}
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-medium">
+              <button
+                onClick={() => setReadingMode('bilingual')}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                  readingMode === 'bilingual'
+                    ? 'bg-white text-indigo-700 shadow-xs font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Languages className="w-3.5 h-3.5" />
+                <span>雙語對照</span>
+              </button>
+              <button
+                onClick={() => setReadingMode('zh')}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  readingMode === 'zh'
+                    ? 'bg-white text-indigo-700 shadow-xs font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span>繁體中文</span>
+              </button>
+              <button
+                onClick={() => setReadingMode('en')}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  readingMode === 'en'
+                    ? 'bg-white text-indigo-700 shadow-xs font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span>English</span>
+              </button>
+            </div>
+
+            {/* Font Size Toggle */}
+            <button
+              onClick={() => setFontSize(fontSize === 'normal' ? 'large' : 'normal')}
+              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-xs font-semibold rounded-lg text-slate-700 transition-colors"
+              title="調整字體大小"
+            >
+              {fontSize === 'normal' ? 'A+' : 'A-'}
+            </button>
+          </div>
+        </div>
+
+        {/* Paper Title */}
+        <div className="space-y-3">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold font-serif text-slate-950 tracking-tight leading-snug">
+            {ORIGINAL_PAPER_SOURCE.titleEn}
+          </h1>
+          <h2 className="text-lg sm:text-xl font-medium text-indigo-900 leading-normal">
+            {ORIGINAL_PAPER_SOURCE.titleZh}
+          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-slate-500 pt-1">
+            <p>
+              作者：{ORIGINAL_PAPER_SOURCE.authors.map(a => `${a.name} (${a.affil})`).join(' • ')}
+            </p>
+            <button
+              onClick={() => setShowSourceModal(true)}
+              className="text-indigo-600 hover:text-indigo-800 font-medium underline flex items-center gap-1"
+            >
+              <span>查看詳細引用與出版資訊</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Quick Value Callout Banner */}
+          {onNavigateToCritique && (
+            <div className="mt-4 p-3.5 rounded-xl bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 border border-indigo-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
+                <span className="text-slate-800">
+                  {selectedPaperId === 'wang_2023' ? (
+                    <><strong>/MMR文獻篩選【方法論對照教學】：</strong> 香港股市事件研究與消費者實驗結合。作者使用多階段設計，經 9 步篩選精準定位為 Multi-study Quantitative Design。</>
+                  ) : selectedPaperId === 'afego_2021' ? (
+                    <><strong>質性內容分析破譯市場反應：</strong> 抵制參與宣告產生 +2.68% 異常報酬，證實質性論述能有效解釋量化市場反饋。</>
+                  ) : (
+                    <><strong>深入探索本篇核心機理與方法論價值：</strong> Table 2 揭示「營收暴增 + 新聞過熱」超額報酬反而修正 (-102.094) 的市場預期機制。</>
+                  )}
+                </span>
+              </div>
+              <button
+                onClick={onNavigateToCritique}
+                className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold shrink-0 text-xs flex items-center gap-1.5 transition-colors shadow-2xs"
+              >
+                <span>{selectedPaperId === 'wang_2023' ? '查看文獻方法論對照' : '探索文獻核心方法與價值'}</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ---------------- Wang et al. (2023) /MMR文獻篩選 爭議案例與反例專題剖析 ---------------- */}
+      {selectedPaperId === 'wang_2023' && (
+        <div className="bg-slate-950 text-white rounded-3xl p-6 sm:p-8 border-2 border-rose-500/50 shadow-2xl space-y-6">
+          {/* Top Title & Official Links */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-600 text-white flex items-center gap-1 shadow-md">
+                  <span>🔴 /MMR文獻篩選【反例比較】</span>
+                </span>
+                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-mono bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  這不是典型 MMR（作者雖宣稱 Mixed Methods 但實質為 Multi-study Quantitative Design）
+                </span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-white mt-2 flex items-center gap-2">
+                <span>The Impacts of Logo Dynamism and Product Types on Brand Market Performance</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Wang, Liu & Chen (2023) • <em>Journal of Business Research (JBR)</em>, Vol. 166, Article 114060 • DOI: 10.1016/j.jbusres.2023.114060
+              </p>
+            </div>
+
+            {/* Official Source Action Buttons */}
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <a
+                href="https://www.sciencedirect.com/science/article/pii/S0148296323004186?casa_token=x_GFXZM-9JIAAAAA:9kUsr8s3TJuqCW3K1EFOJfYliL-vRfZUb1-dsEqNybUl5wfGKGuxRL-vpgA4JwVW6uciJ1CyeIQ"
+                target="_blank"
+                rel="noreferrer"
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>ScienceDirect 正式文章頁面</span>
+              </a>
+              <a
+                href="https://www.researchgate.net/publication/371981313_The_impacts_of_logo_dynamism_and_product_types_on_brand_market_performance"
+                target="_blank"
+                rel="noreferrer"
+                className="px-3.5 py-2 rounded-xl bg-teal-700 hover:bg-teal-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>ResearchGate 文章頁面</span>
+              </a>
+              <button
+                onClick={() => openLightboxWithImage('img6')}
+                className="px-3.5 py-2 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all"
+              >
+                <ZoomIn className="w-3.5 h-3.5" />
+                <span>放大檢視反例圖表</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Core Content Grid: Left ASCII/YAML Card + Right Gamma Image */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Left Column: Standard /MMR文獻篩選 Output Box (5 cols) */}
+            <div className="lg:col-span-5 bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800 font-mono text-xs space-y-3 flex flex-col justify-between">
+              <div className="flex items-center justify-between text-amber-300 font-bold border-b border-slate-800 pb-2">
+                <span>📋 /MMR文獻篩選 標準輸出判定表</span>
+                <span className="text-[10px] text-rose-400 bg-rose-950/80 px-2 py-0.5 rounded border border-rose-800">非典型 MMR</span>
+              </div>
+
+              <pre className="text-slate-300 leading-relaxed overflow-x-auto text-[11px] sm:text-xs">
+{`╔════════════════════════════════════════════╗
+║             /MMR文獻篩選                  ║
+╠════════════════════════════════════════════╣
+║ 論文                                       ║
+║ The Impacts of Logo Dynamism and          ║
+║ Product Types on Brand Market Performance ║
+║                                            ║
+║ Wang, Liu & Chen (2023)                   ║
+║ Journal of Business Research              ║
+║ DOI: 10.1016/j.jbusres.2023.114060        ║
+╠════════════════════════════════════════════╣
+║ 作者是否宣稱 Mixed Methods?               ║
+║ 🟢 YES                                    ║
+║                                            ║
+║ 是否有多種研究方法?                       ║
+║ 🟢 YES                                    ║
+║                                            ║
+║ 是否包含 QUAN?                            ║
+║ 🟢 YES                                    ║
+║                                            ║
+║ 是否包含真正 QUAL?                        ║
+║ 🔴 NO                                     ║
+║                                            ║
+║ QUAN + QUAL 方法論整合?                   ║
+║ 🔴 不足                                   ║
+║                                            ║
+║ 是否屬「真正 MMR」?                       ║
+║ 🔴 NO（嚴格篩選標準）                     ║
+║                                            ║
+║ 建議分類                                  ║
+║ Multi-study Quantitative Research         ║
+║ / Mixed Research Methods                  ║
+╚════════════════════════════════════════════╝`}
+              </pre>
+
+              <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400">
+                ⭐ <strong>最重要的判斷</strong>：出版社摘要雖明確寫「Mixed methods are employed」，而且包含 Pilot study ➔ Event study ➔ Experiment 1 ➔ Experiment 2。但全文實質為多重量化設計串聯，未見質性資料（QUAL）與跨典範整合。
+              </div>
+            </div>
+
+            {/* Right Column: Independent Infographic Image Preview (7 cols) */}
+            <div className="lg:col-span-7 bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800 space-y-3 flex flex-col justify-between">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                  <ImageIcon className="w-4 h-4 text-rose-400" />
+                  <span>主題六：/MMR文獻篩選 反例全景圖解 (Gamma 原圖同步)</span>
+                </span>
+                <a
+                  href="https://cdn.gamma.app/qczcgzm3dplba12/70dbe7ce78974009a403a083b190751d/original/image.png"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-rose-400 hover:text-rose-300 flex items-center gap-1 text-[11px] font-semibold"
+                >
+                  <span>開啟原圖</span>
+                  <Maximize2 className="w-3 h-3" />
+                </a>
+              </div>
+
+              <div 
+                onClick={() => openLightboxWithImage('img6')}
+                className="group relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950 cursor-pointer shadow-inner flex items-center justify-center max-h-72"
+              >
+                <img
+                  src="https://cdn.gamma.app/qczcgzm3dplba12/70dbe7ce78974009a403a083b190751d/original/image.png"
+                  alt="/MMR文獻篩選 反例教學：Wang et al. (2023)"
+                  className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-slate-950/40 group-hover:bg-slate-950/10 transition-colors flex items-center justify-center">
+                  <span className="px-3 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 shadow-md group-hover:scale-105 transition-transform">
+                    <ZoomIn className="w-3.5 h-3.5 text-rose-400" />
+                    <span>點擊放大檢視第 6 張高畫質篩選圖表</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[10px] font-mono text-slate-300 pt-1">
+                <div className="p-2 rounded-lg bg-slate-950 border border-slate-800">
+                  <div className="text-slate-400">Study 0 Pilot</div>
+                  <div className="text-amber-300 font-bold">Forbes 100 (QUAN)</div>
+                </div>
+                <div className="p-2 rounded-lg bg-slate-950 border border-slate-800">
+                  <div className="text-slate-400">Study 1 Event</div>
+                  <div className="text-amber-300 font-bold">港股 CAR (QUAN)</div>
+                </div>
+                <div className="p-2 rounded-lg bg-slate-950 border border-slate-800">
+                  <div className="text-slate-400">Study 2 Exp 1</div>
+                  <div className="text-amber-300 font-bold">控制實驗 (QUAN)</div>
+                </div>
+                <div className="p-2 rounded-lg bg-slate-950 border border-slate-800">
+                  <div className="text-slate-400">Study 3 Exp 2</div>
+                  <div className="text-amber-300 font-bold">中介機制 (QUAN)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 9 步篩選流程圖 & 為什麼不是真正 MMR 深度剖析 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+            {/* Left: 9 步篩選檢查流程 */}
+            <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-3">
+              <h4 className="text-sm font-bold text-amber-300 flex items-center gap-2">
+                <span>🔎 /MMR文獻篩選 9 步標準查核流程鏈</span>
+              </h4>
+              <div className="font-mono text-xs text-slate-300 space-y-1.5 p-3 rounded-xl bg-slate-950 border border-slate-800 leading-relaxed overflow-x-auto">
+                <div>/MMR文獻篩選</div>
+                <div className="pl-4 text-slate-500">↓</div>
+                <div className="pl-2">① QUAN 是否存在：<span className="text-emerald-400 font-bold">✅ 存在 (Forbes次級資料 + 港股CAR + 實驗)</span></div>
+                <div className="pl-4 text-slate-500">↓</div>
+                <div className="pl-2">② QUAL 是否存在：<span className="text-rose-400 font-bold">🔴 不存在 (無訪談、無文本編碼、無質性觀察)</span></div>
+                <div className="pl-4 text-slate-500">↓</div>
+                <div className="pl-2">③ 是否有 QUAN + QUAL：<span className="text-rose-400 font-bold">🔴 否 (全部為量化方法)</span></div>
+                <div className="pl-4 text-slate-500">↓</div>
+                <div className="pl-2">④ 是否真正 Integration：<span className="text-rose-400 font-bold">🔴 不足 (各研究各自獨立推論，無跨範型整合)</span></div>
+                <div className="pl-4 text-slate-500">↓</div>
+                <div className="pl-2">⑤ Integration 發生在哪一階段：<span className="text-slate-500">🔴 不適用</span></div>
+                <div className="pl-4 text-slate-500">↓</div>
+                <div className="pl-2">⑥ MMR Design：<span className="text-slate-500">🔴 不適用 Creswell 四大主要 MMR 設計</span></div>
+                <div className="pl-4 text-slate-500">↓</div>
+                <div className="pl-2">⑦ QUAN : QUAL 比例：<span className="text-amber-300 font-bold">100 : 0 (純量化)</span></div>
+                <div className="pl-4 text-slate-500">↓</div>
+                <div className="pl-2">⑧ 是否只是 Multi-method：<span className="text-emerald-400 font-bold">🟢 YES (多重研究方法組合)</span></div>
+                <div className="pl-4 text-slate-500">↓</div>
+                <div className="pl-2 font-bold text-rose-400">⑨ 最終判定：🔴 FALSE MMR（建議標註為 Multi-study Quantitative Design）</div>
+              </div>
+            </div>
+
+            {/* Right: 為什麼這篇不是「真正 MMR」的 4 大核心理由 */}
+            <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-3 flex flex-col justify-between">
+              <div>
+                <h4 className="text-sm font-bold text-rose-300 flex items-center gap-2">
+                  <span>⚡ 這篇為什麼不是「真正 MMR」？4 大判準剖析</span>
+                </h4>
+                <div className="space-y-2 mt-3 text-xs leading-relaxed text-slate-300">
+                  <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-start gap-2">
+                    <span className="w-5 h-5 rounded-full bg-rose-600/30 text-rose-400 font-bold flex items-center justify-center shrink-0 text-xs">1</span>
+                    <div><strong className="text-white">沒有質性資料/方法：</strong> 全文未見訪談、焦點團體、內容主題分析等任何質性研究方法。</div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-start gap-2">
+                    <span className="w-5 h-5 rounded-full bg-rose-600/30 text-rose-400 font-bold flex items-center justify-center shrink-0 text-xs">2</span>
+                    <div><strong className="text-white">四個研究都是量化方法：</strong> Pilot study (資料分析)、Event study、兩個行為實驗研究，本質皆為 QUAN。</div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-start gap-2">
+                    <span className="w-5 h-5 rounded-full bg-rose-600/30 text-rose-400 font-bold flex items-center justify-center shrink-0 text-xs">3</span>
+                    <div><strong className="text-white">缺乏 QUAN + QUAL 整合：</strong> 各研究為獨立平行的量化方法，沒有質性與量化的交錯並行或跨資料源整合。</div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-start gap-2">
+                    <span className="w-5 h-5 rounded-full bg-rose-600/30 text-rose-400 font-bold flex items-center justify-center shrink-0 text-xs">4</span>
+                    <div><strong className="text-white">屬於 Multi-study Quantitative Design：</strong> 這是經典的「多研究方法組合」，不是典型 Mixed Methods Research (MMR)。</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
+                <span className="text-slate-400">🎓 博士論文答辯建議：以此篇作為反例，向審稿人口委展示界定真偽 MMR 的學術功力！</span>
+                <button
+                  onClick={() => onAskGemini('請依據 /MMR文獻篩選 標準，深度比較 Raman et al. (2022) 的真 MMR 與 Wang et al. (2023) 的多重研究量化設計之本質差異？')}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-colors shadow-xs"
+                >
+                  AI 深度對比
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Grid: Left TOC Sidebar + Right Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: TOC Navigation (4 cols on lg) */}
+        <div className="lg:col-span-4 space-y-5 lg:sticky lg:top-20">
+          {/* Search Box */}
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="搜尋論文段落、變數或關鍵字..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-hidden focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 text-slate-800 shadow-xs"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600"
+              >
+                清除
+              </button>
+            )}
+          </div>
+
+          {/* Quick Sidebar MMR Infographic Card */}
+          <div
+            onClick={() => setShowImageLightbox(true)}
+            className="p-3.5 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/30 shadow-xs cursor-pointer group hover:border-indigo-400 transition-all flex items-center gap-3"
+            title="點擊放大查看 1536×1024 MMR 全景架構圖"
+          >
+            <div className="w-14 h-11 rounded-lg overflow-hidden shrink-0 border border-indigo-400/40 relative bg-slate-950">
+              <img
+                src="/images/paper_framework_diagram.png"
+                alt="MMR 縮圖"
+                onError={(e) => {
+                  e.currentTarget.src = "https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png";
+                }}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+              />
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent flex items-center justify-center transition-colors">
+                <ZoomIn className="w-3.5 h-3.5 text-white drop-shadow-xs" />
+              </div>
+            </div>
+            <div className="overflow-hidden flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-white truncate">MMR 全景架構圖</span>
+                <span className="px-1.5 py-0.2 rounded text-[9px] bg-indigo-500 text-white font-semibold">1536px</span>
+              </div>
+              <div className="text-[11px] text-indigo-200/80 truncate mt-0.5">點擊開啟無損高清燈箱</div>
+            </div>
+            <Maximize2 className="w-4 h-4 text-indigo-400 group-hover:text-white shrink-0 transition-colors" />
+          </div>
+
+          {/* Section List */}
+          <div className="bg-white rounded-2xl p-3 border border-slate-200 shadow-xs space-y-1">
+            <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              論文章節大綱導覽
+            </div>
+            {PAPER_SECTIONS.map((sec) => (
+              <button
+                key={sec.id}
+                onClick={() => {
+                  setActiveSection(sec.id);
+                  setSearchQuery('');
+                }}
+                className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-between group ${
+                  activeSection === sec.id && !searchQuery
+                    ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <div className="truncate">
+                  <div className="truncate text-slate-900 group-hover:text-indigo-600 transition-colors">
+                    {sec.titleZh}
+                  </div>
+                  <div className="text-[11px] text-slate-400 truncate font-mono">
+                    {sec.titleEn}
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+              </button>
+            ))}
+          </div>
+
+          {/* Key Findings Card */}
+          <div className="bg-gradient-to-br from-indigo-50/80 to-purple-50/60 p-5 rounded-2xl border border-indigo-100 text-xs space-y-3">
+            <div className="font-bold text-indigo-950 flex items-center gap-1.5 text-sm">
+              <Sparkles className="w-4 h-4 text-indigo-600" />
+              本論文 3 大實證震撼結論
+            </div>
+            {selectedPaperId === 'wang_2023' ? (
+              <ul className="space-y-2 text-slate-600 leading-relaxed">
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 mt-1.5 shrink-0" />
+                  <span>
+                    <strong>動態標誌溢酬：</strong>動態 Logo 帶來顯著較高的累積異常報酬 (CAR = +1.84%, p &lt; 0.001)。
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-600 mt-1.5 shrink-0" />
+                  <span>
+                    <strong>產品類型調節：</strong>享樂型產品 (Hedonic) 相較實用型產品更具強烈的市場視覺溢酬效果。
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 shrink-0" />
+                  <span>
+                    <strong>MMR 典範：</strong>成功將香港股市 205 家事件研究與消費者心理控制實驗完美融合。
+                  </span>
+                </li>
+              </ul>
+            ) : selectedPaperId === 'afego_2021' ? (
+              <ul className="space-y-2 text-slate-600 leading-relaxed">
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 mt-1.5 shrink-0" />
+                  <span>
+                    <strong>社會倡議信號：</strong>企業宣布參與抵制活動產生平均 +2.68% (p &lt; 0.001) 累積異常報酬。
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-600 mt-1.5 shrink-0" />
+                  <span>
+                    <strong>質性內容驅動：</strong>企業溝通框架的質性編碼直接解釋了量化股票市場的異象反應。
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 shrink-0" />
+                  <span>
+                    <strong>窗口穩健性：</strong>在 [-2, +1]、[-1, +2] 與 [0, +3] 多個窗口下皆呈現穩健正向異常反應。
+                  </span>
+                </li>
+              </ul>
+            ) : (
+              <ul className="space-y-2 text-slate-600 leading-relaxed">
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 mt-1.5 shrink-0" />
+                  <span>
+                    <strong>情緒不對稱性：</strong>負面新聞情緒衝擊 (β = -11.119***) 遠比正面情緒更具穿透力與破壞力。
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-600 mt-1.5 shrink-0" />
+                  <span>
+                    <strong>邊際遞減效應：</strong>在高營收成長時，正面情緒激勵效果強烈遞減 (Sales_growth × Pos = -102.094**)。
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 shrink-0" />
+                  <span>
+                    <strong>機器學習飛躍：</strong>加入新聞文字指標後，提升決策樹準確率從 <strong>67.9% 飆升至 99.7%</strong>！
+                  </span>
+                </li>
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Paragraph Content & Tables (8 cols on lg) */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* TTS Feature Prompt Banner */}
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-indigo-50/90 via-purple-50/70 to-sky-50/80 border border-indigo-200/80 flex items-center justify-between gap-3 text-xs shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Volume2 className="w-4 h-4 animate-pulse" />
+              </div>
+              <div>
+                <span className="font-bold text-indigo-950">即時選取 TTS 語音朗讀已就緒：</span>
+                <span className="text-slate-600 ml-1">
+                  隨時在網頁上<strong>滑鼠框選任何中英文句子</strong>，將自動浮現 TTS 播放列進行自然語音朗讀！
+                </span>
+              </div>
+            </div>
+            <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-200/60 text-indigo-800 shrink-0">
+              雙語支援 • 自由變速
+            </span>
+          </div>
+
+          {/* Methodology Infographic Card: Mixed Methods Research (MMR) */}
+          <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-5 sm:p-6 text-white border border-indigo-500/30 shadow-md relative overflow-hidden">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+              <div className="flex flex-col sm:flex-row items-start gap-4">
+                {/* Thumbnail */}
+                <div 
+                  onClick={() => setShowImageLightbox(true)}
+                  className="w-full sm:w-44 h-28 sm:h-28 rounded-xl overflow-hidden border border-indigo-400/40 shrink-0 bg-slate-950 relative group cursor-pointer shadow-lg"
+                  title="點擊放大查看 1536×1024 高清圖"
+                >
+                  <img
+                    src="/images/paper_framework_diagram.png"
+                    alt="MMR 全景架構圖"
+                    onError={(e) => {
+                      e.currentTarget.src = "https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png";
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-transparent transition-colors flex items-center justify-center">
+                    <ZoomIn className="w-6 h-6 text-white drop-shadow-md" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/80 text-white border border-indigo-300/30">
+                      方法論核心全景圖解
+                    </span>
+                    <span className="text-xs text-indigo-300 font-mono">1536 × 1024 高清 PNG</span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                    混合方法研究 (Mixed Methods Research, MMR) 全景架構圖
+                  </h3>
+                  <p className="text-xs text-indigo-200/80 leading-relaxed">
+                    本篇論文榮登頂級期刊的根本關鍵：結合<strong>量化數字的廣度</strong>（Compustat 財報指標）與<strong>質性敘事的深度</strong>（華爾街日報新聞情緒），透過<strong>實用主義</strong>與<strong>三角交叉檢驗</strong>，突破純統計模型盲區。
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                    <span className="font-semibold text-amber-300">📐 Creswell 圖 4.1 三角校正設計：</span>
+                    <span className="text-white bg-amber-500/30 px-2 py-0.5 rounded border border-amber-400/40">
+                      本研究屬於 (c) 資料轉化模式（QUAL ➔ quan ➔ 與 QUAN 相互關聯）
+                    </span>
+                    {onOpenMmrModal && (
+                      <button
+                        onClick={onOpenMmrModal}
+                        className="text-amber-200 hover:text-white underline font-semibold ml-1 flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>查看 a, b, c, d, e 五大變型圖解</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-row md:flex-col gap-2 shrink-0 w-full md:w-auto justify-end">
+                <button
+                  onClick={() => setShowImageLightbox(true)}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-xs transition-colors"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  <span>放大查看全圖</span>
+                </button>
+                <button
+                  onClick={() => onAskGemini('請依據 MMR 全景架構圖，詳細解析 Raman et al. (2022) 論文如何運用混合方法研究解決金融市場預測難題？')}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-indigo-200 hover:text-white font-medium text-xs transition-colors border border-white/10"
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                  <span>AI 圖解剖析</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Paragraph Cards */}
+          {filteredParagraphs.map((para) => (
+            <article
+              key={para.id}
+              className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/90 shadow-xs hover:border-indigo-200 transition-all space-y-4"
+            >
+              {/* PDF Original Page Indicator & SubSection Title */}
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs border-b border-slate-100 pb-2.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
+                    {para.pdfPage || 'PDF 原文位置'}
+                  </span>
+                  {para.subSection && (
+                    <span className="text-xs font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">
+                      {para.subSection}
+                    </span>
+                  )}
+                </div>
+                <a
+                  href={ORIGINAL_PAPER_SOURCE.doiUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-slate-400 hover:text-indigo-600 flex items-center gap-1 transition-colors"
+                  title="前往 ScienceDirect 對照原始期刊論文"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  <span>對照 Elsevier 原文</span>
+                </a>
+              </div>
+
+              {/* English Version */}
+              {(readingMode === 'bilingual' || readingMode === 'en') && (
+                <div className={`text-slate-800 leading-relaxed font-sans ${
+                  fontSize === 'large' ? 'text-base sm:text-lg leading-relaxed' : 'text-sm sm:text-base leading-relaxed'
+                }`}>
+                  {para.en}
+                </div>
+              )}
+
+              {/* Chinese Translation */}
+              {(readingMode === 'bilingual' || readingMode === 'zh') && (
+                <div className={`text-slate-900 leading-relaxed font-serif ${
+                  readingMode === 'bilingual' ? 'pt-3 border-t border-slate-100 text-indigo-950/90' : ''
+                } ${
+                  fontSize === 'large' ? 'text-base sm:text-lg leading-relaxed' : 'text-sm sm:text-base leading-relaxed'
+                }`}>
+                  {para.zh}
+                </div>
+              )}
+
+              {/* Action Toolbar & Glossary Chips */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-xs">
+                {/* Paragraph Audio TTS Buttons */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleSpeakParagraph(para.id, para.en, 'en')}
+                    className={`flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg transition-colors font-medium ${
+                      readingParaId === para.id && readingLang === 'en'
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 border border-slate-200'
+                    }`}
+                    title="朗讀本段英文原文 (EN)"
+                  >
+                    {readingParaId === para.id && readingLang === 'en' ? (
+                      <>
+                        <VolumeX className="w-3.5 h-3.5" />
+                        <span>停止英文</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>朗讀英文</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => handleSpeakParagraph(para.id, para.zh, 'zh')}
+                    className={`flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg transition-colors font-medium ${
+                      readingParaId === para.id && readingLang === 'zh'
+                        ? 'bg-purple-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-purple-700 hover:bg-purple-50 border border-slate-200'
+                    }`}
+                    title="朗讀本段中文翻譯 (ZH)"
+                  >
+                    {readingParaId === para.id && readingLang === 'zh' ? (
+                      <>
+                        <VolumeX className="w-3.5 h-3.5" />
+                        <span>停止中文</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-3.5 h-3.5 text-purple-600" />
+                        <span>朗讀中文</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Glossary terms & Ask Gemini */}
+                <div className="flex flex-wrap items-center gap-1.5 ml-auto">
+                  {para.glossaryTerms?.map((term) => (
+                    <button
+                      key={term}
+                      onClick={() => onOpenGlossaryTerm(term)}
+                      className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 font-mono text-[11px] transition-colors flex items-center gap-1"
+                    >
+                      <Info className="w-3 h-3 text-indigo-600" />
+                      <span>{term}</span>
+                    </button>
+                  ))}
+
+                  {/* Ask AI Button */}
+                  <button
+                    onClick={() => onAskGemini(`${para.en}\n\n【中文翻譯】\n${para.zh}`)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-800 hover:text-white bg-purple-100 hover:bg-purple-600 rounded-xl transition-all border border-purple-300/60 shadow-xs active:scale-95 cursor-pointer"
+                    title="使用 Gemini AI 深度解析此段論文論述與微結構意涵"
+                  >
+                    <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                    <span>⚡ AI 解析</span>
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+
+          {/* Section Pagination (Previous & Next Section) */}
+          {(() => {
+            const currentIndex = PAPER_SECTIONS.findIndex(s => s.id === activeSection);
+            const prevSection = currentIndex > 0 ? PAPER_SECTIONS[currentIndex - 1] : null;
+            const nextSection = currentIndex < PAPER_SECTIONS.length - 1 ? PAPER_SECTIONS[currentIndex + 1] : null;
+
+            return (
+              <div className="pt-8 pb-4 border-t border-slate-200 flex items-center justify-between gap-4">
+                {prevSection ? (
+                  <button
+                    onClick={() => {
+                      setActiveSection(prevSection.id);
+                      setSearchQuery('');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-semibold border border-slate-300 flex items-center gap-2 text-xs sm:text-sm transition-all shadow-xs"
+                  >
+                    <ChevronRight className="w-4 h-4 rotate-180" />
+                    <span>上一頁：{prevSection.titleZh}</span>
+                  </button>
+                ) : <div />}
+
+                {nextSection && (
+                  <button
+                    onClick={() => {
+                      setActiveSection(nextSection.id);
+                      setSearchQuery('');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-2 text-xs sm:text-sm transition-all shadow-md ml-auto"
+                  >
+                    <span>下一頁：{nextSection.titleZh}</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Section Tables (Shown when activeSection is results or methods) */}
+          {(activeSection === 'results' || activeSection === 'methods') && (
+            <div className="space-y-8 pt-4">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-lg border-b border-slate-200 pb-3">
+                <TableIcon className="w-5 h-5 text-indigo-600" />
+                <span>論文實證統計數據表 (Table 1 ~ Table 8)</span>
+              </div>
+
+              {PAPER_TABLES.map((table) => (
+                <div key={table.id} className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                  <div className="px-6 py-4 bg-slate-50 border-b border-slate-200">
+                    <h3 className="font-bold text-slate-900 text-base">{table.titleZh}</h3>
+                    <div className="text-xs text-slate-500 font-mono mt-0.5">{table.titleEn}</div>
+                    <p className="text-xs text-slate-600 mt-1">{table.description}</p>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs sm:text-sm">
+                      <thead>
+                        <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-700 font-semibold">
+                          {table.headers.map((h, i) => (
+                            <th key={i} className="px-4 py-3 whitespace-nowrap">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700 font-mono">
+                        {table.rows.map((row, rIdx) => {
+                          const isKeyRow = String(row[0]).includes('Sales_growth X Positive') || String(row[0]).includes('Boosted Decision Tree');
+                          return (
+                            <tr key={rIdx} className={isKeyRow ? 'bg-amber-50/70 font-semibold text-amber-950' : 'hover:bg-slate-50/80 transition-colors'}>
+                              {row.map((cell, cIdx) => (
+                                <td key={cIdx} className="px-4 py-2.5 whitespace-nowrap">
+                                  {cell}
+                                </td>
+                              ))}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {table.footer && (
+                    <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 italic">
+                      {table.footer}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Interactive Appendix Interaction Plots (When on conclusion / results) */}
+          {(activeSection === 'conclusion' || activeSection === 'results') && (
+            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+              <div className="border-b border-slate-200 pb-3">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-indigo-600" />
+                  論文附錄交互作用圖解 (Appendix: Interaction Plots)
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  重現論文第 28-29 頁交互作用圖：展示情緒高低如何調節營收成長率對 SCAR 的影響
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Plot 1: Sentiments and Sales Growth */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <h4 className="font-semibold text-slate-900 text-xs mb-3 text-center">
+                    圖 A: 正面新聞情緒 × 營收成長率 (邊際效應遞減)
+                  </h4>
+                  <div className="h-48 relative flex items-center justify-center border-l-2 border-b-2 border-slate-400 m-4">
+                    {/* Low Positive Line (Steep slope) */}
+                    <svg className="absolute inset-0 w-full h-full overflow-visible">
+                      <line x1="10%" y1="85%" x2="90%" y2="15%" stroke="#4f46e5" strokeWidth="2.5" />
+                      <circle cx="10%" cy="85%" r="4" fill="#4f46e5" />
+                      <circle cx="90%" cy="15%" r="4" fill="#4f46e5" />
+                      {/* High Positive Line (Flatter slope showing diminishing effect) */}
+                      <line x1="10%" y1="70%" x2="90%" y2="40%" stroke="#9333ea" strokeWidth="2" strokeDasharray="4" />
+                      <circle cx="10%" cy="70%" r="4" fill="#9333ea" />
+                      <circle cx="90%" cy="40%" r="4" fill="#9333ea" />
+                    </svg>
+                  </div>
+                  <div className="flex justify-between text-[11px] text-slate-500 px-4">
+                    <span>低營收成長 (Low Sales Growth)</span>
+                    <span>高營收成長 (High Sales Growth)</span>
+                  </div>
+                  <div className="mt-3 text-[11px] text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200">
+                    <span className="text-indigo-600 font-bold">實證意涵：</span>實線（低正面情緒）斜率陡峭；虛線（高正面情緒）在高營收成長時斜率走平，證實利多已被充分定價，邊際效應遞減。
+                  </div>
+                </div>
+
+                {/* Plot 2: Sentiments and MB Ratio */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <h4 className="font-semibold text-slate-900 text-xs mb-3 text-center">
+                    圖 B: 負面新聞情緒 × 市值淨值比 (高評價股懲罰加劇)
+                  </h4>
+                  <div className="h-48 relative flex items-center justify-center border-l-2 border-b-2 border-slate-400 m-4">
+                    <svg className="absolute inset-0 w-full h-full overflow-visible">
+                      {/* Low Negative Line */}
+                      <line x1="10%" y1="80%" x2="90%" y2="20%" stroke="#059669" strokeWidth="2.5" />
+                      <circle cx="10%" cy="80%" r="4" fill="#059669" />
+                      <circle cx="90%" cy="20%" r="4" fill="#059669" />
+                      {/* High Negative Line (Pushed down severely) */}
+                      <line x1="10%" y1="90%" x2="90%" y2="55%" stroke="#dc2626" strokeWidth="2" strokeDasharray="4" />
+                      <circle cx="10%" cy="90%" r="4" fill="#dc2626" />
+                      <circle cx="90%" cy="55%" r="4" fill="#dc2626" />
+                    </svg>
+                  </div>
+                  <div className="flex justify-between text-[11px] text-slate-500 px-4">
+                    <span>低淨值比 (價值股)</span>
+                    <span>高淨值比 (成長股)</span>
+                  </div>
+                  <div className="mt-3 text-[11px] text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200">
+                    <span className="text-rose-600 font-bold">實證意涵：</span>紅色虛線（高負面情緒）全面下壓，尤其高估值成長股遭遇負面新聞時，超額報酬修正幅度更為劇烈。
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Original Paper Source & Citation Modal */}
+      {showSourceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div 
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden text-slate-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-900 to-indigo-950 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500 text-white flex items-center justify-center font-bold shadow-md">
+                  <GraduationCap className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-white">論文原文位置與官方出版來源</h3>
+                  <p className="text-xs text-slate-300">
+                    International Journal of Information Management (IJIM)
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowSourceModal(false)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-5 text-xs sm:text-sm">
+              {/* Paper Title & Journal info */}
+              <div className="p-4 rounded-xl bg-indigo-50/70 border border-indigo-200 space-y-2">
+                <div className="font-bold text-slate-900 text-sm leading-snug font-serif">
+                  {ORIGINAL_PAPER_SOURCE.titleEn}
+                </div>
+                <div className="text-xs text-indigo-900 font-medium">
+                  {ORIGINAL_PAPER_SOURCE.titleZh}
+                </div>
+                <div className="text-xs text-slate-500 pt-1 border-t border-indigo-100 flex flex-wrap gap-y-1 gap-x-3">
+                  <span><strong>期刊：</strong>{ORIGINAL_PAPER_SOURCE.journal}</span>
+                  <span><strong>卷期：</strong>{ORIGINAL_PAPER_SOURCE.volume}</span>
+                  <span><strong>評級：</strong>{ORIGINAL_PAPER_SOURCE.journalImpact}</span>
+                </div>
+              </div>
+
+              {/* Direct Access Links */}
+              <div className="space-y-2">
+                <div className="font-bold text-slate-900 text-xs uppercase tracking-wider">
+                  官方出版與學術取得管道 (點擊直接前往)：
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <a
+                    href={ORIGINAL_PAPER_SOURCE.doiUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 flex items-center justify-between group transition-all"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+                        DOI
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-900 text-xs group-hover:text-indigo-600 transition-colors">
+                          官方 DOI 永久連結
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-mono">
+                          doi.org/10.1016/...
+                        </div>
+                      </div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                  </a>
+
+                  <a
+                    href={ORIGINAL_PAPER_SOURCE.scienceDirectUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 flex items-center justify-between group transition-all"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center font-bold text-xs">
+                        SD
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-900 text-xs group-hover:text-indigo-600 transition-colors">
+                          Elsevier ScienceDirect
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          官方期刊全文與 PDF
+                        </div>
+                      </div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                  </a>
+
+                  <a
+                    href={ORIGINAL_PAPER_SOURCE.googleScholarUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 flex items-center justify-between group transition-all"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                        GS
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-900 text-xs group-hover:text-indigo-600 transition-colors">
+                          Google Scholar 學術搜尋
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          查找引用文獻與開放存取
+                        </div>
+                      </div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                  </a>
+
+                  <a
+                    href="mailto:vvenkatesh@vvenkatesh.us"
+                    className="p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 flex items-center justify-between group transition-all"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                        @
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-900 text-xs group-hover:text-indigo-600 transition-colors">
+                          通訊作者 Prof. Venkatesh
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          vvenkatesh@vvenkatesh.us
+                        </div>
+                      </div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Authors List */}
+              <div className="space-y-1.5 pt-1">
+                <div className="font-bold text-slate-900 text-xs uppercase tracking-wider">
+                  原著作者與所屬機構：
+                </div>
+                <div className="space-y-1">
+                  {ORIGINAL_PAPER_SOURCE.authors.map((auth, i) => (
+                    <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+                      <span className="font-semibold text-slate-800">{auth.name}</span>
+                      <span className="text-slate-500">{auth.affil}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Citations Copy */}
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900 text-xs uppercase tracking-wider">
+                    學術引用格式 (APA 7th & BibTeX)：
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCopyApa}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+                    >
+                      {copiedApa ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedApa ? '已複製 APA' : '複製 APA 7th'}</span>
+                    </button>
+                    <button
+                      onClick={handleCopyBibtex}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+                    >
+                      {copiedBibtex ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedBibtex ? '已複製 BibTeX' : '複製 BibTeX'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 text-indigo-300 p-3 rounded-xl font-mono text-xs overflow-x-auto leading-relaxed">
+                  {ORIGINAL_PAPER_SOURCE.apaCitation}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+              <span className="text-xs text-slate-500">
+                本系統沈浸式翻譯段落皆標註有「對應原著 PDF 頁碼」便於嚴格查核
+              </span>
+              <button
+                onClick={() => setShowSourceModal(false)}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-colors"
+              >
+                關閉視窗
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global High-Res Methodology Infographic Lightbox */}
+      <ImageLightboxModal
+        isOpen={showImageLightbox}
+        onClose={() => setShowImageLightbox(false)}
+        onAskGemini={onAskGemini}
+      />
+    </div>
+  );
+};
