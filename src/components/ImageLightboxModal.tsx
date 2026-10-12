@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DECK } from '../data/thesisDeck.tsx';
 import { 
   X, 
   ZoomIn, 
@@ -114,6 +115,25 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
     }
   ];
 
+  // 依「論文發展＝簡報順序」排列：定位 → 理論架構 → 研究設計 → 方法 → 結果 → 文獻比較 → 延伸
+  const ORDER: Array<{ id: string; stage: string; slides: string[] }> = [
+    { id: 'img4', stage: '論文定位', slides: ['p1'] },
+    { id: 'img3', stage: '三階段架構', slides: ['p4', 'p9'] },
+    { id: 'img1', stage: 'MMR 是什麼', slides: ['p5'] },
+    { id: 'img8', stage: '資料轉化設計', slides: ['p5', 'p8'] },
+    { id: 'img2', stage: '方法：雙軌模型', slides: ['p9', 'p11'] },
+    { id: 'img9', stage: '結果：預期踏車', slides: ['p10', 'r10', 'c3'] },
+    { id: 'img6', stage: '對照：非典型 MMR', slides: ['c5'] },
+    { id: 'img7', stage: '對照：典型 MMR', slides: ['c5'] },
+    { id: 'img5', stage: '延伸：研究技能總覽', slides: ['c6'] },
+  ];
+  const CN = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
+  const ordered = ORDER.map((o, i) => {
+    const img = images.find((x) => x.id === o.id)!;
+    const pages = o.slides.map((sid) => DECK.findIndex((d) => d.id === sid) + 1).filter((n) => n > 0);
+    return { ...img, n: i + 1, stage: o.stage, pages, title: `主題${CN[i]}：${img.title.replace(/^主題.：/, '')}` };
+  });
+
   const [selectedImgId, setSelectedImgId] = useState<string>(initialImageId);
 
   useEffect(() => {
@@ -121,7 +141,7 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
     setZoomLevel(1);
   }, [isOpen, initialImageId]);
 
-  const currentImage = images.find(img => img.id === selectedImgId) || images[0];
+  const currentImage = ordered.find(img => img.id === selectedImgId) || ordered[0];
 
   // Handle ESC key
   useEffect(() => {
@@ -276,22 +296,22 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
               {/* The Image */}
               <div className="flex flex-col items-center justify-center w-full h-full pb-8">
                 {/* 3 Theme Images Selector Tabs */}
-                <div className="flex items-center gap-2 mb-4 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-700 shadow-lg">
-                  {images.map((img) => (
+                <div className="flex items-center gap-1.5 mb-4 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-700 shadow-lg max-w-full overflow-x-auto no-scrollbar">
+                  {ordered.map((img) => (
                     <button
                       key={img.id}
                       onClick={() => {
                         setSelectedImgId(img.id);
                         setZoomLevel(1);
                       }}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                      className={`shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                         selectedImgId === img.id
                           ? 'bg-indigo-600 text-white shadow-md'
                           : 'text-slate-300 hover:text-white hover:bg-slate-800'
                       }`}
                     >
-                      <Layers className="w-3.5 h-3.5 text-indigo-300" />
-                      <span>{img.title.split('：')[0]}</span>
+                      <span className="w-5 h-5 rounded-md bg-white/10 flex items-center justify-center font-mono text-[11px]">{img.n}</span>
+                      <span className="whitespace-nowrap">{img.stage}</span>
                     </button>
                   ))}
                 </div>
@@ -310,6 +330,9 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
                 <div className="mt-4 text-center max-w-2xl px-4">
                   <h3 className="text-white font-bold text-sm sm:text-base">{currentImage.title}</h3>
                   <p className="text-xs text-indigo-200 mt-1">{currentImage.caption}</p>
+                  {currentImage.pages.length > 0 && (
+                    <p className="text-[11px] text-amber-300 mt-1.5">對應簡報：{currentImage.pages.map((n) => `第 ${n} 頁`).join('、')}・依論文發展順序排列（{currentImage.n} / {ordered.length}）</p>
+                  )}
                 </div>
               </div>
 

@@ -516,7 +516,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-slate-200 flex items-center gap-1.5">
                   <ImageIcon className="w-4 h-4 text-rose-400" />
-                  <span>主題六：/MMR文獻篩選 反例全景圖解 (Gamma 原圖同步)</span>
+                  <span>主題七：/MMR文獻篩選 反例全景圖解 (Gamma 原圖同步)</span>
                 </span>
                 <a
                   href="https://cdn.gamma.app/qczcgzm3dplba12/70dbe7ce78974009a403a083b190751d/original/image.png"

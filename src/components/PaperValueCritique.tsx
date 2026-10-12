@@ -642,12 +642,12 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
               </div>
             </div>
 
-            {/* Third Gamma Artifact Image: Img 9 (主題九：本篇論文真正價值與四大深層經濟真相) */}
+            {/* Third Gamma Artifact Image: Img 9 (主題六：本篇論文真正價值與四大深層經濟真相) */}
             <div className="bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-950 text-white rounded-3xl p-6 sm:p-7 border border-indigo-500/30 shadow-xl space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2 border-b border-indigo-500/20 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-400 text-slate-950 font-mono shadow-sm">
-                    ★ 主題九精華
+                    ★ 主題六精華
                   </span>
                   <h4 className="font-extrabold text-sm sm:text-base text-white">
                     本篇論文 (Raman et al., 2022) 的「真正價值」與四大深層經濟真相
@@ -658,7 +658,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                   className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition-transform active:scale-95"
                 >
                   <ZoomIn className="w-3.5 h-3.5" />
-                  <span>檢視主題九大圖 (img9)</span>
+                  <span>檢視主題六大圖 (img9)</span>
                 </button>
               </div>
 
@@ -672,14 +672,14 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
               >
                 <img
                   src="https://cdn.gamma.app/qczcgzm3dplba12/a258c799d57c43dbb989ede9ff39d03a/original/image.png"
-                  alt="主題九：本篇論文真正價值與四大深層經濟真相"
+                  alt="主題六：本篇論文真正價值與四大深層經濟真相"
                   className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300 opacity-95 group-hover:opacity-100"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-indigo-950/40 group-hover:bg-indigo-950/10 transition-colors flex items-center justify-center">
                   <span className="px-3.5 py-2 rounded-xl bg-slate-900/90 backdrop-blur-md text-amber-300 text-xs font-bold flex items-center gap-2 shadow-lg group-hover:scale-105 transition-transform border border-amber-400/30">
                     <ZoomIn className="w-4 h-4 text-amber-400" />
-                    <span>點擊放大檢視主題九：真正價值與 4 大深層經濟真相</span>
+                    <span>點擊放大檢視主題六：真正價值與 4 大深層經濟真相</span>
                   </span>
                 </div>
               </div>
@@ -847,7 +847,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-slate-200 flex items-center gap-1.5">
                         <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>主題四：SSCI 期刊查核與 8 項檢核總表圖</span>
+                        <span>主題一：SSCI 期刊查核與 8 項檢核總表圖</span>
                       </span>
                       <a
                         href="https://cdn.gamma.app/qczcgzm3dplba12/31f0cf8a12c34c6eafc11666ce048330/original/image.png"
@@ -917,7 +917,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-slate-800 flex items-center gap-1.5">
                   <ImageIcon className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>主題五：博士論文 20 個 Skills 與 MMR 完整檢驗導覽圖 (Gamma 原圖同步)</span>
+                  <span>主題九：博士論文 20 個 Skills 與 MMR 完整檢驗導覽圖 (Gamma 原圖同步)</span>
                 </span>
                 <a
                   href="https://cdn.gamma.app/qczcgzm3dplba12/ca044b88abba4ab9b7b11c9b1f51c3c3/original/image.png"
@@ -1423,7 +1423,7 @@ Quantitative Data              Textual Data
                   <div className="absolute inset-0 bg-slate-950/30 group-hover:bg-slate-950/10 transition-colors flex items-center justify-center">
                     <span className="px-3 py-1.5 rounded-xl bg-slate-900/80 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 shadow-md group-hover:scale-105 transition-transform">
                       <ZoomIn className="w-3.5 h-3.5" />
-                      <span>點擊放大檢視第三張主題圖表 (三階段協同與預期踏車效應)</span>
+                      <span>點擊放大檢視主題二 (三階段協同與預期踏車效應)</span>
                     </span>
                   </div>
                 </div>
@@ -1630,7 +1630,7 @@ Quantitative Data              Textual Data
                 <div>
                   <span className="font-bold text-white flex items-center gap-1.5 text-sm">
                     <ImageIcon className="w-4 h-4 text-emerald-400" />
-                    <span>主題七：Afego & Alagidede (2021) TRUE MMR 核心架構圖 (Gamma 原圖同步)</span>
+                    <span>主題八：Afego & Alagidede (2021) TRUE MMR 核心架構圖 (Gamma 原圖同步)</span>
                   </span>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     展示 Content Analysis ➔ Event Study ➔ Abnormal Return (+2.68%) 雙軌整合視覺化流程

@@ -1294,7 +1294,7 @@ Abstract: In an increasingly data-rich business environment, organizations face 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-950">
-                      主題五：全景導覽圖
+                      主題九：全景導覽圖
                     </span>
                     <span className="text-xs font-bold text-slate-200">
                       MMR 混合方法研究與 20 大 Skills 導覽架構圖 (Gamma 原圖同步)
