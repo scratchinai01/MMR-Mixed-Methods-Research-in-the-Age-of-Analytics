@@ -145,6 +145,7 @@ def fetch_prices(stocks, start, end, token):
 
 # ─────────────────────────── 2. 情緒判讀（Gemini 或關鍵詞，含快取） ───────────────────────────
 def keyword_score(title):
+    title = title.replace("買賣超", "")  # 「三大法人買賣超」是欄目名稱，避免同時算成買超與賣超
     pos = sum(w in title for w in POS_WORDS)
     neg = sum(w in title for w in NEG_WORDS)
     return max(-0.95, min(0.95, (pos - neg) * 0.35))

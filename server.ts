@@ -1143,7 +1143,8 @@ async function fetchRecentNews(stockId: string, token: string, days: number): Pr
   results.forEach(r => {
     if (r.status !== 'fulfilled') return;
     r.value.forEach((item: any) => {
-      const key = `${item.title}|${item.date}`;
+      // 同一天同標題只留一則（FinMind 偶爾會重複收錄，時間不同但內容相同）
+      const key = `${String(item.title).trim()}|${String(item.date).slice(0, 10)}`;
       if (item.title && !seen.has(key)) { seen.add(key); rows.push(item); }
     });
   });
@@ -1156,7 +1157,9 @@ async function fetchRecentNews(stockId: string, token: string, days: number): Pr
 const POS_WORDS = ['成長', '突破', '獲利', '擴大', '優於預期', '包下', '大增', '新高', '樂觀', '強勁', '量產', '領先', '漲', '擴產', '買超', '上修', '調升', '看好', '利多'];
 const NEG_WORDS = ['下修', '重挫', '衰退', '放緩', '暴跌', '虧損', '訴訟', '疲弱', '壓力', '承壓', '短缺', '保守', '跌', '賣超', '調降', '利空', '減少', '下滑', '砍單'];
 
-function keywordSentiment(title: string) {
+function keywordSentiment(rawTitle: string) {
+  // 「三大法人買賣超」是中性的欄目名稱，先移除，避免同時被算成「買超」和「賣超」
+  const title = rawTitle.replace(/買賣超/g, '');
   const pos = POS_WORDS.filter(w => title.includes(w));
   const neg = NEG_WORDS.filter(w => title.includes(w));
   const net = pos.length - neg.length;
@@ -1444,7 +1447,14 @@ async function runRealSentimentStudy(sId: string, sName: string, token: string, 
   if (newsRows.length === 0) throw new Error(`最近 ${newsDays} 天查無 ${sId} 新聞`);
 
   // 情緒分類：最多 200 則，每 40 則一批送 Gemini
-  const capped = newsRows.slice(0, 200);
+  // 每天平均抽樣，最多 200 則：避免只取最新 200 則時全部擠在最近幾天，導致可分析的交易日太少
+  const byDay = new Map<string, any[]>();
+  newsRows.forEach((r: any) => {
+    const d = String(r.date).slice(0, 10);
+    byDay.set(d, [...(byDay.get(d) || []), r]);
+  });
+  const perDay = Math.max(3, Math.ceil(200 / Math.max(1, byDay.size)));
+  const capped = [...byDay.values()].flatMap(rows => rows.slice(0, perDay)).slice(0, 200);
   const sentiments: ReturnType<typeof keywordSentiment>[] = [];
   let engine = '關鍵詞情緒詞典';
   for (let i = 0; i < capped.length; i += 40) {
@@ -1606,7 +1616,7 @@ app.post('/api/finmind/ml-train', async (req, res) => {
     for (let i = 0; i < corpusSize; i++) {
       const isPos = (i % 3 !== 0);
       const dayOffset = i % 365;
-      const dateStr = `2026-${String(Math.floor(dayOffset / 30) + 1).padStart(2, '0')}-${String((dayOffset % 28) + 1).padStart(2, '0')}`;
+      const dateStr = new Date(Date.UTC(2026, 0, 1 + dayOffset)).toISOString().slice(0, 10); // 避免產生 2026-13-28 這種不存在的日期
       const titleTemplate = sampleHeadlinesPool[i % sampleHeadlinesPool.length];
       articles.push({
         articleId: `NEWS-2026-${sId}-${i + 1}`,
