@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DECK } from '../data/thesisDeck.tsx';
 import { 
   X, 
@@ -13,7 +13,9 @@ import {
   Layers, 
   Check, 
   Copy,
-  Info
+  Info,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 interface ImageItem {
@@ -142,6 +144,33 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
   }, [isOpen, initialImageId]);
 
   const currentImage = ordered.find(img => img.id === selectedImgId) || ordered[0];
+  const curIdx = Math.max(0, ordered.findIndex((img) => img.id === currentImage.id));
+  const goImg = (d: number) => {
+    const n = Math.min(Math.max(curIdx + d, 0), ordered.length - 1);
+    if (n === curIdx) return;
+    setSelectedImgId(ordered[n].id);
+    setZoomLevel(1);
+  };
+
+  // 觸控／滑鼠左右滑動換圖
+  const swipe = useRef<{ x: number; y: number; t: number } | null>(null);
+  const onSwipeStart = (e: React.PointerEvent) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    swipe.current = { x: e.clientX, y: e.clientY, t: Date.now() };
+  };
+  const onSwipeEnd = (e: React.PointerEvent) => {
+    const s0 = swipe.current;
+    swipe.current = null;
+    if (!s0) return;
+    const dx = e.clientX - s0.x, dy = e.clientY - s0.y;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - s0.t < 800) goImg(dx < 0 ? 1 : -1);
+  };
+
+  // 目前的分頁標籤自動捲到看得見的位置
+  const tabsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    tabsRef.current?.querySelector<HTMLElement>(`[data-img="${currentImage.id}"]`)?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [currentImage.id, isOpen]);
 
   // Handle ESC key
   useEffect(() => {
@@ -151,10 +180,12 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
       if (e.key === '+' || e.key === '=') handleZoomIn();
       if (e.key === '-') handleZoomOut();
       if (e.key === '0') handleResetZoom();
+      if (e.key === 'ArrowRight') goImg(1);
+      if (e.key === 'ArrowLeft') goImg(-1);
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, zoomLevel]);
+  }, [isOpen, zoomLevel, curIdx]);
 
   if (!isOpen) return null;
 
@@ -296,10 +327,11 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
               {/* The Image */}
               <div className="flex flex-col items-center justify-center w-full h-full pb-8">
                 {/* 3 Theme Images Selector Tabs */}
-                <div className="flex items-center gap-1.5 mb-4 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-700 shadow-lg max-w-full overflow-x-auto no-scrollbar">
+                <div ref={tabsRef} className="flex items-center gap-1.5 mb-4 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-700 shadow-lg max-w-full overflow-x-auto no-scrollbar">
                   {ordered.map((img) => (
                     <button
                       key={img.id}
+                      data-img={img.id}
                       onClick={() => {
                         setSelectedImgId(img.id);
                         setZoomLevel(1);
@@ -316,15 +348,33 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
                   ))}
                 </div>
 
-                <div 
-                  className="transition-transform duration-150 ease-out origin-center flex items-center justify-center max-w-full"
-                  style={{ transform: `scale(${zoomLevel})` }}
+                <div
+                  className="relative w-full flex items-center justify-center select-none"
+                  style={{ touchAction: 'pan-y pinch-zoom' }}
+                  onPointerDown={onSwipeStart}
+                  onPointerUp={onSwipeEnd}
+                  onPointerCancel={() => { swipe.current = null; }}
                 >
-                  <img
-                    src={currentImage.url}
-                    alt={currentImage.title}
-                    className="rounded-2xl shadow-2xl max-w-full max-h-[66vh] object-contain border border-slate-700/80 bg-slate-900"
-                  />
+                  <div
+                    className="transition-transform duration-150 ease-out origin-center flex items-center justify-center max-w-full"
+                    style={{ transform: `scale(${zoomLevel})` }}
+                  >
+                    <img
+                      src={currentImage.url}
+                      alt={currentImage.title}
+                      draggable={false}
+                      className="rounded-2xl shadow-2xl max-w-full max-h-[66vh] object-contain border border-slate-700/80 bg-slate-900"
+                    />
+                  </div>
+                  {/* 左右換圖按鈕 */}
+                  <button onClick={() => goImg(-1)} disabled={curIdx === 0} aria-label="上一張"
+                    className="absolute left-1 sm:left-3 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-900/70 hover:bg-slate-800 border border-slate-600 text-white flex items-center justify-center disabled:opacity-0 transition-opacity">
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button onClick={() => goImg(1)} disabled={curIdx === ordered.length - 1} aria-label="下一張"
+                    className="absolute right-1 sm:right-3 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-900/70 hover:bg-slate-800 border border-slate-600 text-white flex items-center justify-center disabled:opacity-0 transition-opacity">
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
                 </div>
 
                 <div className="mt-4 text-center max-w-2xl px-4">
@@ -339,7 +389,7 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
               {/* Bottom Quick Help Prompt */}
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 px-3.5 py-1 rounded-full bg-slate-900/80 border border-slate-700 text-[11px] text-slate-300 backdrop-blur-xs flex items-center gap-2 pointer-events-none">
                 <Info className="w-3 h-3 text-indigo-400" />
-                <span>可用鍵盤 +/- 鍵縮放，或切換上方「論文實證對齊解析」查看深入詮釋</span>
+                <span>左右滑動或按 ← → 換圖・+/- 縮放・切換上方「論文實證對齊解析」查看深入詮釋</span>
               </div>
             </div>
           ) : (
