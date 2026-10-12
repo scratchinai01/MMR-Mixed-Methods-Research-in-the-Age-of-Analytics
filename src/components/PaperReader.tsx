@@ -207,7 +207,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
             上傳您手上的論文 PDF，逐段顯示 PDF 原文，下方附繁體中文譯文，並可對照 PDF 原頁。PDF 只在您的瀏覽器中解析，不會上傳或公開。
           </p>
         </div>
-        <button onClick={aiClick(() => setPdfReaderOpen(true))} title="翻譯會使用 Gemini：請按住 Shift 再點擊"
+        <button onClick={aiClick(() => setPdfReaderOpen(true))} title="翻譯需主帳號登入"
           className="h-10 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shrink-0">
           上傳 PDF 開始閱讀
         </button>

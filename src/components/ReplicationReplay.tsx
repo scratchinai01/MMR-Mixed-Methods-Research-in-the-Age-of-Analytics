@@ -137,11 +137,11 @@ export function ReplicationReplay({ data, jump }: { data: any | null; jump?: { s
           <RotateCcw className="w-4 h-4" /> 重來
         </button>
         <div className="flex-1" />
-        <button onClick={aiClick(() => handleUpdate())} disabled={updating} title="請按住 Shift 再點擊"
+        <button onClick={aiClick(() => handleUpdate())} disabled={updating} title="需主帳號登入"
           className="h-10 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-slate-950 text-sm font-extrabold flex items-center gap-2">
           <RefreshCw className={`w-4 h-4 ${updating ? 'animate-spin' : ''}`} /> 更新數據
         </button>
-        <a href={WORKFLOW_URL} target="_blank" rel="noreferrer" onClick={aiClick(() => {})} title="重新計算會使用 Gemini：請按住 Shift 再點擊"
+        <a href={WORKFLOW_URL} target="_blank" rel="noreferrer" onClick={aiClick(() => {})} title="需主帳號登入"
           className="h-10 px-3 rounded-xl border border-white/20 hover:bg-white/10 text-slate-200 text-xs font-semibold flex items-center gap-1.5">
           <ExternalLink className="w-3.5 h-3.5" /> 重新抓取並計算
         </a>

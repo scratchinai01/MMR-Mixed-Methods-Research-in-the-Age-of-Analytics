@@ -1,7 +1,7 @@
 // =====================================================================
 // AI 使用閘門：避免現場大量觀眾誤觸而消耗 Gemini 費用
-// - 會用到 Gemini 的按鈕：必須「按住 Shift + 點擊」才會執行
-// - Shift + 點擊後，這個分頁的 AI 功能會解鎖 10 分鐘（頁首會顯示倒數，可隨時停用）
+// - 會用到 Gemini 的按鈕：需以報告人的方式操作才會執行（對外顯示為「需主帳號登入」）
+// - 解鎖後，這個分頁的 AI 功能可用 10 分鐘（頁首顯示倒數，可隨時登出）
 // - 所有送往 AI 端點的請求都經過這裡：未解鎖時直接擋下，不會送到伺服器
 //   （伺服器端另有檢查與每個 IP 的次數上限）
 // - 解鎖狀態只存在記憶體中，重新整理頁面就恢復鎖定
@@ -22,14 +22,14 @@ export function lockAi() { unlockedUntil = 0; notify(); }
 export function subscribeAiGate(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; }
 
 /** 顯示提示（由 AiGateToast 元件接收） */
-export function showAiHint(message = '這個功能會使用 Gemini AI。為避免現場誤觸產生費用，請「按住 Shift 再點擊」按鈕。') {
+export function showAiHint(message = '這個功能需要以主帳號登入才能使用。目前為公開閱讀模式，其他內容都可以正常瀏覽。') {
   window.dispatchEvent(new CustomEvent('ai-gate-hint', { detail: message }));
 }
 
 /**
  * 包裝會使用 AI 的按鈕：
  *   onClick={aiClick(() => doSomething())}
- * 一般點擊只顯示提示；Shift + 點擊才解鎖並執行。
+ * 一般點擊只顯示提示；報告人操作才解鎖並執行。
  */
 export function aiClick<E extends { shiftKey: boolean; preventDefault?: () => void }>(handler: (e: E) => void) {
   return (e: E) => {
@@ -56,7 +56,7 @@ export function installAiFetchGuard() {
     if (!AI_PATHS.includes(path)) return orig(input, init);
     if (!isAiUnlocked()) {
       showAiHint();
-      const body = JSON.stringify({ success: false, error: 'AI_LOCKED', message: 'AI 功能目前鎖定中：請按住 Shift 再點擊 AI 按鈕以啟用（啟用後 10 分鐘內有效）。' });
+      const body = JSON.stringify({ success: false, error: 'AI_LOCKED', message: '此功能需要以主帳號登入才能使用（目前為公開閱讀模式）。' });
       return Promise.resolve(new Response(body, { status: 403, headers: { 'Content-Type': 'application/json' } }));
     }
     const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined));

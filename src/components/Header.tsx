@@ -121,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({
             {onOpenUploadModal && (
               <button
                 onClick={aiClick(() => onOpenUploadModal())}
-                title="上傳論文由 AI 診斷（會使用 Gemini）：請按住 Shift 再點擊"
+                title="上傳論文由 AI 診斷（需主帳號登入）"
                 className={`${toolBtn} !text-indigo-700 !border-indigo-200 !bg-indigo-50 hover:!bg-indigo-100`}
               >
                 <UploadCloud className="w-4 h-4" />
@@ -131,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={aiClick(() => onOpenMmrModal?.())}
-              title="Mixed Method 研究解析（會使用 Gemini）：請按住 Shift 再點擊"
+              title="Mixed Method 研究解析（需主帳號登入）"
               className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-colors whitespace-nowrap shrink-0"
             >
               <Sparkles className="w-4 h-4 text-amber-200" />

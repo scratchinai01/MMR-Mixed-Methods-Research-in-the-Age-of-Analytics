@@ -17,7 +17,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // ─────────────────────────────────────────────────────────────────────
-// 會消耗 Gemini 的端點：需由網頁「Shift + 點擊」解鎖後才會帶上 x-ai-unlock 標頭；
+// 會消耗 Gemini 的端點：需由網頁解鎖後才會帶上 x-ai-unlock 標頭；
 // 另以每個 IP 10 分鐘內最多 AI_RATE_LIMIT 次（預設 60）限制，避免現場大量觀眾誤觸造成費用。
 // ─────────────────────────────────────────────────────────────────────
 const AI_ROUTES = ['/api/gemini/explain', '/api/gemini/analyze-paper', '/api/gemini/critique-value', '/api/gemini/test',
@@ -27,13 +27,13 @@ const aiHits = new Map<string, number[]>();
 app.use((req, res, next) => {
   if (req.method !== 'POST' || !AI_ROUTES.includes(req.path)) return next();
   if (req.get('x-ai-unlock') !== '1') {
-    return res.status(403).json({ success: false, error: 'AI_LOCKED', message: '此功能會使用 Gemini，請按住 Shift 再點擊按鈕以啟用。' });
+    return res.status(403).json({ success: false, error: 'AI_LOCKED', message: '此功能需要以主帳號登入才能使用。' });
   }
   const ip = String(req.get('x-forwarded-for') || req.ip || '').split(',')[0].trim();
   const now = Date.now();
   const recent = (aiHits.get(ip) || []).filter((t) => now - t < 10 * 60 * 1000);
   if (recent.length >= AI_RATE_LIMIT) {
-    return res.status(429).json({ success: false, error: 'AI_RATE_LIMIT', message: `AI 使用次數已達上限（每 10 分鐘 ${AI_RATE_LIMIT} 次），請稍後再試。` });
+    return res.status(429).json({ success: false, error: 'AI_RATE_LIMIT', message: '使用次數已達上限，請稍後再試。' });
   }
   recent.push(now);
   aiHits.set(ip, recent);
