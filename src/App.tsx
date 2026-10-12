@@ -87,7 +87,7 @@ export default function App() {
         context: '高頻市場微結構與混合方法研究 (MMR) 博士生導師專用解析系統'
       });
       setParaModalContent(data.answer || '解析完成。');
-      setParaModalEngine(data.modelUsed || 'Gemini 2.5 Flash');
+      setParaModalEngine(data.modelUsed || 'Gemini');
       setParaModalLatency(data.latencyMs);
 
       // Persist to Firebase
@@ -98,7 +98,7 @@ export default function App() {
           sourceText: sourceSnippet.slice(0, 500),
           question: `針對段落深度解析：${sourceSnippet.slice(0, 80)}...`,
           answer: data.answer,
-          modelUsed: data.modelUsed || 'Gemini 2.5 Flash',
+          modelUsed: data.modelUsed || 'Gemini',
         }).catch(e => console.warn('Firebase save warning:', e));
       }
     } catch (err: any) {

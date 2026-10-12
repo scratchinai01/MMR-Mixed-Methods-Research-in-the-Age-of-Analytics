@@ -147,7 +147,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
           topic: textToQuery.slice(0, 100),
           question: textToQuery,
           answer: data.answer,
-          modelUsed: data.modelUsed || 'Gemini 2.5 Flash',
+          modelUsed: data.modelUsed || 'Gemini',
         }).catch(err => console.warn('Firebase critique followup save warning:', err));
       } else {
         setCritiqueResponse(data.fallback || '無法取得分析結果，請檢查 API 設定。');

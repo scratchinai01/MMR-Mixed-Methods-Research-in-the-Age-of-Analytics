@@ -51,7 +51,7 @@ export const SelectionTTSWidget: React.FC<SelectionTTSWidgetProps> = ({ onAskGem
         isTranslation: true,
       });
       setAnalysisContent(data.answer || '翻譯完成。');
-      setAnalysisEngine(data.modelUsed || 'Gemini 2.5 Flash');
+      setAnalysisEngine(data.modelUsed || 'Gemini');
       setAnalysisLatency(data.latencyMs);
     } catch (err: any) {
       setAnalysisContent(`翻譯發生錯誤：${err.message}`);
@@ -76,7 +76,7 @@ export const SelectionTTSWidget: React.FC<SelectionTTSWidgetProps> = ({ onAskGem
         context: '高頻市場微結構與實證計量學術解析'
       });
       setAnalysisContent(data.answer || '解析完成。');
-      setAnalysisEngine(data.modelUsed || 'Gemini 2.5 Flash');
+      setAnalysisEngine(data.modelUsed || 'Gemini');
       setAnalysisLatency(data.latencyMs);
     } catch (err: any) {
       setAnalysisContent(`解析發生錯誤：${err.message}`);

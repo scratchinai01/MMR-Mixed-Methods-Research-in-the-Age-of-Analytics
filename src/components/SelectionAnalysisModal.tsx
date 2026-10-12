@@ -210,7 +210,7 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
       });
 
       const aiReply = data.answer || '接力解析完成。';
-      const aiModel = data.modelUsed || 'Gemini 2.5 Flash';
+      const aiModel = data.modelUsed || 'Gemini';
 
       setMessages(prev => [
         ...prev,
@@ -469,7 +469,7 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
                     {msg.role === 'ai' ? (
                       <>
                         <Globe className="w-4 h-4 text-indigo-600" />
-                        <span>{msg.modelUsed || engineUsed || 'Gemini 2.5 Flash'} 分析結果 (#{mIdx + 1})</span>
+                        <span>{msg.modelUsed || engineUsed || 'Gemini'} 分析結果 (#{mIdx + 1})</span>
                       </>
                     ) : (
                       <>

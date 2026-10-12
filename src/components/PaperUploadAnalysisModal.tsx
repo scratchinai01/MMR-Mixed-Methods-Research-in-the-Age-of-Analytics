@@ -323,7 +323,7 @@ Abstract: In an increasingly data-rich business environment, organizations face 
           await analysisStorage.appendFollowup(currentRecordId, {
             q,
             a: data.answer,
-            modelUsed: data.modelUsed || 'Gemini 2.5 Flash'
+            modelUsed: data.modelUsed || 'Gemini'
           });
         } else {
           // 2. Otherwise save directly to Firebase followup_dialogues collection
@@ -332,7 +332,7 @@ Abstract: In an increasingly data-rich business environment, organizations face 
             topic: analyzedFileName || '論文診斷追問',
             question: q,
             answer: data.answer,
-            modelUsed: data.modelUsed || 'Gemini 2.5 Flash',
+            modelUsed: data.modelUsed || 'Gemini',
           });
         }
       } else {

@@ -27,6 +27,8 @@ const ai = new GoogleGenAI({
     headers: {
       'User-Agent': 'aistudio-build',
     },
+    // 僅供測試時指向模擬伺服器；正式環境不需設定
+    ...(process.env.GEMINI_BASE_URL ? { baseUrl: process.env.GEMINI_BASE_URL } : {}),
   },
 });
 
@@ -37,112 +39,48 @@ interface AiExecutionResult {
 }
 
 // =====================================================================
-// 🟧 Groq 串接（OpenAI 相容 API）
+// 🟦 Gemini AI 設定（翻譯、解析、情緒判讀全部使用 Gemini）
 // ---------------------------------------------------------------------
-// 設定方式：在 .env 或部署平台的環境變數加入 GROQ_API_KEY=gsk_xxx
-// 可選：GROQ_MODEL 指定模型（預設 openai/gpt-oss-120b，失敗時改用 llama-3.3-70b-versatile）
-// 金鑰只存在伺服器端，瀏覽器端看不到。
-// AI 呼叫順序：Groq ➔ Gemini ➔ 本地知識庫備援
+// 為了壓低成本，預設全部使用最便宜的 Flash-Lite 模型：
+//   - 翻譯、情緒判讀：gemini-3.1-flash-lite，思考程度 MINIMAL（最省）
+//   - 學術解析：同一個模型，思考程度 LOW（稍微多想一點，仍很便宜）
+// 可用環境變數調整（不設定就用預設值）：
+//   GEMINI_TRANSLATE_MODEL=gemini-3.1-flash-lite
+//   GEMINI_ANALYSIS_MODEL=gemini-3.1-flash-lite   （想要更深入的解析可改 gemini-3.8-flash，費用較高）
+//   GEMINI_ANALYSIS_THINKING=LOW                   （MINIMAL / LOW / MEDIUM / HIGH）
+// 主要模型失敗時，會自動改用 gemini-3.5-flash-lite 再試一次。
+// AI 呼叫順序：Gemini ➔ 本地知識庫備援
 // =====================================================================
-const GROQ_BASE_URL = process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1';
+type AiTask = 'translate' | 'analysis' | 'classify';
 
-// 支援多把金鑰輪替：GROQ_API_KEYS="key1,key2,..."（可與 GROQ_API_KEY 並用），遇到 429 額度用盡會自動換下一把
-function getGroqKeys(): string[] {
-  const raw = [process.env.GROQ_API_KEY || '', ...(process.env.GROQ_API_KEYS || '').split(',')];
-  const keys = raw.map(k => k.trim()).filter(k => k.length > 10 && !/^(MY_|KEY\d|your_)/i.test(k));
-  return [...new Set(keys)];
-}
-let groqKeyCursor = 0;
+const GEMINI_DEFAULT_MODEL = 'gemini-3.1-flash-lite';
+const GEMINI_BACKUP_MODEL = 'gemini-3.5-flash-lite';
+const THINKING_LEVELS = ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH'] as const;
 
-function hasValidGroqKey(): boolean {
-  return getGroqKeys().length > 0;
+function getGeminiModels(task: AiTask): string[] {
+  const env = task === 'analysis' ? process.env.GEMINI_ANALYSIS_MODEL : process.env.GEMINI_TRANSLATE_MODEL;
+  const primary = (env || '').trim() || GEMINI_DEFAULT_MODEL;
+  return primary === GEMINI_BACKUP_MODEL ? [primary] : [primary, GEMINI_BACKUP_MODEL];
 }
 
-function getGroqModels(): string[] {
-  const preferred = (process.env.GROQ_MODEL || '').trim();
-  const defaults = ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile'];
-  return preferred ? [preferred, ...defaults.filter(m => m !== preferred)] : defaults;
+function getThinkingLevel(task: AiTask): string {
+  if (task !== 'analysis') return 'MINIMAL';
+  const v = (process.env.GEMINI_ANALYSIS_THINKING || 'LOW').trim().toUpperCase();
+  return (THINKING_LEVELS as readonly string[]).includes(v) ? v : 'LOW';
+}
+
+/** Gemini 3 系列用 thinkingLevel；2.5 系列用 thinkingBudget（MINIMAL 時關閉思考） */
+function buildThinkingConfig(model: string, level: string): any {
+  if (model.startsWith('gemini-2.5')) {
+    const budgets: Record<string, number> = { MINIMAL: 0, LOW: 1024, MEDIUM: 4096, HIGH: 8192 };
+    return { thinkingBudget: model.includes('pro') ? Math.max(128, budgets[level]) : budgets[level] };
+  }
+  return { thinkingLevel: level };
 }
 
 function maskKey(key?: string): string {
   if (!key) return '未設定';
   return key.length > 10 ? `${key.slice(0, 6)}...${key.slice(-4)}` : '••••••••';
-}
-
-/** 把 Gemini 格式的 contents（字串或 parts 陣列）轉成純文字給 Groq 使用 */
-function contentsToText(contents: any): string {
-  if (typeof contents === 'string') return contents;
-  if (Array.isArray(contents)) {
-    return contents.map((c: any) => c.text || (c.inlineData ? '' : JSON.stringify(c))).filter(Boolean).join('\n');
-  }
-  return JSON.stringify(contents);
-}
-
-/** 內容是否含有 PDF 等二進位附件（Groq 無法直接讀取 PDF，需交給 Gemini） */
-function hasBinaryParts(contents: any): boolean {
-  return Array.isArray(contents) && contents.some((c: any) => c && c.inlineData);
-}
-
-async function callGroq(options: {
-  contents: any;
-  systemInstruction?: string;
-  temperature?: number;
-  timeoutMs?: number;
-  jsonMode?: boolean;
-  maxTokens?: number;
-}): Promise<{ text: string; model: string }> {
-  if (!hasValidGroqKey()) throw new Error('No valid GROQ_API_KEY configured');
-
-  const messages: any[] = [];
-  if (options.systemInstruction) messages.push({ role: 'system', content: options.systemInstruction });
-  messages.push({ role: 'user', content: contentsToText(options.contents) });
-
-  const keys = getGroqKeys();
-  const startIdx = groqKeyCursor++ % keys.length; // 每次呼叫從不同金鑰開始，分散用量
-  let lastError: any = null;
-  for (let k = 0; k < keys.length; k++) {
-    const apiKey = keys[(startIdx + k) % keys.length];
-    let rotateKey = false;
-    for (const model of getGroqModels()) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 45000);
-      try {
-        const body: any = {
-          model,
-          messages,
-          temperature: options.temperature ?? 0.7,
-          max_completion_tokens: options.maxTokens ?? 4096,
-        };
-        if (options.jsonMode) body.response_format = { type: 'json_object' };
-
-        const resp = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        });
-        const data: any = await resp.json().catch(() => ({}));
-        if (!resp.ok) {
-          throw new Error(`Groq ${resp.status}: ${data?.error?.message || resp.statusText}`);
-        }
-        const text = data?.choices?.[0]?.message?.content?.trim();
-        if (text) return { text, model };
-        throw new Error(`Groq model ${model} returned empty content`);
-      } catch (err: any) {
-        lastError = err.name === 'AbortError' ? new Error(`Groq model ${model} timed out`) : err;
-        console.warn(`[Groq] ${model} failed: ${lastError.message}`);
-        // 金鑰無效或額度用盡：換模型沒用，改換下一把金鑰
-        if (/Groq (401|403|429)/.test(lastError.message)) { rotateKey = true; break; }
-      } finally {
-        clearTimeout(timer);
-      }
-    }
-    if (!rotateKey) break; // 非金鑰問題（例如模型都逾時），不再嘗試其他金鑰
-  }
-  throw lastError || new Error('All Groq models failed');
 }
 
 /** 從模型回覆中取出 JSON（容忍 ```json 包裝或前後多餘文字） */
@@ -154,12 +92,13 @@ function parseJsonLoose(text: string): any {
   throw new Error('No JSON found in model output');
 }
 
-// 保留原函式名稱，讓既有 API 路由不必修改；實際順序為 Groq ➔ Gemini ➔ 本地備援
+// 保留原函式名稱，讓既有 API 路由不必修改；順序為 Gemini ➔ 本地備援
 async function callAiWithGemini(options: {
   contents: string | any;
   systemInstruction?: string;
   temperature?: number;
   timeoutMs?: number;
+  task?: AiTask;
 }): Promise<AiExecutionResult> {
   const startTime = Date.now();
   const contentString = typeof options.contents === 'string'
@@ -168,28 +107,13 @@ async function callAiWithGemini(options: {
         ? options.contents.map((c: any) => c.text || (c.inlineData ? '[上傳檔案內容已處理]' : JSON.stringify(c))).join('\n')
         : JSON.stringify(options.contents));
 
-  // PDF 附件交給 Gemini（Groq 無法讀取 PDF）；其餘內容優先使用 Groq
-  if (hasValidGroqKey() && !(hasBinaryParts(options.contents) && hasValidApiKey())) {
-    try {
-      const groq = await callGroq(options);
-      return {
-        text: groq.text,
-        modelUsed: `Groq ${groq.model}`,
-        latencyMs: Date.now() - startTime,
-      };
-    } catch (groqErr: any) {
-      console.warn('[AI Pipeline] Groq failed, trying Gemini:', groqErr.message);
-    }
-  }
-
   if (hasValidApiKey()) {
     try {
-      const geminiText = await callGeminiWithFallback(options);
-      const latencyMs = Date.now() - startTime;
+      const result = await callGeminiWithFallback(options);
       return {
-        text: geminiText,
-        modelUsed: 'Gemini 2.5 Flash (AI 學術智慧引擎)',
-        latencyMs,
+        text: result.text,
+        modelUsed: `Gemini ${result.model}`,
+        latencyMs: Date.now() - startTime,
       };
     } catch (geminiErr: any) {
       console.warn('[AI Pipeline] Gemini API failed, falling back to local engine:', geminiErr.message);
@@ -198,11 +122,10 @@ async function callAiWithGemini(options: {
 
   // Fallback to local academic synthesis engine
   const smartRes = generateSmartAcademicResponse(contentString, options.systemInstruction);
-  const latencyMs = Date.now() - startTime;
   return {
     text: smartRes.text,
     modelUsed: `${smartRes.modelUsed} (本地高階知識庫備援)`,
-    latencyMs,
+    latencyMs: Date.now() - startTime,
   };
 }
 
@@ -211,20 +134,18 @@ async function callGeminiWithFallback(options: {
   systemInstruction?: string;
   temperature?: number;
   timeoutMs?: number;
-}): Promise<string> {
+  task?: AiTask;
+  jsonMode?: boolean;
+}): Promise<{ text: string; model: string }> {
   if (!hasValidApiKey()) {
     throw new Error('No valid GEMINI_API_KEY configured');
   }
 
-  const candidateModels = [
-    'gemini-2.5-flash',
-    'gemini-3.8-flash',
-    'gemini-3.1-flash-lite',
-    'gemini-flash-latest',
-  ];
-
-  let lastError: any = null;
+  const task: AiTask = options.task || 'analysis';
+  const level = getThinkingLevel(task);
+  const candidateModels = getGeminiModels(task);
   const timeoutMs = options.timeoutMs ?? 30000;
+  let lastError: any = null;
 
   // Normalize contents payload for @google/genai SDK
   const formattedContents = Array.isArray(options.contents)
@@ -233,31 +154,29 @@ async function callGeminiWithFallback(options: {
 
   for (let i = 0; i < candidateModels.length; i++) {
     const model = candidateModels[i];
-    // Allow full timeout for primary model; use 15s-20s for secondary fallback attempts
     const currentModelTimeout = i === 0 ? timeoutMs : Math.min(timeoutMs, 20000);
 
     try {
-      const callPromise = ai.models.generateContent({
-        model,
-        contents: formattedContents,
-        config: {
-          systemInstruction: options.systemInstruction,
-          temperature: options.temperature ?? 0.7,
-        },
-      });
+      const config: any = {
+        systemInstruction: options.systemInstruction,
+        temperature: options.temperature ?? 0.7,
+        thinkingConfig: buildThinkingConfig(model, level),
+      };
+      if (options.jsonMode) config.responseMimeType = 'application/json';
 
+      const callPromise = ai.models.generateContent({ model, contents: formattedContents, config });
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(`Model ${model} timed out after ${currentModelTimeout}ms`)), currentModelTimeout)
       );
 
       const response: any = await Promise.race([callPromise, timeoutPromise]);
-
       if (response && response.text && response.text.trim().length > 0) {
-        return response.text.trim();
+        return { text: response.text.trim(), model };
       }
+      lastError = new Error(`Model ${model} returned empty content`);
     } catch (err: any) {
       lastError = err;
-      console.warn(`[Gemini Fallback] Model ${model} failed (${err.status || err.message}), trying next candidate...`);
+      console.warn(`[Gemini] Model ${model} failed (${err.status || err.message}), trying next candidate...`);
     }
   }
 
@@ -866,6 +785,7 @@ app.post('/api/gemini/explain', async (req, res) => {
         contents: `${context ? `[論文或研究背景]\n${context}\n\n` : ''}[提問或選取文字]\n${question}`,
         systemInstruction,
         temperature: isTranslationReq ? 0.3 : 0.65,
+        task: isTranslationReq ? 'translate' : 'analysis',
       });
 
       return res.json({
@@ -928,18 +848,7 @@ app.post('/api/gemini/analyze-paper', async (req, res) => {
     let contentsPayload: any;
     const isPdf = fileBase64 && (fileType === 'application/pdf' || fileType?.includes('pdf'));
 
-    if (isPdf && !hasValidApiKey() && hasValidGroqKey()) {
-      // 只有 Groq 金鑰時：先在伺服器端把 PDF 轉成文字，再交給 Groq 分析
-      try {
-        const { extractText, getDocumentProxy } = await import('unpdf');
-        const pdf = await getDocumentProxy(new Uint8Array(Buffer.from(fileBase64, 'base64')));
-        const { text } = await extractText(pdf, { mergePages: true });
-        contentsPayload = `${basePrompt}\n\n[論文 PDF 文字萃取 (${fileName || 'PDF'})]:\n${String(text).slice(0, 60000)}`;
-      } catch (pdfErr: any) {
-        console.warn('[Analyze-Paper] PDF text extraction failed:', pdfErr.message);
-        contentsPayload = `${basePrompt}\n\n[PDF 文字萃取失敗，請改貼上論文文字]`;
-      }
-    } else if (isPdf) {
+    if (isPdf) {
       contentsPayload = [
         {
           inlineData: {
@@ -1115,7 +1024,7 @@ function getStageProgressionFallback(stage: number, lastQuery?: string, lastAnsw
 }
 
 // AI Dynamic Stage-by-Stage 4-Question Generator Endpoint
-app.post(['/api/ai/dynamic-questions', '/api/groq/dynamic-questions'], async (req, res) => {
+app.post('/api/ai/dynamic-questions', async (req, res) => {
   try {
     const { stage = 1, currentTopic, lastQuery, lastAnswer, sourceText } = req.body;
     const nextStage = Number(stage) + 1;
@@ -1137,13 +1046,14 @@ ${sourceText ? `【論文原始文字】：${sourceText.slice(0, 300)}` : ''}
 請推進至【階段 ${nextStage}】，動態生成 4 個深度學術探討問題：`;
 
     let questions: string[] = [];
-    let modelUsed = 'Gemini 2.5 Flash (AI 學術智慧引擎)';
+    let modelUsed = 'Gemini';
 
     try {
       const result = await callAiWithGemini({
         contents,
         systemInstruction,
         temperature: 0.7,
+        task: 'classify', // 產生 4 個追問題目屬於簡單任務，用最低思考程度
       });
 
       if (result && result.text) {
@@ -1255,20 +1165,21 @@ function keywordSentiment(title: string) {
   return { sentiment, score: Math.round(score * 100) / 100, lmKeywords: [...pos, ...neg] };
 }
 
-/** 批次情緒分類：有 Groq 金鑰時用 Groq（一次送多則標題），否則用關鍵詞 */
+/** 批次情緒分類：有 Gemini 金鑰時用 Gemini Flash-Lite（一次送多則標題、最低思考程度），否則用關鍵詞 */
 async function classifyHeadlines(titles: string[]): Promise<{ results: ReturnType<typeof keywordSentiment>[]; engine: string }> {
   const fallback = () => ({ results: titles.map(keywordSentiment), engine: '關鍵詞情緒詞典' });
-  if (!hasValidGroqKey() || titles.length === 0) return fallback();
+  if (!hasValidApiKey() || titles.length === 0) return fallback();
   try {
     const numbered = titles.map((t, i) => `${i}. ${t}`).join('\n');
-    const groq = await callGroq({
+    const r = await callGeminiWithFallback({
       systemInstruction: '你是台股財經新聞情緒分類器，依 Loughran-McDonald 金融情緒概念判斷每則標題對該公司股價的情緒。只輸出 JSON。',
       contents: `請逐一分類以下新聞標題，輸出 JSON 物件：{"items":[{"i":編號,"sentiment":"positive|negative|neutral","score":-1到1的數字,"keywords":["情緒關鍵詞"]}]}\n\n${numbered}`,
       temperature: 0.1,
+      task: 'classify',
       jsonMode: true,
       timeoutMs: 30000,
     });
-    const parsed = parseJsonLoose(groq.text);
+    const parsed = parseJsonLoose(r.text);
     const items: any[] = Array.isArray(parsed) ? parsed : parsed.items || [];
     const byIndex = new Map(items.map((it: any) => [Number(it.i), it]));
     const results = titles.map((t, i) => {
@@ -1277,9 +1188,9 @@ async function classifyHeadlines(titles: string[]): Promise<{ results: ReturnTyp
       const score = Math.max(-1, Math.min(1, Number(it.score) || 0));
       return { sentiment: it.sentiment, score: Math.round(score * 100) / 100, lmKeywords: Array.isArray(it.keywords) ? it.keywords.slice(0, 5) : [] };
     });
-    return { results, engine: `Groq ${groq.model}` };
+    return { results, engine: `Gemini ${r.model}` };
   } catch (err: any) {
-    console.warn('[Sentiment] Groq classification failed, using keywords:', err.message);
+    console.warn('[Sentiment] Gemini classification failed, using keywords:', err.message);
     return fallback();
   }
 }
@@ -1309,7 +1220,7 @@ app.post('/api/finmind/live-news', async (req, res) => {
 
     let fetchError = '';
 
-    // 1. 有 FinMind 金鑰：逐日抓取最近 7 天新聞，再做情緒分類（Groq 或關鍵詞）
+    // 1. 有 FinMind 金鑰：逐日抓取最近 7 天新聞，再做情緒分類（Gemini 或關鍵詞）
     if (token && token.length > 5) {
       try {
         const days = Math.min(14, Math.max(1, Number(req.body?.days) || 7));
@@ -1404,17 +1315,18 @@ app.post('/api/sentiment/analyze-headline', async (req, res) => {
   "explanation": "繁體中文簡要說明情緒分類原因與對股價的交互作用"
 }`;
 
-    // 有 Groq 金鑰時：交給 Groq 以 JSON 模式判讀
-    if (hasValidGroqKey()) {
+    // 有 Gemini 金鑰時：交給 Gemini Flash-Lite 以 JSON 模式判讀
+    if (hasValidApiKey()) {
       try {
-        const groq = await callGroq({
+        const g = await callGeminiWithFallback({
           systemInstruction: '你是台股財經新聞情緒分析系統。只輸出合法 JSON，scarImpact 為字串（例如 "+1.8%"），explanation 用繁體中文。',
           contents: prompt,
           temperature: 0.2,
+          task: 'classify',
           jsonMode: true,
           timeoutMs: 30000,
         });
-        const r = parseJsonLoose(groq.text);
+        const r = parseJsonLoose(g.text);
         if (['positive', 'negative', 'neutral'].includes(r.sentiment)) {
           return res.json({
             sentiment: r.sentiment,
@@ -1423,11 +1335,11 @@ app.post('/api/sentiment/analyze-headline', async (req, res) => {
             keywords: Array.isArray(r.keywords) ? r.keywords : [],
             scarImpact: String(r.scarImpact ?? ''),
             explanation: r.explanation || '',
-            modelUsed: `Groq ${groq.model}`,
+            modelUsed: `Gemini ${g.model}`,
           });
         }
       } catch (err: any) {
-        console.warn('[Analyze-Headline] Groq failed, using keyword rules:', err.message);
+        console.warn('[Analyze-Headline] Gemini failed, using keyword rules:', err.message);
       }
     }
 
@@ -1461,7 +1373,7 @@ app.post('/api/sentiment/analyze-headline', async (req, res) => {
       lmCategory,
       keywords: [...matchedPos, ...matchedNeg],
       scarImpact,
-      modelUsed: '關鍵詞情緒詞典（未設定 Groq）',
+      modelUsed: '關鍵詞情緒詞典（未設定 Gemini）',
       explanation: `依據 Loughran-McDonald 金融情緒詞庫比對，該標題識別出關鍵詞 [${[...matchedPos, ...matchedNeg].join(', ') || '市場觀察'}]，分類為 ${sentiment === 'positive' ? '正面情緒 (Positive)' : sentiment === 'negative' ? '負面情緒 (Negative)' : '中性 (Neutral)'}，對當期累積超額報酬 (SCAR) 預估邊際衝擊約為 ${scarImpact}。`
     });
   } catch (err: any) {
@@ -1512,7 +1424,7 @@ app.post('/api/finmind/test', async (req, res) => {
 // ---------------------------------------------------------------------
 // 1. 抓近一年日收盤價（TaiwanStockPrice，一次請求）
 // 2. 逐日抓最近 newsDays 天新聞（TaiwanStockNews，每天一次請求）
-// 3. 每則標題做情緒分類（Groq 或關鍵詞），按日平均成「每日情緒分數」
+// 3. 每則標題做情緒分類（Gemini 或關鍵詞），按日平均成「每日情緒分數」
 // 4. 新聞日對應到「當天或之後的第一個交易日 t」，結果變數 = t+1 日報酬
 // 5. 簡單迴歸：隔日報酬 = a + b × 情緒；另算方向命中率與 AUC
 // 注意：天數少時樣本很小，結果僅供教學討論，不構成投資建議
@@ -1531,14 +1443,14 @@ async function runRealSentimentStudy(sId: string, sName: string, token: string, 
   if (prices.length < 5) throw new Error(`股價資料不足（${prices.length} 筆），請確認股票代號`);
   if (newsRows.length === 0) throw new Error(`最近 ${newsDays} 天查無 ${sId} 新聞`);
 
-  // 情緒分類：最多 200 則，每 40 則一批送 Groq
+  // 情緒分類：最多 200 則，每 40 則一批送 Gemini
   const capped = newsRows.slice(0, 200);
   const sentiments: ReturnType<typeof keywordSentiment>[] = [];
   let engine = '關鍵詞情緒詞典';
   for (let i = 0; i < capped.length; i += 40) {
     const batch = await classifyHeadlines(capped.slice(i, i + 40).map((r: any) => r.title));
     sentiments.push(...batch.results);
-    if (batch.engine.startsWith('Groq')) engine = batch.engine;
+    if (batch.engine.startsWith('Gemini')) engine = batch.engine;
   }
   const posN = sentiments.filter(s => s.sentiment === 'positive').length;
   const negN = sentiments.filter(s => s.sentiment === 'negative').length;
@@ -1764,46 +1676,21 @@ app.delete('/api/analysis-records/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// AI 供應商狀態：前端可用來顯示目前使用 Groq / Gemini / 本地備援
+// AI 狀態：前端可用來顯示目前使用的模型與思考程度
 app.get('/api/ai/status', (_req, res) => {
-  const groq = hasValidGroqKey();
   const gemini = hasValidApiKey();
   res.json({
-    groq: { configured: groq, models: getGroqModels(), keyMasked: maskKey(getGroqKeys()[0]), keyCount: getGroqKeys().length },
-    gemini: { configured: gemini, keyMasked: maskKey(process.env.GEMINI_API_KEY) },
+    gemini: {
+      configured: gemini,
+      keyMasked: maskKey(process.env.GEMINI_API_KEY),
+      translateModels: getGeminiModels('translate'),
+      analysisModels: getGeminiModels('analysis'),
+      translateThinking: getThinkingLevel('translate'),
+      analysisThinking: getThinkingLevel('analysis'),
+    },
     finmind: { configured: !!getEffectiveFinmindToken().token },
-    activeProvider: groq ? 'Groq' : gemini ? 'Gemini' : '本地知識庫備援',
-    order: 'Groq ➔ Gemini ➔ 本地備援（PDF 附件優先交給 Gemini）',
+    activeProvider: gemini ? 'Gemini' : '本地知識庫備援',
   });
-});
-
-// Groq API 連線測試
-app.post('/api/groq/test', async (_req, res) => {
-  const startTime = Date.now();
-  if (!hasValidGroqKey()) {
-    return res.status(400).json({
-      success: false,
-      error: '未偵測到有效的 GROQ_API_KEY 環境變數。',
-      keyMasked: maskKey(getGroqKeys()[0]),
-    });
-  }
-  try {
-    const result = await callGroq({
-      contents: '請用繁體中文回覆一句話：Groq API 連線測試成功。',
-      systemInstruction: 'You are a connection testing assistant. Answer in Traditional Chinese in one short sentence.',
-      temperature: 0.1,
-      timeoutMs: 15000,
-      maxTokens: 300,
-    });
-    res.json({ success: true, model: result.model, reply: result.text, latencyMs: Date.now() - startTime, keyMasked: maskKey(getGroqKeys()[0]) });
-  } catch (err: any) {
-    const msg = err.message || '';
-    const diagnosis = /401|invalid_api_key/i.test(msg) ? 'API 金鑰無效 (401)，請至 console.groq.com 重新產生。'
-      : /429/.test(msg) ? '超過速率或用量限制 (429)，請稍後再試。'
-      : /404|model/i.test(msg) ? '模型不存在或已下架，請調整 GROQ_MODEL。'
-      : 'Groq API 調用失敗';
-    res.status(500).json({ success: false, error: msg, diagnosis, latencyMs: Date.now() - startTime, keyMasked: maskKey(getGroqKeys()[0]) });
-  }
 });
 
 // Gemini API Connection Test Endpoint
@@ -1822,19 +1709,20 @@ app.post('/api/gemini/test', async (req, res) => {
       });
     }
 
-    const testText = await callGeminiWithFallback({
+    const test = await callGeminiWithFallback({
       contents: '請用繁體中文回覆一句話：Gemini API 連線測試成功。',
       systemInstruction: 'You are a connection testing assistant. Answer in Traditional Chinese in one short sentence.',
       temperature: 0.1,
-      timeoutMs: 10000,
+      timeoutMs: 15000,
+      task: 'translate',
     });
 
     const latencyMs = Date.now() - startTime;
     return res.json({
       success: true,
-      model: 'Gemini 2.5 Flash',
+      model: `${test.model}（翻譯：${getGeminiModels('translate')[0]}／解析：${getGeminiModels('analysis')[0]}，思考 ${getThinkingLevel('analysis')}）`,
       latencyMs,
-      reply: testText,
+      reply: test.text,
       keyMasked,
     });
   } catch (err: any) {
@@ -1847,7 +1735,7 @@ app.post('/api/gemini/test', async (req, res) => {
     } else if (errMessage.includes('403') || errMessage.includes('API_KEY_INVALID')) {
       diagnosis = 'API 金鑰無效或權限不足 (403 Forbidden / Invalid Key)。';
     } else if (errMessage.includes('404')) {
-      diagnosis = '模型不存在或版本不支援 (404 Not Found)。';
+      diagnosis = '模型不存在或版本不支援 (404 Not Found)，請檢查 GEMINI_TRANSLATE_MODEL / GEMINI_ANALYSIS_MODEL 設定。';
     }
     return res.status(500).json({
       success: false,

@@ -4,7 +4,7 @@
 =====================================================================
 做什麼：
   1. 從 FinMind 抓多支股票、多天的「真實新聞」（目標 500 則以上）與日收盤價
-  2. 用 Groq 判讀每則標題的情緒（沒有 Groq 金鑰時改用關鍵詞）
+  2. 用 Gemini Flash-Lite 判讀每則標題的情緒（沒有 Gemini 金鑰時改用關鍵詞）
   3. 建立兩組特徵：
        - 純量化：過去 1/5/20 日報酬、20 日波動度、成交量比
        - 量化＋情緒：再加上當日平均情緒、正面／負面新聞則數
@@ -17,7 +17,7 @@
   cd ~/mmr
   pip install --user pandas scikit-learn requests
   export FINMIND_API_TOKEN=你的Token
-  export GROQ_API_KEY=你的Groq金鑰        # 可省略，省略則用關鍵詞判讀情緒
+  export GEMINI_API_KEY=你的Gemini金鑰    # 可省略，省略則用關鍵詞判讀情緒
   python3 news_ml_study.py --stocks 2330,2454,2317,2382 --days 90
   bash deploy.sh                           # 重新上架，網頁就會顯示新結果
 
@@ -54,8 +54,9 @@ except ImportError as e:
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 FINMIND_URL = os.environ.get("FINMIND_BASE_URL", "https://api.finmindtrade.com/api/v4/data")
-GROQ_URL = os.environ.get("GROQ_BASE_URL", "https://api.groq.com/openai/v1") + "/chat/completions"
-GROQ_MODEL = os.environ.get("GROQ_MODEL") or "llama-3.3-70b-versatile"
+GEMINI_URL = os.environ.get("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
+# 情緒判讀是簡單分類，用最便宜的 Flash-Lite、最低思考程度即可
+GEMINI_MODEL = os.environ.get("GEMINI_TRANSLATE_MODEL") or "gemini-3.1-flash-lite"
 CACHE = ".cache"
 BENCHMARK = "0050"
 HORIZON = 5  # 預測未來幾個交易日
@@ -142,62 +143,53 @@ def fetch_prices(stocks, start, end, token):
     return px
 
 
-# ─────────────────────────── 2. 情緒判讀（Groq 或關鍵詞，含快取） ───────────────────────────
+# ─────────────────────────── 2. 情緒判讀（Gemini 或關鍵詞，含快取） ───────────────────────────
 def keyword_score(title):
     pos = sum(w in title for w in POS_WORDS)
     neg = sum(w in title for w in NEG_WORDS)
     return max(-0.95, min(0.95, (pos - neg) * 0.35))
 
 
-def groq_keys():
-    keys = [os.environ.get("GROQ_API_KEY", "")] + os.environ.get("GROQ_API_KEYS", "").split(",")
-    return [k.strip() for k in keys if len(k.strip()) > 10]
-
-
-def groq_batch(titles, keys):
+def gemini_batch(titles, key):
     numbered = "\n".join(f"{i}. {t}" for i, t in enumerate(titles))
     body = {
-        "model": GROQ_MODEL, "temperature": 0.1, "response_format": {"type": "json_object"},
-        "messages": [
-            {"role": "system", "content": "你是台股財經新聞情緒分類器，依 Loughran-McDonald 金融情緒概念判斷每則標題對該公司股價的情緒。只輸出 JSON。"},
-            {"role": "user", "content": '請逐一分類以下新聞標題，輸出 {"items":[{"i":編號,"score":-1到1的數字}]}，正面為正、負面為負、中性為 0。\n\n' + numbered},
-        ],
+        "systemInstruction": {"parts": [{"text": "你是台股財經新聞情緒分類器，依 Loughran-McDonald 金融情緒概念判斷每則標題對該公司股價的情緒。只輸出 JSON。"}]},
+        "contents": [{"role": "user", "parts": [{"text": '請逐一分類以下新聞標題，輸出 {"items":[{"i":編號,"score":-1到1的數字}]}，正面為正、負面為負、中性為 0。\n\n' + numbered}]}],
+        "generationConfig": {"temperature": 0.1, "responseMimeType": "application/json",
+                             "thinkingConfig": {"thinkingLevel": "MINIMAL"}},
     }
-    for k in range(len(keys)):
-        key = keys[(groq_batch.cursor + k) % len(keys)]
-        r = requests.post(GROQ_URL, json=body, headers={"Authorization": f"Bearer {key}"}, timeout=60)
-        if r.status_code in (401, 403, 429):
-            time.sleep(1)
+    for attempt in range(3):
+        r = requests.post(f"{GEMINI_URL}/models/{GEMINI_MODEL}:generateContent", json=body,
+                          headers={"x-goog-api-key": key}, timeout=60)
+        if r.status_code == 429:  # 免費額度每分鐘上限：稍等再試
+            time.sleep(15 * (attempt + 1))
             continue
         r.raise_for_status()
-        text = r.json()["choices"][0]["message"]["content"]
+        parts = r.json()["candidates"][0]["content"]["parts"]
+        text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
         text = re.sub(r"```(?:json)?", "", text).strip()
         items = json.loads(re.search(r"\{[\s\S]*\}", text).group(0)).get("items", [])
-        groq_batch.cursor += 1
         return {int(it["i"]): max(-1.0, min(1.0, float(it.get("score", 0)))) for it in items if "i" in it}
-    raise RuntimeError("所有 Groq 金鑰都無法使用（401/403/429）")
-
-
-groq_batch.cursor = 0
+    raise RuntimeError("Gemini 持續回報 429（超過額度），請稍後再試")
 
 
 def score_titles(titles):
     path = f"{CACHE}/sentiment.json"
     cache = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
     h = lambda t: hashlib.md5(t.encode("utf-8")).hexdigest()
-    keys = groq_keys()
-    engine = f"Groq {GROQ_MODEL}" if keys else "關鍵詞情緒詞典"
+    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    engine = f"Gemini {GEMINI_MODEL}" if key else "關鍵詞情緒詞典"
     todo = [t for t in dict.fromkeys(titles) if h(t) not in cache]
     if todo:
         log(f"  需判讀 {len(todo)} 則（已快取 {len(set(titles)) - len(todo)} 則），引擎：{engine}")
     for b in range(0, len(todo), 40):
         batch = todo[b:b + 40]
         scores = {}
-        if keys:
+        if key:
             try:
-                scores = groq_batch(batch, keys)
+                scores = gemini_batch(batch, key)
             except Exception as e:
-                log(f"\n  ⚠️ Groq 失敗（{e}），此批改用關鍵詞")
+                log(f"\n  ⚠️ Gemini 失敗（{e}），此批改用關鍵詞")
         for i, t in enumerate(batch):
             cache[h(t)] = scores.get(i, keyword_score(t))
         print(f"\r  情緒判讀 {min(b + 40, len(todo))}/{len(todo)}", end="", flush=True)

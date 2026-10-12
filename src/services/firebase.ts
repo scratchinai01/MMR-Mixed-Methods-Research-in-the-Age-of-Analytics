@@ -155,7 +155,7 @@ export async function appendFollowupToAnalysisRecordInFirestore(
   const qaEntry = {
     ...qa,
     timestamp: Date.now(),
-    modelUsed: qa.modelUsed || 'Gemini 2.5 Flash',
+    modelUsed: qa.modelUsed || 'Gemini',
   };
 
   try {

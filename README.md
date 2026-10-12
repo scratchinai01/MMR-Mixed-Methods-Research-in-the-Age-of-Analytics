@@ -1,7 +1,7 @@
 # 台股論文復刻與沈浸式翻譯｜混合方法研究 (MMR)
 
 復刻 Raman et al. (2022)《Mixed Methods Research in the Age of Analytics》的台股教學平台。
-AI 解析由 **Groq** 提供（Gemini 為備援），台股新聞與股價來自 **FinMind**。
+翻譯與 AI 解析由 **Gemini Flash-Lite** 提供（低成本設定），台股新聞與股價來自 **FinMind**。
 
 ## 本機執行
 
@@ -9,9 +9,8 @@ AI 解析由 **Groq** 提供（Gemini 為備援），台股新聞與股價來自
 
 1. 安裝套件：`npm install`（或 `bun install`）
 2. 複製 `.env.example` 為 `.env`，填入金鑰：
-   - `GROQ_API_KEY`：到 https://console.groq.com/keys 產生
+   - `GEMINI_API_KEY`：到 https://aistudio.google.com/apikey 產生
    - `FINMIND_API_TOKEN`：到 https://finmindtrade.com/ 登入後取得
-   - `GEMINI_API_KEY`（可選）：Groq 失敗時的備援，上傳 PDF 時優先使用
 3. 啟動：`npm run dev`，開啟 http://localhost:3000
 
 ## 上架到 Google Cloud Run
@@ -41,7 +40,7 @@ AI 解析由 **Groq** 提供（Gemini 為備援），台股新聞與股價來自
 cd ~/mmr && git pull
 pip install --user pandas scikit-learn requests
 export FINMIND_API_TOKEN=你的Token
-export GROQ_API_KEY=你的Groq金鑰   # 可省略，省略則用關鍵詞判讀情緒
+export GEMINI_API_KEY=你的Gemini金鑰   # 可省略，省略則用關鍵詞判讀情緒
 python3 news_ml_study.py --stocks 2330,2454,2317,2382 --days 90
 bash deploy.sh
 ```
@@ -49,20 +48,26 @@ bash deploy.sh
 結果存在 `public/data/ml_results.json`，網頁會自動改顯示真實結果，並附上樣本數、期間與基準準確率。
 抓過的新聞存在 `.cache/`，若碰到 FinMind 請求上限，一小時後重跑同一指令即可從中斷處繼續。
 
-## AI 呼叫順序
+## AI 模型與成本
 
-Groq ➔ Gemini ➔ 本地知識庫備援。三者都沒有金鑰時仍可運作，只是回覆來自內建範本。
-上傳 PDF 論文時：有 Gemini 金鑰就交給 Gemini 直接讀 PDF；只有 Groq 時，伺服器會先把 PDF 轉成文字再交給 Groq。
+全部使用 Gemini，預設選最便宜的 Flash-Lite，並依工作調整思考程度：
+
+| 工作 | 預設模型 | 思考程度 |
+|---|---|---|
+| 翻譯、新聞情緒判讀、追問題目 | `gemini-3.1-flash-lite` | MINIMAL |
+| 學術解析、論文診斷 | `gemini-3.1-flash-lite` | LOW |
+
+主要模型失敗時會改用 `gemini-3.5-flash-lite` 再試一次；都失敗時改用內建範本回覆。
+可用 `GEMINI_TRANSLATE_MODEL`、`GEMINI_ANALYSIS_MODEL`、`GEMINI_ANALYSIS_THINKING` 調整（見 `.env.example`）。
 
 ## API 一覽
 
 | 路徑 | 說明 |
 |---|---|
 | `GET /api/ai/status` | 目前啟用的 AI 供應商與金鑰狀態 |
-| `POST /api/groq/test` | 測試 Groq 連線 |
 | `POST /api/gemini/test` | 測試 Gemini 連線 |
 | `POST /api/finmind/test` | 驗證 FinMind Token（伺服器或使用者自填） |
-| `POST /api/finmind/live-news` | 最近 7 天個股新聞＋情緒判讀（`days` 可調，上限 14） |
+| `POST /api/finmind/live-news` | 最近 7 天個股新聞＋Gemini 情緒判讀（`days` 可調，上限 14） |
 | `POST /api/finmind/ml-train` | 真實股價＋新聞：新聞情緒對隔日報酬的迴歸、方向命中率、AUC（`newsDays` 預設 20，上限 60） |
 | `POST /api/sentiment/analyze-headline` | 單則標題情緒分析 |
 

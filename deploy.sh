@@ -30,22 +30,18 @@ while true; do
   echo ""
   echo "▶ 請輸入金鑰（貼上時畫面不會顯示，這是正常的；貼上後按 Enter）"
   echo "  不需要設定或要沿用上次設定的，直接按 Enter 跳過"
-  read -rsp "  GROQ_API_KEY: " GROQ_API_KEY; echo
-  read -rsp "  GROQ_API_KEYS（多把以逗號分隔，可留空）: " GROQ_API_KEYS; echo
+  read -rsp "  GEMINI_API_KEY: " GEMINI_API_KEY; echo
   read -rsp "  FINMIND_API_TOKEN: " FINMIND_API_TOKEN; echo
-  read -rsp "  GEMINI_API_KEY（可留空）: " GEMINI_API_KEY; echo
 
   # 去掉不小心貼進來的空白與換行
-  for NAME in GROQ_API_KEY GROQ_API_KEYS FINMIND_API_TOKEN GEMINI_API_KEY; do
+  for NAME in GEMINI_API_KEY FINMIND_API_TOKEN; do
     printf -v "$NAME" '%s' "$(printf '%s' "${!NAME}" | tr -d '[:space:]')"
   done
 
   echo ""
   echo "▶ 請確認輸入內容："
-  echo "  GROQ_API_KEY      ：$(mask "$GROQ_API_KEY")"
-  echo "  GROQ_API_KEYS     ：$(mask "$GROQ_API_KEYS")"
-  echo "  FINMIND_API_TOKEN ：$(mask "$FINMIND_API_TOKEN")"
   echo "  GEMINI_API_KEY    ：$(mask "$GEMINI_API_KEY")"
+  echo "  FINMIND_API_TOKEN ：$(mask "$FINMIND_API_TOKEN")"
   read -rp "  正確請按 y 開始部署；要重新輸入請按 n：" OK
   case "$OK" in
     y|Y) break ;;
@@ -53,14 +49,16 @@ while true; do
   esac
 done
 
-# 只更新有填寫的變數；用 | 當分隔符號，避免 GROQ_API_KEYS 裡的逗號被拆開
+# 只更新有填寫的變數；用 | 當分隔符號，避免值裡的逗號被拆開
 ENV_ARGS=()
 PAIRS=""
-for NAME in GROQ_API_KEY GROQ_API_KEYS FINMIND_API_TOKEN GEMINI_API_KEY; do
+for NAME in GEMINI_API_KEY FINMIND_API_TOKEN; do
   VALUE="${!NAME}"
   if [ -n "$VALUE" ]; then PAIRS="${PAIRS:+$PAIRS|}$NAME=$VALUE"; fi
 done
 if [ -n "$PAIRS" ]; then ENV_ARGS=(--update-env-vars "^|^$PAIRS"); fi
+# 已改用 Gemini，移除舊的 Groq 金鑰設定（不存在時不影響）
+ENV_ARGS+=(--remove-env-vars "GROQ_API_KEY,GROQ_API_KEYS,GROQ_MODEL")
 
 echo ""
 echo "▶ 開始建置與部署（約 3～6 分鐘）..."

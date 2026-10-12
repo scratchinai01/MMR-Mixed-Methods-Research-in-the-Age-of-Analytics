@@ -9,9 +9,7 @@ interface GeminiStatusModalProps {
 
 export const GeminiStatusModal: React.FC<GeminiStatusModalProps> = ({ isOpen, onClose }) => {
   const [testing, setTesting] = useState<boolean>(false);
-  // 要測試的 AI 供應商：Groq（優先使用）或 Gemini（備援）
-  const [provider, setProvider] = useState<'groq' | 'gemini'>('groq');
-  const providerName = provider === 'groq' ? 'Groq' : 'Gemini';
+  const providerName = 'Gemini';
   const [testResult, setTestResult] = useState<{
     success?: boolean;
     model?: string;
@@ -28,7 +26,7 @@ export const GeminiStatusModal: React.FC<GeminiStatusModalProps> = ({ isOpen, on
     setTesting(true);
     setTestResult(null);
     try {
-      const data = await callAiApi(`/api/${provider}/test`, {});
+      const data = await callAiApi('/api/gemini/test', {});
       setTestResult(data);
     } catch (err: any) {
       setTestResult({
@@ -55,13 +53,13 @@ export const GeminiStatusModal: React.FC<GeminiStatusModalProps> = ({ isOpen, on
             </div>
             <div>
               <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <span>AI 連線狀態診斷（Groq / Gemini）</span>
+                <span>AI 連線狀態診斷（Gemini）</span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white">
                   Live Test
                 </span>
               </h2>
               <p className="text-xs text-indigo-200">
-                即時驗證 Groq 與 Gemini 的金鑰、額度與模型連線狀態
+                即時驗證 Gemini 金鑰、額度與模型連線狀態（翻譯與解析皆使用低成本 Flash-Lite）
               </p>
             </div>
           </div>
@@ -83,21 +81,6 @@ export const GeminiStatusModal: React.FC<GeminiStatusModalProps> = ({ isOpen, on
             <p className="text-xs text-slate-600 leading-relaxed">
               點擊下方按鈕將向後端伺服器發送即時測試請求，直接調用所選 AI 模型的 <code className="font-mono text-indigo-700">generateContent</code> API，確認金鑰是否有效且額度正常。
             </p>
-          </div>
-
-          {/* 選擇要測試的 AI 供應商 */}
-          <div className="flex gap-2">
-            {(['groq', 'gemini'] as const).map((p) => (
-              <button
-                key={p}
-                onClick={() => { setProvider(p); setTestResult(null); }}
-                className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
-                  provider === p ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {p === 'groq' ? 'Groq（優先）' : 'Gemini（備援）'}
-              </button>
-            ))}
           </div>
 
           {/* Test Action & Status */}
@@ -173,12 +156,12 @@ export const GeminiStatusModal: React.FC<GeminiStatusModalProps> = ({ isOpen, on
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
                     <span className="text-slate-500">如何解決額度或憑證問題？</span>
                     <a
-                      href={provider === 'groq' ? 'https://console.groq.com/keys' : 'https://ai.studio/projects'}
+                      href="https://ai.studio/projects"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1"
                     >
-                      <span>{provider === 'groq' ? '前往 Groq Console 管理金鑰' : '前往 AI Studio 管理專案與帳單'}</span>
+                      <span>前往 AI Studio 管理專案與帳單</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>

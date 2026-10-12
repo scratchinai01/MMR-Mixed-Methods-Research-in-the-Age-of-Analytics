@@ -84,7 +84,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           topic: 'MMR 混合方法研究解析',
           question: userMsg,
           answer: data.answer,
-          modelUsed: data.modelUsed || 'Gemini 2.5 Flash',
+          modelUsed: data.modelUsed || 'Gemini',
         }).catch(err => console.warn('Firebase followup save warning in MixedMethodModal:', err));
       } else {
         setChatHistory((prev) => [

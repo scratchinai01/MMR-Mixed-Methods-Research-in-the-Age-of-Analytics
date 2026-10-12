@@ -1,6 +1,6 @@
 # GitHub 的 main 有新版本時，自動重新部署到 Google Cloud Run
 # 第一次使用前，需在 Cloud Shell 執行一次：bash setup-auto-deploy.sh
-# 金鑰（GROQ、FinMind…）沿用 Cloud Run 上已設定的值，這裡不需要也不會碰到
+# 金鑰（Gemini、FinMind）沿用 Cloud Run 上已設定的值，這裡不需要也不會碰到
 name: 自動部署到 Cloud Run
 
 on:

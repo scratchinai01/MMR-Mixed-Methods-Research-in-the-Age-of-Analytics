@@ -86,7 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenGeminiTestModal && (
                 <button
                   onClick={onOpenGeminiTestModal}
-                  title="確定 Groq / Gemini API 是否開通與正常運作"
+                  title="確定 Gemini API 是否開通與正常運作"
                   className="flex items-center gap-1.5 px-2.5 h-full hover:bg-slate-100 transition-colors"
                 >
                   <Zap className="w-3.5 h-3.5 text-emerald-600" />

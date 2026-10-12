@@ -128,7 +128,7 @@ export const analysisStorage = {
         topic: target?.paperTitle || '論文追問探討',
         question: qa.q,
         answer: qa.a,
-        modelUsed: qa.modelUsed || 'Gemini 2.5 Flash',
+        modelUsed: qa.modelUsed || 'Gemini',
       });
     } catch (e) {
       console.warn('Failed to append follow-up:', e);
