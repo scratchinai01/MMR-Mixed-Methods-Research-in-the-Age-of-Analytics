@@ -66,6 +66,19 @@ export default function App() {
   const [paraModalLatency, setParaModalLatency] = useState<number | undefined>(undefined);
   const [paraModalLoading, setParaModalLoading] = useState<boolean>(false);
   const [isSpeakingPara, setIsSpeakingPara] = useState<boolean>(false);
+  const [paraModalOffline, setParaModalOffline] = useState<boolean>(false);
+
+  // 預先寫好的白話解說：直接顯示，不呼叫 AI
+  const handleExplainPara = (title: string, source: string, markdown: string) => {
+    setParaModalOffline(true);
+    setParaModalSource(source);
+    setParaModalTitle(title);
+    setParaModalContent(markdown);
+    setParaModalEngine('預寫白話解說（不使用 AI）');
+    setParaModalLatency(undefined);
+    setParaModalLoading(false);
+    setParaModalOpen(true);
+  };
 
   // Trigger real AI analysis on specific paragraph/query
   const handleAskAi = async (promptText: string) => {
@@ -73,6 +86,7 @@ export default function App() {
     if (sourceSnippet.includes('：\n')) {
       sourceSnippet = sourceSnippet.split('：\n')[1]?.trim() || sourceSnippet;
     }
+    setParaModalOffline(false);
     setParaModalSource(sourceSnippet);
     setParaModalTitle('💡 Gemini AI 論文論述深度解析');
     setParaModalContent('');
@@ -199,6 +213,7 @@ export default function App() {
           <PaperReader
             onAskGemini={handleAskAi}
             onOpenGlossaryTerm={handleOpenGlossaryTerm}
+            onExplainPara={handleExplainPara}
             onNavigateToCritique={() => {
               setInitialCritiqueTab('traps');
               setCurrentTab('critique');
@@ -385,6 +400,7 @@ export default function App() {
         title={paraModalTitle}
         sourceText={paraModalSource}
         analysisContent={paraModalContent}
+        offline={paraModalOffline}
         loading={paraModalLoading}
         engineUsed={paraModalEngine}
         latencyMs={paraModalLatency}

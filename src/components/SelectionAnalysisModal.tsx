@@ -34,6 +34,8 @@ interface SelectionAnalysisModalProps {
   onSpeakText: (text: string) => void;
   isSpeaking: boolean;
   onStopSpeech: () => void;
+  /** 預寫內容模式：不自動呼叫 AI 產生推薦問題 */
+  offline?: boolean;
 }
 
 export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
@@ -48,6 +50,7 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
   onSpeakText,
   isSpeaking,
   onStopSpeech,
+  offline = false,
 }) => {
   const [copied, setCopied] = useState<boolean>(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string; modelUsed?: string }[]>([]);
@@ -176,9 +179,9 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
       setMessages([
         { role: 'ai', text: analysisContent, modelUsed: engineUsed }
       ]);
-      fetchDynamicQuestions(1, title, analysisContent);
+      if (!offline) fetchDynamicQuestions(1, title, analysisContent);
     }
-  }, [analysisContent, engineUsed, title]);
+  }, [analysisContent, engineUsed, title, offline]);
 
   if (!isOpen) return null;
 
@@ -430,7 +433,7 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
                   {title}
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-400 text-slate-950 shadow-xs">
-                  {stageTitle.split('：')[0] || `階段 ${currentStage}`}
+                  {offline && messages.length <= 1 ? '白話解說' : (stageTitle.split('：')[0] || `階段 ${currentStage}`)}
                 </span>
                 {engineUsed && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 bg-amber-400/20 text-amber-300 border-amber-400/30">
@@ -441,7 +444,7 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
               </div>
               <p className="text-xs text-indigo-200 flex items-center gap-1.5 mt-0.5">
                 <Zap className="w-3.5 h-3.5 text-amber-300" />
-                <span>{stageTitle} • 支援滑鼠選字即時朗讀與持續追問</span>
+                <span>{offline && messages.length <= 1 ? '預先寫好的白話解說・不使用 AI' : stageTitle} • 支援選字朗讀與持續追問</span>
               </p>
             </div>
           </div>
@@ -484,7 +487,7 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
                     {msg.role === 'ai' ? (
                       <>
                         <Globe className="w-4 h-4 text-indigo-600" />
-                        <span>{msg.modelUsed || engineUsed || 'Gemini'} 分析結果 (#{mIdx + 1})</span>
+                        <span>{offline && mIdx === 0 ? '白話解說（預先寫好，不使用 AI）' : `${msg.modelUsed || engineUsed || 'Gemini'} 分析結果 (#${mIdx + 1})`}</span>
                       </>
                     ) : (
                       <>
@@ -554,8 +557,13 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
             )}
           </div>
 
+          {offline && messages.length <= 1 && (
+            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 leading-relaxed">
+              以上是預先寫好的白話解說，不使用 AI、不產生費用。還有疑問，可以在下方輸入框直接問 AI（這時才會使用 AI）。
+            </div>
+          )}
           {/* Stage Progression & Dynamic 4 Questions */}
-          <div className="space-y-3 pt-3 border-t border-slate-200">
+          <div className={`space-y-3 pt-3 border-t border-slate-200 ${offline && messages.length <= 1 ? 'hidden' : ''}`}>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5 flex-wrap">
                 <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />

@@ -29,14 +29,17 @@ import {
   ZoomIn,
   Zap,
   Presentation,
-  ArrowLeft
+  ArrowLeft,
+  Lightbulb
 } from 'lucide-react';
 import { PdfImmersiveReader } from './PdfImmersiveReader.tsx';
+import { PARA_EXPLAIN, buildExplainMarkdown } from '../data/paraExplain.ts';
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
 
 interface PaperReaderProps {
   onAskGemini: (context: string) => void;
   onOpenGlossaryTerm: (term: string) => void;
+  onExplainPara?: (title: string, source: string, markdown: string) => void;
   onNavigateToCritique?: () => void;
   onOpenMmrModal?: () => void;
   initialSection?: string;
@@ -47,6 +50,7 @@ interface PaperReaderProps {
 export const PaperReader: React.FC<PaperReaderProps> = ({
   onAskGemini,
   onOpenGlossaryTerm,
+  onExplainPara,
   onNavigateToCritique,
   onOpenMmrModal,
   initialSection = 'abstract',
@@ -1004,14 +1008,25 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                   ))}
 
                   {/* Ask AI Button */}
-                  <button
-                    onClick={() => onAskGemini(`${para.en}\n\n【中文翻譯】\n${para.zh}`)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-800 hover:text-white bg-purple-100 hover:bg-purple-600 rounded-xl transition-all border border-purple-300/60 shadow-xs active:scale-95 cursor-pointer"
-                    title="使用 Gemini AI 深度解析此段論文論述與微結構意涵"
-                  >
-                    <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-                    <span>⚡ AI 解析</span>
-                  </button>
+                  {PARA_EXPLAIN[para.id] && onExplainPara ? (
+                    <button
+                      onClick={() => onExplainPara(`💡 白話解說：${para.subSection || '本段'}`, para.zh, buildExplainMarkdown(PARA_EXPLAIN[para.id]))}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:text-white bg-emerald-100 hover:bg-emerald-600 rounded-xl transition-all border border-emerald-300/60 shadow-xs active:scale-95 cursor-pointer"
+                      title="預先寫好的白話解說與生活例子（不使用 AI，不花費用）"
+                    >
+                      <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                      <span>白話解說</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => onAskGemini(`${para.en}\n\n【中文翻譯】\n${para.zh}`)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-800 hover:text-white bg-purple-100 hover:bg-purple-600 rounded-xl transition-all border border-purple-300/60 shadow-xs active:scale-95 cursor-pointer"
+                      title="使用 Gemini AI 解析此段"
+                    >
+                      <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                      <span>⚡ AI 解析</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </article>
