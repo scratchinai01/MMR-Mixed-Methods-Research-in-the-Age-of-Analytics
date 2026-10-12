@@ -21,5 +21,16 @@
   "samples": 2250,
   "runner": "GitHub Actions",
   "runUrl": "https://github.com/scratchinai01/MMR-Mixed-Methods-Research-in-the-Age-of-Analytics/actions/runs/38215948590"
+ },
+ {
+  "startedAt": "2026-10-13T06:05:38+08:00",
+  "totalSeconds": 29.4,
+  "finmindNew": 61,
+  "finmindFromCache": 3630,
+  "geminiCalls": 1,
+  "articles": 16962,
+  "samples": 2249,
+  "runner": "GitHub Actions",
+  "runUrl": "https://github.com/scratchinai01/MMR-Mixed-Methods-Research-in-the-Age-of-Analytics/actions/runs/38314562194"
  }
 ]
