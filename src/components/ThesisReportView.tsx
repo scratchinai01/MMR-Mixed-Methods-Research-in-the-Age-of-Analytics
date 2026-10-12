@@ -81,7 +81,8 @@ export const ThesisReportView: React.FC<ThesisReportViewProps> = ({
   const [fontFamily, setFontFamily] = useState<'sans' | 'serif' | 'mono'>('sans');
   const [fontScale, setFontScale] = useState<'sm' | 'md' | 'lg'>('md');
   const [copiedDraft, setCopiedDraft] = useState<boolean>(false);
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  // 從台股復刻／論文翻譯跳回來時若仍在全螢幕，直接回到投影模式
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(() => typeof document !== 'undefined' && !!document.fullscreenElement);
   const [selectedCommitteeQ, setSelectedCommitteeQ] = useState<number | null>(null);
 
   // Side Drawer for Instant Bilingual Paper Text Preview
@@ -166,23 +167,43 @@ export const ThesisReportView: React.FC<ThesisReportViewProps> = ({
   }, [viewMode, totalSlides]);
 
   // Fullscreen toggle
+  // 全螢幕投影：整份文件進入全螢幕（不是只有投影片容器），
+  // 這樣選字朗讀、翻譯、AI 解析、語音設定、名詞彈窗等浮層在全螢幕下都看得到。
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      slideContainerRef.current?.requestFullscreen?.().catch(() => {});
+    if (!isFullscreen) {
       setIsFullscreen(true);
+      document.documentElement.requestFullscreen?.().catch(() => {});
     } else {
-      document.exitFullscreen?.().catch(() => {});
       setIsFullscreen(false);
+      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     }
   };
 
   useEffect(() => {
-    const onFsChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
+    const onFsChange = () => { if (!document.fullscreenElement) setIsFullscreen(false); };
     document.addEventListener('fullscreenchange', onFsChange);
     return () => document.removeEventListener('fullscreenchange', onFsChange);
   }, []);
+
+  // 投影模式：鎖住背後頁面捲動；瀏覽器不支援全螢幕時 Esc 也能退出
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('deck-present');
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !document.fullscreenElement) setIsFullscreen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.body.classList.remove('deck-present');
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [isFullscreen]);
+
+  // 離開簡報模式或離開本頁時，一併退出全螢幕
+  useEffect(() => {
+    if (viewMode !== 'slides' && isFullscreen) toggleFullscreen();
+  }, [viewMode]);
 
   // Print manuscript handler
   const handlePrint = () => {
@@ -332,7 +353,10 @@ export const ThesisReportView: React.FC<ThesisReportViewProps> = ({
         {/* ========================================================= */}
         {viewMode === 'slides' && (
           // 兩小時三段式報告：原文報告 40｜台股復刻 60｜復刻後比較 20，每頁左右對照
-          <div ref={slideContainerRef} className="max-w-7xl mx-auto bg-slate-50 overflow-y-auto">
+          <div
+            ref={slideContainerRef}
+            className={isFullscreen ? 'fixed inset-0 z-[35] bg-slate-800 p-2 sm:p-3' : 'max-w-7xl mx-auto bg-slate-50'}
+          >
             <ThesisDeck
               initialSlide={currentSlide}
               onSlideChange={(n) => { setCurrentSlide(n); onSlideChange?.(n); }}
@@ -340,6 +364,8 @@ export const ThesisReportView: React.FC<ThesisReportViewProps> = ({
               timerActive={isTimerRunning}
               onJumpReplication={(link, n) => onNavigateToReplication?.(n, link)}
               onJumpReader={(section, n) => onNavigateToReader?.(section, n)}
+              present={isFullscreen}
+              onExitPresent={toggleFullscreen}
             />
           </div>
         )}
