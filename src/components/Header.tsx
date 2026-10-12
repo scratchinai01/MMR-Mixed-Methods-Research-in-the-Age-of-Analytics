@@ -1,4 +1,6 @@
 import React from 'react';
+import { aiClick } from '../services/aiGate.ts';
+import { AiGateBadge } from './AiGateUI.tsx';
 import { VoicePickerButton } from './VoicePicker.tsx';
 import { 
   BookOpen, 
@@ -105,6 +107,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden md:inline">{seniorMode ? '大字體 1.3x' : '大字體'}</span>
             </button>
 
+            <AiGateBadge />
             <VoicePickerButton className={toolBtn} />
 
             <button
@@ -117,8 +120,8 @@ export const Header: React.FC<HeaderProps> = ({
 
             {onOpenUploadModal && (
               <button
-                onClick={onOpenUploadModal}
-                title="上傳學術論文 (PDF/TXT)，由 AI 深度診斷混合研究方法 (MMR)"
+                onClick={aiClick(() => onOpenUploadModal())}
+                title="上傳論文由 AI 診斷（會使用 Gemini）：請按住 Shift 再點擊"
                 className={`${toolBtn} !text-indigo-700 !border-indigo-200 !bg-indigo-50 hover:!bg-indigo-100`}
               >
                 <UploadCloud className="w-4 h-4" />
@@ -127,8 +130,8 @@ export const Header: React.FC<HeaderProps> = ({
             )}
 
             <button
-              onClick={onOpenMmrModal}
-              title="Mixed Method 研究解析（AI）"
+              onClick={aiClick(() => onOpenMmrModal?.())}
+              title="Mixed Method 研究解析（會使用 Gemini）：請按住 Shift 再點擊"
               className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-colors whitespace-nowrap shrink-0"
             >
               <Sparkles className="w-4 h-4 text-amber-200" />

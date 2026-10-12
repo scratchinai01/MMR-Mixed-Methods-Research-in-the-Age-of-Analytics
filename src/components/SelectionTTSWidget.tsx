@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { aiClick } from '../services/aiGate.ts';
 import { makeUtterance, getTtsPrefs, setTtsPrefs } from '../services/ttsVoice.ts';
 import { 
   Volume2, 
@@ -399,9 +400,10 @@ export const SelectionTTSWidget: React.FC<SelectionTTSWidgetProps> = ({ onAskGem
 
           {/* Translate Selection */}
           <button
-            onClick={handleTranslateSelection}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={aiClick(() => handleTranslateSelection())}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all active:scale-95"
-            title="將框選文字透過 Gemini AI 進行專業學術翻譯"
+            title="會使用 Gemini：請按住 Shift 再點擊"
           >
             <Globe className="w-3.5 h-3.5 text-indigo-200" />
             <span>翻譯</span>
@@ -409,9 +411,10 @@ export const SelectionTTSWidget: React.FC<SelectionTTSWidgetProps> = ({ onAskGem
 
           {/* Deep AI Academic Analysis */}
           <button
-            onClick={handleDeepGeminiAnalysis}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={aiClick(() => handleDeepGeminiAnalysis())}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md transition-all active:scale-95"
-            title="將框選文字透過 Gemini AI 進行學術與微結構深度解析"
+            title="會使用 Gemini：請按住 Shift 再點擊"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
             <span>AI 解析</span>

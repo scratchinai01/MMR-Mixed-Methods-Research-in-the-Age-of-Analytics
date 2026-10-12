@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AiGateToast } from './components/AiGateUI.tsx';
 import { makeUtterance } from './services/ttsVoice.ts';
 import { Header } from './components/Header.tsx';
 import { PaperReader } from './components/PaperReader.tsx';
@@ -360,6 +361,8 @@ export default function App() {
           setUploadModalOpen(true);
         }}
       />
+
+      <AiGateToast />
 
       <GlossaryModal
         isOpen={glossaryModalOpen}
