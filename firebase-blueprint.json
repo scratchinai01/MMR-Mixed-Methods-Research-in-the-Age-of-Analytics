@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "followup_dialogues": {
+      "title": "Followup Dialogues",
+      "description": "Records of user follow-up questions and AI research answers across MMR analysis modules",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique dialogue ID" },
+        "sourceModule": { "type": "string", "description": "Module source: paper_upload, selection_analysis, value_critique, mmr_reader" },
+        "topic": { "type": "string", "description": "Topic or context title" },
+        "sourceText": { "type": "string", "description": "Related paper text snippet or context" },
+        "question": { "type": "string", "description": "User follow-up question" },
+        "answer": { "type": "string", "description": "AI answer or explanation" },
+        "modelUsed": { "type": "string", "description": "Gemini model used" },
+        "timestamp": { "type": "string", "description": "Formatted ISO or locale date time" },
+        "createdAt": { "type": "number", "description": "Epoch timestamp in ms" },
+        "stage": { "type": "number", "description": "Progression stage index if applicable" }
+      },
+      "required": ["id", "question", "answer", "createdAt"]
+    },
+    "analysis_records": {
+      "title": "Paper MMR Analysis Records",
+      "description": "Full paper MMR diagnosis records and structured reports",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique record ID" },
+        "fileName": { "type": "string", "description": "Paper file name or title" },
+        "paperTitle": { "type": "string", "description": "Paper title" },
+        "majorDesignId": { "type": "string", "description": "triangulation | embedded | explanatory | exploratory" },
+        "majorDesignName": { "type": "string", "description": "Major design name" },
+        "subVariantName": { "type": "string", "description": "Sub-variant name" },
+        "notation": { "type": "string", "description": "MMR notation e.g. QUAN ➔ qual" },
+        "timing": { "type": "string", "description": "Timing e.g. sequential / concurrent" },
+        "weight": { "type": "string", "description": "Weight e.g. QUAN dominant / equal" },
+        "summary": { "type": "string", "description": "Executive summary" },
+        "markdownReport": { "type": "string", "description": "Full Markdown diagnostic report" },
+        "diagramType": { "type": "string", "description": "Diagram type identifier" },
+        "followups": {
+          "type": "array",
+          "description": "List of follow-up Q&A pairs for this paper",
+          "items": {
+            "type": "object",
+            "properties": {
+              "q": { "type": "string" },
+              "a": { "type": "string" },
+              "timestamp": { "type": "number" },
+              "modelUsed": { "type": "string" }
+            }
+          }
+        },
+        "createdAt": { "type": "number", "description": "Epoch timestamp in ms" },
+        "timestamp": { "type": "string", "description": "Formatted timestamp" }
+      },
+      "required": ["id", "fileName", "markdownReport", "createdAt"]
+    }
+  },
+  "firestore": {
+    "followup_dialogues": {
+      "entity": "followup_dialogues",
+      "description": "User follow-up questions and AI responses collection"
+    },
+    "analysis_records": {
+      "entity": "analysis_records",
+      "description": "Paper MMR analysis records with embedded follow-ups"
+    }
+  }
+}

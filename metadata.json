@@ -1,0 +1,8 @@
+{
+  "name": "Mixed Methods Research in the Age of Analytics: An Exemplar Leveraging Sentiments from News Articles to Predict Firm Performance 台股論文復刻與沈浸式翻譯",
+  "description": "結合 FinMind 工具復刻《Mixed Methods Research in the Age of Analytics》台股實證研究，提供論文雙語沈浸式翻譯、GEE 計量模型與機器學習預測模擬，並獨立出 Gemini 混合方法研究 (MMR) 深度解析與真價值批判。",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
