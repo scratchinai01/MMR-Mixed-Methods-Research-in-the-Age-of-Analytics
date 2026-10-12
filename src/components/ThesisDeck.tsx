@@ -9,10 +9,12 @@ import { DECK, SECTION_META, DECK_TOTAL_MINUTES, DeckSection } from '../data/the
 import { useMlResults } from '../services/mlResults.ts';
 import { PAPER_PARAGRAPHS } from '../data/paperContent.ts';
 import { scriptFor } from '../data/deckScripts.ts';
+import { PARA_EXPLAIN } from '../data/paraExplain.ts';
 
 /** 論文原文段落（英文）＋中譯，附 PDF 頁碼；摘要段落已與公開摘要核對 */
 const QuoteBlock: React.FC<{ id: string }> = ({ id }) => {
   const [open, setOpen] = useState(false);
+  const [plainOpen, setPlainOpen] = useState(false);
   const para = PAPER_PARAGRAPHS.find((p) => p.id === id);
   if (!para) return null;
   const LIMIT = 220;
@@ -23,13 +25,28 @@ const QuoteBlock: React.FC<{ id: string }> = ({ id }) => {
     <figure className="rounded-xl bg-white/80 border border-blue-200 p-3 space-y-1.5 text-[0.82em] leading-relaxed">
       <blockquote lang="en" className="italic text-slate-700 border-l-4 border-blue-400 pl-3">{cut(para.en)}</blockquote>
       <p className="text-blue-950 pl-4">{cut(para.zh)}</p>
+      {plainOpen && PARA_EXPLAIN[id] && (
+        <div className="ml-4 rounded-lg border border-amber-200 bg-amber-50/80 p-2.5 space-y-1.5 text-slate-800">
+          <div><span className="font-bold text-amber-900">白話說　</span>{PARA_EXPLAIN[id].p}</div>
+          <div><span className="font-bold text-amber-900">生活例子　</span>{PARA_EXPLAIN[id].e}</div>
+          <div><span className="font-bold text-amber-900">一句話記住　</span>{PARA_EXPLAIN[id].k}</div>
+          {PARA_EXPLAIN[id].w && <div className="text-[0.92em] text-rose-800">小提醒：{PARA_EXPLAIN[id].w}</div>}
+        </div>
+      )}
       <figcaption className="flex flex-wrap items-center justify-between gap-2 pl-4 text-[0.9em] text-blue-800/80">
         <span>{para.pdfPage}{verified ? '｜已與公開摘要核對' : '｜請以原文 PDF 核對'}</span>
-        {long && (
-          <button onClick={() => setOpen(!open)} className="font-semibold text-blue-700 hover:underline">
-            {open ? '收合' : '展開全文'}
-          </button>
-        )}
+        <span className="flex items-center gap-3">
+          {PARA_EXPLAIN[id] && (
+            <button onClick={() => setPlainOpen(!plainOpen)} className="font-semibold text-amber-700 hover:underline">
+              {plainOpen ? '收合白話' : '白話解說'}
+            </button>
+          )}
+          {long && (
+            <button onClick={() => setOpen(!open)} className="font-semibold text-blue-700 hover:underline">
+              {open ? '收合' : '展開全文'}
+            </button>
+          )}
+        </span>
       </figcaption>
     </figure>
   );

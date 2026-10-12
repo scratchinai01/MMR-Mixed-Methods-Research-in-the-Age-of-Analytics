@@ -11,6 +11,7 @@
 // 左欄原著數字取自本平台的論文翻譯（src/data/paperContent.ts），報告前請以原文 PDF 核對。
 // =====================================================================
 import React from 'react';
+import { PARA_EXPLAIN } from './paraExplain.ts';
 import { NewsDownload } from '../components/NewsDownload.tsx';
 import { PAPER_TABLES, ORIGINAL_PAPER_SOURCE, PAPER_PARAGRAPHS } from './paperContent.ts';
 
@@ -247,6 +248,13 @@ function AbstractFull({ id, focus }: { id: string; focus: string[] }) {
         <div className="text-[0.8em] font-bold opacity-80 mb-1">本句重點</div>
         <Bullets items={focus} />
       </div>
+      {PARA_EXPLAIN[id] && (
+        <div className="ml-4 rounded-xl border border-amber-200 bg-amber-50/80 p-3 space-y-2 text-[0.92em] leading-relaxed">
+          <div><span className="font-bold text-amber-900">白話說　</span>{PARA_EXPLAIN[id].p}</div>
+          <div><span className="font-bold text-amber-900">生活例子　</span>{PARA_EXPLAIN[id].e}</div>
+          <div className="rounded-lg bg-slate-900 text-white px-3 py-1.5"><span className="font-bold text-amber-300 mr-2">一句話記住</span>{PARA_EXPLAIN[id].k}</div>
+        </div>
+      )}
       <p className="text-[0.75em] opacity-70 pl-4">{para.pdfPage}｜已與公開摘要核對（Virginia Tech 典藏頁）</p>
     </div>
   );
