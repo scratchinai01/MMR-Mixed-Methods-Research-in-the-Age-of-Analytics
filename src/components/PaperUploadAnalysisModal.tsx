@@ -35,6 +35,7 @@ import { ExplanatoryVsExploratoryDiagram } from './ExplanatoryVsExploratoryDiagr
 import { analysisStorage, AnalysisRecord } from '../services/analysisStorage.ts';
 import { AnalysisHistoryDrawer } from './AnalysisHistoryDrawer.tsx';
 import { callAiApi } from '../services/aiHelper.ts';
+import { aiClick } from '../services/aiGate.ts';
 import { saveFollowupToFirestore } from '../services/firebase.ts';
 import { MathRenderer } from './MathRenderer.tsx';
 import { buildReportHtml } from '../services/reportHtml.ts';
@@ -269,11 +270,7 @@ Abstract: This paper quantitatively measures the interactions between media pess
     if (!file && !targetText.trim() && !fileBase64) {
       // Default to Raman et al. (2022) exemplar if user didn't upload or paste anything
       finalFileName = 'Raman_et_al_2022_Exemplar.pdf';
-      finalTargetText = `Mixed Methods Research in the Age of Analytics: An Exemplar Leveraging Sentiments from News Articles to Predict Firm Performance
-Authors: Raji Raman, Ruba Aljafari, Viswanath Venkatesh, Vernon Richardson
-Journal: International Journal of Information Management (2022)
-
-Abstract: In an increasingly data-rich business environment, organizations face the dual challenge of interpreting structured financial performance metrics alongside unstructured qualitative data such as news reports. We propose a synergistic mixed-methods framework combining Generalized Estimating Equations (GEE) and machine learning algorithms. Using a panel dataset of S&P 500 firms and 2,500 Wall Street Journal articles analyzed with the Loughran-McDonald financial dictionary, we reveal that positive sentiments interact negatively with sales growth (beta = -102.094, p < 0.001) due to the expectation treadmill. Machine learning models demonstrate that incorporating textual sentiment significantly reduces prediction errors compared to quantitative-only models.`;
+      finalTargetText = "Mixed-methods research in the age of analytics, an exemplar leveraging sentiments from news articles to predict firm performance\nAuthors: Raji Raman, Ruba Aljafari, Viswanath Venkatesh, Vernon Richardson\nJournal: International Journal of Information Management, 64 (2022) 102451\n\nAbstract: Investors and companies have always aspired to make informed investment decisions by using diverse information sources. With the explosion of information sources on the web and emergence of predictive analytics, many investors moved beyond traditional financial measures, as key predictors of firm performance, to textual content from analysts’ reports. Empirical research suggests that these information sources complement each other by providing a clear picture of firm performance, but remains silent on the role of additional textual content that continues to emerge and reach more potential investors on the web. We build on this line of research to examine the effect of textual content from business journals in conjunction with summary measures on cumulative abnormal returns. We use sentiment analysis with machine learning and econometrics methods to examine content extracted from textual articles about S&P 500 index companies that are published in the Wall Street Journal (years 2013–2016). Textual analysis of business journals in conjunction with quantitative measures revealed direct and interaction effects on abnormal returns over time. We also tested for robustness by replicating the analysis with different variable operationalization and observe consistent patterns. Relative to positive sentiments, negative sentiments have more profound effects on cumulative abnormal returns. The effect of positive sentiments becomes weaker when past quantitative measures are high. As information sources continue to emerge on the web, this work makes key contributions to the practice of sentiment analysis in financial markets.";
       setAnalyzedFileName(finalFileName);
       setPastedText(finalTargetText);
     }
@@ -908,7 +905,7 @@ Abstract: In an increasingly data-rich business environment, organizations face 
             </div>
 
             <button
-              onClick={() => handleStartAnalysis()}
+              onClick={aiClick(() => handleStartAnalysis())}
               disabled={loading || (!file && !fileBase64 && !pastedText.trim() && !fileText.trim())}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm shadow-md transition-all cursor-pointer"
             >
@@ -1109,7 +1106,7 @@ Abstract: In an increasingly data-rich business environment, organizations face 
                 <div className="flex flex-wrap gap-2 text-xs">
                   <button
                     type="button"
-                    onClick={() => handleAskFollowup('請依據 Creswell 表 4.2，詳細說明本篇論文為何屬於此大類，依據「時機」與「權重」為何排除其他三種主要設計類型（三角校正 / 嵌入式 / 解釋式 / 探索式）？')}
+                    onClick={aiClick(() => handleAskFollowup('請依據 Creswell 表 4.2，詳細說明本篇論文為何屬於此大類，依據「時機」與「權重」為何排除其他三種主要設計類型（三角校正 / 嵌入式 / 解釋式 / 探索式）？'))}
                     disabled={followupLoading}
                     className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600/60 border border-slate-700 text-slate-200 text-left transition-colors"
                   >
@@ -1117,7 +1114,7 @@ Abstract: In an increasingly data-rich business environment, organizations face 
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleAskFollowup('在大類確立後，論文具體是如何進行資料混合（例如將質性 QUAL 轉為 quan 數值）？其與純量化有何本質差別？')}
+                    onClick={aiClick(() => handleAskFollowup('在大類確立後，論文具體是如何進行資料混合（例如將質性 QUAL 轉為 quan 數值）？其與純量化有何本質差別？'))}
                     disabled={followupLoading}
                     className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600/60 border border-slate-700 text-slate-200 text-left transition-colors"
                   >
@@ -1125,7 +1122,7 @@ Abstract: In an increasingly data-rich business environment, organizations face 
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleAskFollowup('如何在台股環境下運用 FinMind 工具與 GEE 計量回歸復刻此論文的兩階段設計？請列出具體變數與步驟。')}
+                    onClick={aiClick(() => handleAskFollowup('如何在台股環境下運用 FinMind 工具與 GEE 計量回歸復刻此論文的兩階段設計？請列出具體變數與步驟。'))}
                     disabled={followupLoading}
                     className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600/60 border border-slate-700 text-slate-200 text-left transition-colors"
                   >
@@ -1133,7 +1130,7 @@ Abstract: In an increasingly data-rich business environment, organizations face 
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleAskFollowup('這篇論文在元推論 (Meta-Inference) 深度上表現如何？是否有效避開了「空洞架構」的陷阱？')}
+                    onClick={aiClick(() => handleAskFollowup('這篇論文在元推論 (Meta-Inference) 深度上表現如何？是否有效避開了「空洞架構」的陷阱？'))}
                     disabled={followupLoading}
                     className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600/60 border border-slate-700 text-slate-200 text-left transition-colors"
                   >
@@ -1159,7 +1156,7 @@ Abstract: In an increasingly data-rich business environment, organizations face 
                   />
                   <button
                     type="button"
-                    onClick={() => handleAskFollowup(customQuestion)}
+                    onClick={aiClick(() => handleAskFollowup(customQuestion))}
                     disabled={followupLoading || !customQuestion.trim()}
                     className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
                   >

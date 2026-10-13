@@ -33,12 +33,13 @@ export function showAiHint(message = '這個功能需要以主帳號登入才能
  */
 export function aiClick<E extends { shiftKey: boolean; preventDefault?: () => void }>(handler: (e: E) => void) {
   return (e: E) => {
-    if (!e.shiftKey) {
+    // 已解鎖的 10 分鐘內，一般點擊也可以用；未解鎖時才需要報告人操作
+    if (!e.shiftKey && !isAiUnlocked()) {
       e.preventDefault?.();
       showAiHint();
       return;
     }
-    unlockAi();
+    if (e.shiftKey || isAiUnlocked()) unlockAi();
     window.dispatchEvent(new CustomEvent('ai-gate-clear'));
     handler(e);
   };
@@ -48,12 +49,18 @@ export function aiClick<E extends { shiftKey: boolean; preventDefault?: () => vo
 export function installAiFetchGuard() {
   if (typeof window === 'undefined' || (window as any).__aiGuardInstalled) return;
   (window as any).__aiGuardInstalled = true;
+  // 任何按鈕只要是以報告人方式點擊（不論該按鈕有沒有包 aiClick），之後 2 秒內發出的 AI 請求都視為已解鎖
+  let lastPresenterClick = 0;
+  const mark = (e: MouseEvent | KeyboardEvent) => { if (e.shiftKey) lastPresenterClick = Date.now(); };
+  window.addEventListener('click', mark, true);
+  window.addEventListener('keydown', (e) => { if (e.key === 'Enter') mark(e); }, true);
   const orig = window.fetch.bind(window);
   window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     let path = url;
     try { path = new URL(url, window.location.origin).pathname; } catch { /* 保持原字串 */ }
     if (!AI_PATHS.includes(path)) return orig(input, init);
+    if (!isAiUnlocked() && Date.now() - lastPresenterClick < 2000) unlockAi();
     if (!isAiUnlocked()) {
       showAiHint();
       const body = JSON.stringify({ success: false, error: 'AI_LOCKED', message: '此功能需要以主帳號登入才能使用（目前為公開閱讀模式）。' });
