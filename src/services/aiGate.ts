@@ -9,7 +9,7 @@
 
 const UNLOCK_MINUTES = 10;
 const AI_PATHS = ['/api/gemini/explain', '/api/gemini/analyze-paper', '/api/gemini/critique-value', '/api/gemini/test',
-  '/api/ai/dynamic-questions', '/api/sentiment/analyze-headline', '/api/translate', '/api/finmind/live-news'];
+  '/api/ai/dynamic-questions', '/api/sentiment/analyze-headline', '/api/translate'];
 
 let unlockedUntil = 0;
 const listeners = new Set<() => void>();
@@ -45,6 +45,9 @@ export function aiClick<E extends { shiftKey: boolean; preventDefault?: () => vo
   };
 }
 
+/** 不需鎖定、但主帳號登入時可改用 Gemini 的請求：解鎖時加上標頭，未解鎖照常送出（伺服器改用免費方式） */
+const OPTIONAL_AI_PATHS = ['/api/finmind/live-news', '/api/finmind/ml-train'];
+
 /** 攔截所有 AI 請求：未解鎖就擋下；解鎖時加上伺服器需要的標頭 */
 export function installAiFetchGuard() {
   if (typeof window === 'undefined' || (window as any).__aiGuardInstalled) return;
@@ -59,6 +62,12 @@ export function installAiFetchGuard() {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     let path = url;
     try { path = new URL(url, window.location.origin).pathname; } catch { /* 保持原字串 */ }
+    if (OPTIONAL_AI_PATHS.includes(path)) {
+      if (!isAiUnlocked()) return orig(input, init);
+      const h = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined));
+      h.set('x-ai-unlock', '1');
+      return orig(input, { ...init, headers: h });
+    }
     if (!AI_PATHS.includes(path)) return orig(input, init);
     if (!isAiUnlocked() && Date.now() - lastPresenterClick < 2000) unlockAi();
     if (!isAiUnlocked()) {

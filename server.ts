@@ -3,6 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
@@ -21,7 +22,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // 另以每個 IP 10 分鐘內最多 AI_RATE_LIMIT 次（預設 60）限制，避免現場大量觀眾誤觸造成費用。
 // ─────────────────────────────────────────────────────────────────────
 const AI_ROUTES = ['/api/gemini/explain', '/api/gemini/analyze-paper', '/api/gemini/critique-value', '/api/gemini/test',
-  '/api/ai/dynamic-questions', '/api/sentiment/analyze-headline', '/api/translate', '/api/finmind/live-news'];
+  '/api/ai/dynamic-questions', '/api/sentiment/analyze-headline', '/api/translate'];
 const AI_RATE_LIMIT = Number(process.env.AI_RATE_LIMIT || 60);
 const aiHits = new Map<string, number[]>();
 app.use((req, res, next) => {
@@ -1259,10 +1260,58 @@ function keywordSentiment(rawTitle: string) {
   return { sentiment, score: Math.round(score * 100) / 100, lmKeywords: [...pos, ...neg] };
 }
 
-/** 批次情緒分類：有 Gemini 金鑰時用 Gemini Flash-Lite（一次送多則標題、最低思考程度），否則用關鍵詞 */
-async function classifyHeadlines(titles: string[]): Promise<{ results: ReturnType<typeof keywordSentiment>[]; engine: string }> {
-  const fallback = () => ({ results: titles.map(keywordSentiment), engine: '關鍵詞情緒詞典' });
-  if (!hasValidApiKey() || titles.length === 0) return fallback();
+// 每日「台股復刻計算」已用 Gemini 判讀過的標題分數（news_all.csv），公開模式直接沿用，不另花費
+let cachedScores: Map<string, number> | null = null;
+let cachedScoresAt = 0;
+function parseCsvLine(line: string): string[] {
+  const out: string[] = []; let cur = ''; let q = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (q) { if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') q = false; else cur += ch; }
+    else if (ch === '"') q = true; else if (ch === ',') { out.push(cur); cur = ''; } else cur += ch;
+  }
+  out.push(cur); return out;
+}
+function loadCachedScores(): Map<string, number> {
+  if (cachedScores && Date.now() - cachedScoresAt < 30 * 60 * 1000) return cachedScores;
+  const m = new Map<string, number>();
+  for (const dir of ['dist', 'public']) {
+    const f = path.resolve(__dirname, dir, 'data', 'news_all.csv');
+    if (!fs.existsSync(f)) continue;
+    const lines = fs.readFileSync(f, 'utf8').replace(/^\uFEFF/, '').split(/\r?\n/);
+    const head = parseCsvLine(lines[0] || '');
+    const ti = head.indexOf('title'); const si = head.indexOf('score');
+    if (ti < 0 || si < 0) continue;
+    for (const line of lines.slice(1)) {
+      if (!line) continue;
+      const c = parseCsvLine(line); const v = Number(c[si]);
+      if (c[ti] && Number.isFinite(v)) m.set(c[ti].trim(), v);
+    }
+    break;
+  }
+  cachedScores = m; cachedScoresAt = Date.now();
+  return m;
+}
+function scoreToResult(score: number) {
+  const sentiment: 'positive' | 'negative' | 'neutral' = score > 0.15 ? 'positive' : score < -0.15 ? 'negative' : 'neutral';
+  return { sentiment, score: Math.round(score * 100) / 100, lmKeywords: [] as string[] };
+}
+
+/** 批次情緒分類：useGemini 時用 Gemini Flash-Lite；否則先沿用每日計算的判讀結果，再以關鍵詞補足（不花費） */
+async function classifyHeadlines(titles: string[], useGemini = true): Promise<{ results: ReturnType<typeof keywordSentiment>[]; engine: string }> {
+  const fallback = () => {
+    const cache = loadCachedScores();
+    let hit = 0;
+    const results = titles.map((t) => {
+      const v = cache.get(t.trim());
+      if (v === undefined) return keywordSentiment(t);
+      hit++; return scoreToResult(v);
+    });
+    const engine = hit === titles.length ? '每日計算之 Gemini 判讀結果'
+      : hit > 0 ? `每日計算之 Gemini 判讀結果（${hit} 則）＋關鍵詞情緒詞典（${titles.length - hit} 則）` : '關鍵詞情緒詞典';
+    return { results, engine };
+  };
+  if (!useGemini || !hasValidApiKey() || titles.length === 0) return fallback();
   try {
     const numbered = titles.map((t, i) => `${i}. ${t}`).join('\n');
     const r = await callGeminiWithFallback({
@@ -1305,9 +1354,11 @@ app.get('/api/finmind/status', async (_req, res) => {
 });
 
 // Live News & Sentiment Fetching endpoint for 2026 real-time Taiwan stocks
+const liveNewsCache = new Map<string, { at: number; rows: any[] }>();
 app.post('/api/finmind/live-news', async (req, res) => {
   try {
     const { stockId, stockName, token: clientToken } = req.body;
+    const useGemini = req.get('x-ai-unlock') === '1';
     const targetStock = stockId || '2330';
     const targetName = stockName || '台積電';
     const { token, source } = getEffectiveFinmindToken(clientToken);
@@ -1318,10 +1369,15 @@ app.post('/api/finmind/live-news', async (req, res) => {
     if (token && token.length > 5) {
       try {
         const days = Math.min(14, Math.max(1, Number(req.body?.days) || 7));
-        const rows = await fetchRecentNews(targetStock, token, days);
+        const ck = `${targetStock}|${days}|${source}`;
+        const hitCache = liveNewsCache.get(ck);
+        const rows = hitCache && Date.now() - hitCache.at < 10 * 60 * 1000
+          ? hitCache.rows
+          : await fetchRecentNews(targetStock, token, days);
+        if (!hitCache || hitCache.rows !== rows) liveNewsCache.set(ck, { at: Date.now(), rows });
         if (rows.length > 0) {
           const latest = rows.slice(0, 8);
-          const { results, engine } = await classifyHeadlines(latest.map((r: any) => r.title));
+          const { results, engine } = await classifyHeadlines(latest.map((r: any) => r.title), useGemini);
           const news = latest.map((item: any, i: number) => ({
             date: String(item.date || '').slice(0, 10),
             title: item.title,
@@ -1523,7 +1579,7 @@ app.post('/api/finmind/test', async (req, res) => {
 // 5. 簡單迴歸：隔日報酬 = a + b × 情緒；另算方向命中率與 AUC
 // 注意：天數少時樣本很小，結果僅供教學討論，不構成投資建議
 // =====================================================================
-async function runRealSentimentStudy(sId: string, sName: string, token: string, source: string, newsDaysRaw: number) {
+async function runRealSentimentStudy(sId: string, sName: string, token: string, source: string, newsDaysRaw: number, useGemini = false) {
   const t0 = Date.now();
   const newsDays = Math.min(60, Math.max(5, newsDaysRaw));
   const logs: string[] = [];
@@ -1549,7 +1605,7 @@ async function runRealSentimentStudy(sId: string, sName: string, token: string, 
   const sentiments: ReturnType<typeof keywordSentiment>[] = [];
   let engine = '關鍵詞情緒詞典';
   for (let i = 0; i < capped.length; i += 40) {
-    const batch = await classifyHeadlines(capped.slice(i, i + 40).map((r: any) => r.title));
+    const batch = await classifyHeadlines(capped.slice(i, i + 40).map((r: any) => r.title), useGemini);
     sentiments.push(...batch.results);
     if (batch.engine.startsWith('Gemini')) engine = batch.engine;
   }
@@ -1658,7 +1714,7 @@ app.post('/api/finmind/ml-train', async (req, res) => {
     // ── 真實資料模式：有 FinMind 金鑰時，抓真實股價＋新聞做「新聞情緒 → 隔日報酬」實證 ──
     if (token) {
       try {
-        const real = await runRealSentimentStudy(sId, sName, token, source, Number(req.body?.newsDays) || 20);
+        const real = await runRealSentimentStudy(sId, sName, token, source, Number(req.body?.newsDays) || 20, req.get('x-ai-unlock') === '1');
         return res.json(real);
       } catch (err: any) {
         realDataError = err.message;
