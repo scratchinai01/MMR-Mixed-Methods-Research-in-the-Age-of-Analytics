@@ -324,7 +324,7 @@ export function ConferencePaper({ data }: { data: any | null }) {
       <H2>三、預測結果</H2>
       {rows.length > 0 ? (
         <TableBox no={4} title="樣本外分類預測結果"
-          note={<>註：測試期 {n(data.split.testN)} 筆；多數類別基準準確率為 {data.split.baselineAcc}。原研究為隨機切分之結果（Raman et al., 2022，表 7–8），本研究為時間序列切分。</>}>
+          note={<>註：測試期 {n(data.split.testN)} 筆；多數類別基準準確率為 {data.split.baselineAcc}。原研究採 60%／40% 切分，但未說明是否依時間切分（Raman et al., 2022，表 7–8）；本研究採時間序列切分。</>}>
           <thead>
             <tr><Th left>演算法</Th><Th>準確率（財務）</Th><Th>準確率（財務＋情緒）</Th><Th>AUC（財務）</Th><Th>AUC（財務＋情緒）</Th></tr>
           </thead>
