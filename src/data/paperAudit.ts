@@ -478,7 +478,7 @@ export const PAPER_AUDIT: Record<string, ParaAudit> = {
  "results-12": {
   "kind": "original",
   "en": "We found that accuracy of the models was quite high and errors were low when both quantitative and textual data was used. Table 5 shows the results of machine learning algorithms using only quantitative data. Table 6 shows the results of machine learning algorithms using both quantitative and text data in predicting cumulative abnormal returns. On comparing Tables 5 and 6, we notice that textual data in conjunction with quantitative data results in better accuracy and low errors.",
-  "zh": "我們發現，同時使用量化與文字資料時，模型的準確度相當高、誤差較低。表 5 列出只使用量化資料的機器學習結果，表 6 列出同時使用量化與文字資料預測累積異常報酬的結果。比較表 5 與表 6，我們注意到文字資料搭配量化資料，能得到較好的準確度與較低的誤差。\n〔對照表 5、6：並非每個模型都改善。類神經網路迴歸的 MAE 由 0.224 升至 0.265、RMSE 由 0.306 升至 0.450；提升決策樹與決策森林的 RMSE 也上升；除決策森林（0.149）外，其餘模型的判定係數皆為負值。〕",
+  "zh": "我們發現，同時使用量化與文字資料時，模型的準確度相當高、誤差較低。表 5 列出只使用量化資料的機器學習結果，表 6 列出同時使用量化與文字資料預測累積異常報酬的結果。比較表 5 與表 6，我們注意到文字資料搭配量化資料，能得到較好的準確度與較低的誤差。\n〔對照表 5、6：並非每個模型都改善。五個模型中有四個的 RMSE 上升（提升決策樹 0.340→0.386、決策森林 0.321→0.341、線性迴歸 2.358→2.490、類神經網路 0.306→0.450），只有貝氏線性迴歸下降；類神經網路的 MAE 也由 0.224 升至 0.265；除決策森林（0.149）外，其餘模型的判定係數皆為負值。〕",
   "pdfPage": "PDF P.7",
   "subSection": "4.2 表 5 vs 表 6：連續 SCAR 的預測"
  },

@@ -255,7 +255,7 @@ function AbstractFull({ id, focus }: { id: string; focus: string[] }) {
           <div className="rounded-lg bg-slate-900 text-white px-3 py-1.5"><span className="font-bold text-amber-300 mr-2">一句話記住</span>{PARA_EXPLAIN[id].k}</div>
         </div>
       )}
-      <p className="text-[0.75em] opacity-70 pl-4">{para.pdfPage}｜已與公開摘要核對（Virginia Tech 典藏頁）</p>
+      <p className="text-[0.75em] opacity-70 pl-4">{para.pdfPage}｜已與期刊正式版 PDF 逐字核對</p>
     </div>
   );
 }
