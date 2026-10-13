@@ -1,3 +1,4 @@
+import { MmrDefense } from './MmrDefense';
 import { Scale, ThumbsUp, ThumbsDown, BookOpen, MessageSquareQuote } from 'lucide-react';
 
 // =====================================================================
@@ -109,6 +110,9 @@ export function MmrControversy() {
           因此「並行／收斂」這個標籤本身也有爭議。
         </p>
       </div>
+
+      {/* 答辯：四項質疑逐點回應（接在兩種定義的判定之後） */}
+      <MmrDefense />
 
       {/* 引用建議 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
