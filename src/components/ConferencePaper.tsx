@@ -41,7 +41,7 @@ const Eq = ({ tex, no }: { tex: string; no: number }) => (
     <span className="shrink-0 text-[0.95em]">({no})</span>
   </div>
 );
-const TableBox = ({ no, title, note, children }: { no: number; title: string; note?: React.ReactNode; children: React.ReactNode }) => (
+const TableBox = ({ no, title, note, children }: { no: number | string; title: string; note?: React.ReactNode; children: React.ReactNode }) => (
   <figure className="my-6 break-inside-avoid">
     <figcaption className="text-center font-bold text-[0.95em] mb-2">表 {no}　{title}</figcaption>
     <div className="overflow-x-auto border-t-2 border-b-2 border-slate-900">
@@ -226,8 +226,8 @@ export function ConferencePaper({ data }: { data: any | null }) {
         <thead><tr><Th left>變數</Th><Th left>原研究（Raman et al., 2022）</Th><Th left>本研究</Th></tr></thead>
         <tbody>
           {[
-            ['SCAR', '標準化累積超額報酬', '新聞日後 5 個交易日相對 0050 之累積超額報酬 ÷（前 60 日超額報酬標準差 × √5）'],
-            ['Positive / Negative', 'LM 詞典正、負面詞比例', '當日判讀為正面（分數 > 0.15）、負面（< −0.15）之新聞則數比例'],
+            ['SCAR', '標準化累積超額報酬', '新聞日後 5 個交易日相對 0050 之買入持有超額報酬，除以 60 日超額報酬標準差 × √5（式 1–2）'],
+            ['Positive / Negative', 'LM 詞典正、負面詞比例', '當日判讀為正面（分數 > 0.15）、負面（< −0.15）之新聞則數比例（式 3）'],
             ['Sales_growth', '年度營收年增率', '最近已公告月營收之年增率（第 m 月營收視為次月 10 日後可得）'],
             ['PE_ratio', '市值 ÷ 淨利', '每日本益比'],
             ['MB_ratio', '市值 ÷ 股東權益', '每日股價淨值比'],
@@ -238,19 +238,48 @@ export function ConferencePaper({ data }: { data: any | null }) {
           ))}
         </tbody>
       </TableBox>
+      <P>
+        依變數之計算如下。令 <MathRenderer math={'P_{i,t}'} showCopy={false} /> 為股票 <MathRenderer math={'i'} showCopy={false} /> 於交易日 <MathRenderer math={'t'} showCopy={false} /> 之收盤價，
+        <MathRenderer math={'B_t'} showCopy={false} /> 為 0050 收盤價，<MathRenderer math={'t'} showCopy={false} /> 為新聞所對應之交易日，<MathRenderer math={'h = 5'} showCopy={false} />。
+        新聞日後 <MathRenderer math={'h'} showCopy={false} /> 日之累積超額報酬採買入持有形式：
+      </P>
+      <Eq no={1} tex={'CAR_{i,t}^{(h)} = \\left(\\frac{P_{i,t+h}}{P_{i,t}} - 1\\right) - \\left(\\frac{B_{t+h}}{B_{t}} - 1\\right)'} />
+      <P>
+        再以個股超額報酬之波動度標準化。令每日超額報酬 <MathRenderer math={'e_{i,t} = r_{i,t} - r_{B,t}'} showCopy={false} />，
+        <MathRenderer math={'\\sigma_{i,t}'} showCopy={false} /> 為截至 <MathRenderer math={'t'} showCopy={false} /> 日之前 60 個交易日 <MathRenderer math={'e_{i,t}'} showCopy={false} /> 之標準差（至少需 40 個觀測值），則
+      </P>
+      <Eq no={2} tex={'SCAR_{i,t} = \\frac{CAR_{i,t}^{(h)}}{\\sigma_{i,t}\\sqrt{h}}'} />
+      <P>
+        乘以 <MathRenderer math={'\\sqrt{h}'} showCopy={false} /> 係將日波動度換算為 <MathRenderer math={'h'} showCopy={false} /> 日波動度（假設每日超額報酬獨立且變異數相同），
+        使 SCAR 成為無單位之標準化數值，波動度不同之個股可置於同一模型比較。Prior_SCAR 以相同方式計算新聞日前 5 個交易日（<MathRenderer math={'t-5'} showCopy={false} /> 至 <MathRenderer math={'t'} showCopy={false} />）之超額報酬。
+        由於 SCAR 自 <MathRenderer math={'t'} showCopy={false} /> 日收盤起算，新聞當日盤中之價格反應不包含在 SCAR 內，而反映於 Prior_SCAR。
+      </P>
       <H2>三、情緒衡量</H2>
       <P>
         由於中文缺乏與 Loughran-McDonald 詞典對應之公認金融情緒詞典，本研究以大型語言模型{data ? `（${data.sentimentEngine}）` : ''}判讀每則新聞標題，
-        給予 −1 至 +1 之情緒分數，再彙總為每檔股票每日之正、負面新聞比例。
+        給予 −1 至 +1 之情緒分數（正面為正、負面為負、中性為 0）。判讀時溫度參數設為 0.1，每次送出 80 則標題，並將結果依標題快取，同一標題不重複判讀；
+        若 API 呼叫失敗，該批改以關鍵詞詞典評分，失敗則數記錄於執行紀錄。
         {data ? `全樣本中正面新聞約占 ${pct(data.sentimentShare?.positive)}，負面新聞約占 ${pct(data.sentimentShare?.negative)}。` : ''}
+      </P>
+      <P>
+        新聞依發布日期對應至「當日或其後第一個交易日」，例如週末之新聞對應至下週一。令 <MathRenderer math={'N_{i,t}'} showCopy={false} /> 為股票 <MathRenderer math={'i'} showCopy={false} /> 於交易日 <MathRenderer math={'t'} showCopy={false} /> 之新聞則數，
+        <MathRenderer math={'s_k'} showCopy={false} /> 為第 <MathRenderer math={'k'} showCopy={false} /> 則新聞之情緒分數，則
+      </P>
+      <Eq no={3} tex={'Pos_{i,t} = \\frac{1}{N_{i,t}}\\sum_{k=1}^{N_{i,t}} \\mathbf{1}(s_k > 0.15), \\qquad Neg_{i,t} = \\frac{1}{N_{i,t}}\\sum_{k=1}^{N_{i,t}} \\mathbf{1}(s_k < -0.15)'} />
+      <P>
+        分數介於 −0.15 與 0.15 之新聞視為中性，因此 <MathRenderer math={'Pos + Neg \\le 1'} showCopy={false} />。
+        <MathRenderer math={'N_{i,t} = 0'} showCopy={false} /> 之交易日（無新聞）不列入樣本，亦即本研究為「個股—新聞交易日」之事件樣本，而非全部交易日之面板；
+        因此結果解釋為「有新聞之交易日」情緒與其後報酬之關係。本研究以新聞日期對應交易日，未依發布時點區分盤中與盤後新聞。
       </P>
       <H2>四、實證模型</H2>
       <P>本研究沿用原研究之模型設定，以廣義估計方程式估計下列模型：</P>
-      <Eq no={1} tex={'\\begin{aligned} SCAR_{it} ={}& \\beta_0 + \\beta_1 Prior\\_SCAR_{it} + \\beta_2 Size_{it} + \\beta_3 Pos_{it} + \\beta_4 Neg_{it} \\\\ &+ \\beta_5 PE_{it} + \\beta_6 SG_{it} + \\beta_7 MB_{it} + \\sum_{F}\\sum_{S} \\gamma_{FS}\\,(F_{it} \\times S_{it}) + \\varepsilon_{it} \\end{aligned}'} />
+      <Eq no={4} tex={'\\begin{aligned} SCAR_{it} ={}& \\beta_0 + \\beta_1 Prior\\_SCAR_{it} + \\beta_2 Size_{it} + \\beta_3 Pos_{it} + \\beta_4 Neg_{it} \\\\ &+ \\beta_5 PE_{it} + \\beta_6 SG_{it} + \\beta_7 MB_{it} + \\sum_{F}\\sum_{S} \\gamma_{FS}\\,(F_{it} \\times S_{it}) + \\varepsilon_{it} \\end{aligned}'} />
       <P>
         其中 <MathRenderer math={'F \\in \\{PE, SG, MB\\}'} showCopy={false} />，<MathRenderer math={'S \\in \\{Pos, Neg\\}'} showCopy={false} />，共六個交互作用項；
-        交互作用項之變數均先進行平均數中心化，連續變數於 1% 與 99% 分位數進行縮尾處理。GEE 以個股為群組、依交易日排序，
-        分別設定獨立（Independence）、一階自我相關（AR(1)）與可交換（Exchangeable）三種工作相關結構，並以 QIC 比較模型配適。
+        所有解釋變數均先進行平均數中心化，交互作用項以中心化後之變數相乘；本益比、股價淨值比、營收成長率、SCAR 與 Prior_SCAR 於 1% 與 99% 分位數進行縮尾處理。
+        GEE（Liang &amp; Zeger, 1986）採高斯分配與恆等連結函數（identity link），以個股為群組、依交易日排序，
+        分別設定獨立（Independence）、一階自我相關（AR(1)）與可交換（Exchangeable）三種工作相關矩陣，並以 QIC（Pan, 2001）比較模型配適。
+        標準誤一律採穩健（sandwich）估計，即使工作相關矩陣設定錯誤，係數之推論仍具一致性；惟群組僅 {data ? data.stocks.length : 10} 檔，穩健標準誤在少群組下可能低估，解讀顯著性時宜保守。
         依 H3，預期 <MathRenderer math={'\\gamma_{SG \\times Pos} < 0'} showCopy={false} />。
       </P>
       <H2>五、預測模型與驗證</H2>
@@ -258,7 +287,23 @@ export function ConferencePaper({ data }: { data: any | null }) {
         預測目標為新聞日後五日之 SCAR 是否為正。本研究比較梯度提升樹、隨機森林、邏輯迴歸、神經網路與支持向量機五種演算法，
         分別以「僅財務特徵」與「財務加情緒特徵」訓練。為避免前視偏誤，樣本依時間切分：
         {data ? `訓練期為 ${data.split.trainStart} 至 ${data.split.trainEnd}（${n(data.split.trainN)} 筆），測試期為 ${data.split.testStart} 至 ${data.split.testEnd}（${n(data.split.testN)} 筆），` : ''}
-        兩者間保留五個交易日之間隔，並以「全部預測為多數類別」之準確率作為基準。
+        切點為全部交易日之第 70 百分位，兩者間保留五個交易日之間隔，避免訓練期最後幾筆之標籤用到測試期股價。
+      </P>
+      <P>
+        標籤定義為 <MathRenderer math={'y_{i,t} = \\mathbf{1}(SCAR_{i,t} > 0)'} showCopy={false} />。僅財務特徵包括 Prior_SCAR、Size、PE、SG 與 MB；
+        財務加情緒特徵另加入 Pos、Neg、當日平均情緒分數與新聞則數。模型輸出之預測機率 <MathRenderer math={'\\hat{p}'} showCopy={false} /> 以 0.5 為門檻，
+        於測試集（<MathRenderer math={'n'} showCopy={false} /> 筆）計算準確率，並與多數類別基準比較：
+      </P>
+      <Eq no={5} tex={'Acc = \\frac{1}{n}\\sum_{j=1}^{n} \\mathbf{1}(\\hat{y}_j = y_j), \\qquad Acc_{base} = \\max(\\bar{y},\\, 1 - \\bar{y})'} />
+      <P>
+        其中 <MathRenderer math={'\\bar{y}'} showCopy={false} /> 為測試集中 SCAR 為正之比例。另報告 AUC，以衡量不受門檻影響之排序能力。
+        比較同一演算法「僅財務」與「財務加情緒」兩組預測時，因兩者在同一測試樣本上預測，屬成對資料，故採 McNemar 精確檢定（McNemar, 1947; Dietterich, 1998）：
+        令 <MathRenderer math={'b'} showCopy={false} /> 為僅財務模型答對而加情緒模型答錯之筆數，<MathRenderer math={'c'} showCopy={false} /> 為相反情形，
+        虛無假設下 <MathRenderer math={'b \\sim \\text{Binomial}(b + c,\\, 0.5)'} showCopy={false} />，
+      </P>
+      <Eq no={6} tex={'p = \\min\\!\\left(1,\\; 2\\sum_{k=0}^{\\min(b,c)} \\binom{b+c}{k} 0.5^{\\,b+c}\\right)'} />
+      <P>
+        各演算法之超參數列於附錄表 A1，均未另行調參，以避免在小樣本下過度擬合測試期；隨機種子固定為 42。
       </P>
 
       {/* ── 肆、實證結果 ── */}
@@ -324,15 +369,15 @@ export function ConferencePaper({ data }: { data: any | null }) {
       <H2>三、預測結果</H2>
       {rows.length > 0 ? (
         <TableBox no={4} title="樣本外分類預測結果"
-          note={<>註：測試期 {n(data.split.testN)} 筆；多數類別基準準確率為 {data.split.baselineAcc}。原研究採 60%／40% 切分，但未說明是否依時間切分（Raman et al., 2022，表 7–8）；本研究採時間序列切分。</>}>
+          note={<>註：測試期 {n(data.split.testN)} 筆；多數類別基準準確率為 {data.split.baselineAcc}。原研究採 60%／40% 切分，但未說明是否依時間切分（Raman et al., 2022，表 7–8）；本研究採時間序列切分。McNemar 欄括號內為 b／c（僅財務答對／僅加情緒答對之筆數），檢定兩組特徵之準確率差異（式 6）。</>}>
           <thead>
-            <tr><Th left>演算法</Th><Th>準確率（財務）</Th><Th>準確率（財務＋情緒）</Th><Th>AUC（財務）</Th><Th>AUC（財務＋情緒）</Th></tr>
+            <tr><Th left>演算法</Th><Th>準確率（財務）</Th><Th>準確率（財務＋情緒）</Th><Th>AUC（財務）</Th><Th>AUC（財務＋情緒）</Th><Th>McNemar <i>p</i></Th></tr>
           </thead>
           <tbody>
             {rows.map((x) => (
               <tr key={x.algorithm}>
                 <Td left>{x.algorithm.replace(/ \(.*\)/, '')}</Td>
-                <Td>{x.quantOnlyAcc}</Td><Td>{x.quantTextAcc}</Td><Td>{x.quantOnlyAuc}</Td><Td>{x.quantTextAuc}</Td>
+                <Td>{x.quantOnlyAcc}</Td><Td>{x.quantTextAcc}</Td><Td>{x.quantOnlyAuc}</Td><Td>{x.quantTextAuc}</Td><Td>{x.mcnemar ? `${x.mcnemar.p < 0.001 ? '< .001' : x.mcnemar.p.toFixed(3).replace(/^0/, '')}（${x.mcnemar.b}／${x.mcnemar.c}）` : '—'}</Td>
               </tr>
             ))}
           </tbody>
@@ -388,17 +433,42 @@ export function ConferencePaper({ data }: { data: any | null }) {
       <H1>參考文獻</H1>
       <div className="text-[0.9em] space-y-1.5 pl-[2em] -indent-[2em] leading-[1.8]">
         <p>Creswell, J. W., &amp; Plano Clark, V. L. (2018). <em>Designing and conducting mixed methods research</em> (3rd ed.). SAGE.</p>
+        <p>Breiman, L. (2001). Random forests. <em>Machine Learning, 45</em>(1), 5–32.</p>
+        <p>Cortes, C., &amp; Vapnik, V. (1995). Support-vector networks. <em>Machine Learning, 20</em>(3), 273–297.</p>
+        <p>Dietterich, T. G. (1998). Approximate statistical tests for comparing supervised classification learning algorithms. <em>Neural Computation, 10</em>(7), 1895–1923.</p>
         <p>Fetters, M. D., Curry, L. A., &amp; Creswell, J. W. (2013). Achieving integration in mixed methods designs—Principles and practices. <em>Health Services Research, 48</em>(6pt2), 2134–2156.</p>
+        <p>Friedman, J. H. (2001). Greedy function approximation: A gradient boosting machine. <em>The Annals of Statistics, 29</em>(5), 1189–1232.</p>
         <p>Huang, A. H., Zang, A. Y., &amp; Zheng, R. (2014). Evidence on the information content of text in analyst reports. <em>The Accounting Review, 89</em>(6), 2151–2180.</p>
         <p>Johnson, R. B., Onwuegbuzie, A. J., &amp; Turner, L. A. (2007). Toward a definition of mixed methods research. <em>Journal of Mixed Methods Research, 1</em>(2), 112–133.</p>
+        <p>Liang, K.-Y., &amp; Zeger, S. L. (1986). Longitudinal data analysis using generalized linear models. <em>Biometrika, 73</em>(1), 13–22.</p>
         <p>Lo, A. W. (2004). The adaptive markets hypothesis. <em>The Journal of Portfolio Management, 30</em>(5), 15–29.</p>
         <p>Loughran, T., &amp; McDonald, B. (2011). When is a liability not a liability? Textual analysis, dictionaries, and 10-Ks. <em>The Journal of Finance, 66</em>(1), 35–65.</p>
+        <p>McNemar, Q. (1947). Note on the sampling error of the difference between correlated proportions or percentages. <em>Psychometrika, 12</em>(2), 153–157.</p>
+        <p>Pan, W. (2001). Akaike's information criterion in generalized estimating equations. <em>Biometrics, 57</em>(1), 120–125.</p>
+        <p>Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., … Duchesnay, É. (2011). Scikit-learn: Machine learning in Python. <em>Journal of Machine Learning Research, 12</em>, 2825–2830.</p>
         <p>Raman, R., Aljafari, R., Venkatesh, V., &amp; Richardson, V. (2022). Mixed-methods research in the age of analytics, an exemplar leveraging sentiments from news articles to predict firm performance. <em>International Journal of Information Management, 64</em>, 102451. https://doi.org/10.1016/j.ijinfomgt.2021.102451</p>
         <p>Shannon, C. E. (1948). A mathematical theory of communication. <em>Bell System Technical Journal, 27</em>(3), 379–423.</p>
         <p>Shmueli, G., &amp; Koppius, O. R. (2011). Predictive analytics in information systems research. <em>MIS Quarterly, 35</em>(3), 553–572.</p>
         <p>Tetlock, P. C. (2007). Giving content to investor sentiment: The role of media in the stock market. <em>The Journal of Finance, 62</em>(3), 1139–1168.</p>
         <p>Venkatesh, V., Brown, S. A., &amp; Bala, H. (2013). Bridging the qualitative–quantitative divide: Guidelines for conducting mixed methods research in information systems. <em>MIS Quarterly, 37</em>(1), 21–54.</p>
       </div>
+
+      {/* ── 附錄 ── */}
+      <H1>附錄</H1>
+      <TableBox no="A1" title="預測模型之演算法與超參數" note="註：以 scikit-learn（Pedregosa et al., 2011）實作；未列出之參數均為該套件預設值。標準化指以訓練集之平均數與標準差將特徵轉為 z 分數，測試集沿用訓練集之參數。">
+        <thead><tr><Th left>演算法</Th><Th left>主要超參數</Th><Th left>前處理</Th><Th left>文獻</Th></tr></thead>
+        <tbody>
+          {[
+            ['梯度提升樹', '100 棵樹、學習率 0.1、最大深度 3', '無', 'Friedman (2001)'],
+            ['隨機森林', '300 棵樹、葉節點最少 5 筆、每次分裂隨機取「特徵數平方根」個特徵', '無', 'Breiman (2001)'],
+            ['邏輯迴歸', 'L2 正則化（C = 1）、最多 2,000 次迭代', '標準化', '—'],
+            ['神經網路（多層感知器）', '兩層隱藏層 32、16 個節點，ReLU，Adam；提前停止（保留 10% 訓練資料驗證）', '標準化', '—'],
+            ['支持向量機', 'RBF 核、C = 1；以三折交叉驗證之 Platt 校準輸出機率', '標準化', 'Cortes & Vapnik (1995)'],
+          ].map(([a, b, c, d]) => (
+            <tr key={a} className="align-top"><Td left bold>{a}</Td><td className="py-1 px-2">{b}</td><td className="py-1 px-2">{c}</td><td className="py-1 px-2">{d}</td></tr>
+          ))}
+        </tbody>
+      </TableBox>
 
       <p className="mt-10 pt-3 border-t border-slate-300 text-[0.75em] text-slate-500">
         資料來源：FinMind 開放資料平台；實證數字計算時間 {String(data?.generatedAt || '—').replace('T', ' ')}。原研究數字取自本平台論文翻譯之表 2 與表 7–8，正式發表前請以原文核對。

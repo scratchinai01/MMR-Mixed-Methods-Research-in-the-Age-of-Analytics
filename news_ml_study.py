@@ -436,6 +436,16 @@ MODELS = {
 }
 
 
+def mcnemar_exact(b, c):
+    """McNemar 精確檢定（雙尾）：在 b + c 筆不一致樣本中，b 服從 Binomial(b + c, 0.5)。"""
+    from math import comb
+    n = b + c
+    if n == 0:
+        return 1.0
+    k = min(b, c)
+    return float(min(1.0, 2 * sum(comb(n, i) for i in range(k + 1)) / 2 ** n))
+
+
 def evaluate(panel):
     base = panel[panel.SCAR.notna()]
     quant = [t for t in QUANT_BASE if base[t].notna().mean() > 0.8]
@@ -450,11 +460,16 @@ def evaluate(panel):
         sys.exit(f"樣本太少（訓練 {len(train)}、測試 {len(test)} 筆）。請增加 --days 或 --stocks。")
     rows = []
     for name, make in MODELS.items():
-        res = {}
+        res, hit = {}, {}
         for tag, cols in (("quant", quant), ("text", quant + SENT)):
             m = make().fit(train[cols], train.label)
             p = m.predict_proba(test[cols])[:, 1]
             res[tag] = (accuracy_score(test.label, p > 0.5), roc_auc_score(test.label, p))
+            hit[tag] = ((p > 0.5).astype(int) == test.label.values)
+        # McNemar 精確檢定：只看兩組特徵「一對一錯」的樣本
+        b = int((hit["quant"] & ~hit["text"]).sum())   # 只有純財務答對
+        c = int((~hit["quant"] & hit["text"]).sum())   # 只有加情緒答對
+        mcn_p = mcnemar_exact(b, c)
         d_acc = (res["text"][0] - res["quant"][0]) * 100
         rows.append({
             "algorithm": name,
@@ -462,6 +477,7 @@ def evaluate(panel):
             "quantOnlyAuc": f"{res['quant'][1]:.1%}", "quantTextAuc": f"{res['text'][1]:.1%}",
             "note": f"加入情緒後準確率 {'+' if d_acc >= 0 else ''}{d_acc:.1f} 個百分點",
             "raw": {"quantAcc": res["quant"][0], "textAcc": res["text"][0], "quantAuc": res["quant"][1], "textAuc": res["text"][1]},
+            "mcnemar": {"b": b, "c": c, "p": mcn_p},
         })
     base = max(test.label.mean(), 1 - test.label.mean())
     split = {"trainStart": str(pd.Timestamp(dates[0]).date()), "trainEnd": str(pd.Timestamp(train.date.max()).date()),
