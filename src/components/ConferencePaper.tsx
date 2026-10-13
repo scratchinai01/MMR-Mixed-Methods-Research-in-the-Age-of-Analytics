@@ -387,6 +387,13 @@ export function ConferencePaper({ data }: { data: any | null }) {
         <P>
           表 4 顯示，加入情緒特徵後，五種演算法中有 {improved} 種準確率上升，平均變化 {avgGain >= 0 ? '+' : ''}{avgGain.toFixed(1)} 個百分點；
           表現最佳之 {best?.algorithm.replace(/ \(.*\)/, '')} 準確率為 {best?.quantTextAcc}、AUC 為 {best?.quantTextAuc}，與多數類別基準相近。
+          {rows.some((x) => x.mcnemar) && (() => {
+            const sigUp = rows.filter((x) => x.mcnemar && x.mcnemar.p < 0.05 && x.mcnemar.c > x.mcnemar.b);
+            const sigDown = rows.filter((x) => x.mcnemar && x.mcnemar.p < 0.05 && x.mcnemar.b > x.mcnemar.c);
+            const nm = (x: any) => `${x.algorithm.replace(/ \(.*\)/, '')}（p = ${x.mcnemar.p.toFixed(3).replace(/^0/, '')}）`;
+            return <>McNemar 檢定顯示，{sigUp.length ? `${sigUp.map(nm).join('、')}加入情緒後準確率顯著提升` : '沒有任何演算法因加入情緒特徵而顯著提升準確率'}；
+              {sigDown.length ? `${sigDown.map(nm).join('、')}加入情緒後反而顯著下降，顯示在樣本有限時額外特徵可能造成過度擬合。` : '亦無演算法顯著下降。'}</>;
+          })()}
           H4 {h4 === '不支持' ? '未獲支持' : '僅獲部分支持'}。此結果與原研究準確率大幅提升之發現不同，推測原因包括：
           本研究採時間序列切分以避免資訊洩漏、僅使用新聞標題而非全文，以及台股價格對公開資訊之反應速度較快。
           值得注意的是，GEE 顯示情緒與報酬之平均關係顯著，但此關係不足以準確預測個別事件之報酬方向，兩者並不矛盾。
