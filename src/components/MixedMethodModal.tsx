@@ -285,7 +285,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
             }`}
           >
             <GraduationCap className="w-4 h-4 text-amber-600" />
-            <span>🎓 博士生方法論大師課</span>
+            <span>上課筆記</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-slate-950">
               QUAN → qual
             </span>
@@ -914,21 +914,24 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
             </div>
           )}
 
-          {/* TAB: 博士生方法論大師課 (Masterclass) */}
+          {/* 上課筆記（原：博士生方法論大師課） */}
           </section>
 
           <section id="mm-masterclass" data-mm="masterclass" className="pb-8 mb-8 border-b border-slate-200 last:border-0">
           {true && (
             <div className="space-y-6 text-xs sm:text-sm text-slate-800 leading-relaxed">
-              <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-400 text-slate-950">
-                  <span>🎓 博士生方法論大師課 (Masterclass)</span>
+              <div
+                className="p-6 rounded-2xl border border-amber-200 bg-amber-50/40 space-y-2"
+                style={{ backgroundImage: 'repeating-linear-gradient(to bottom, transparent 0, transparent 27px, rgba(148,163,184,0.25) 27px, rgba(148,163,184,0.25) 28px)' }}
+              >
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-white border border-amber-200 text-amber-800">
+                  <span>📒 上課筆記</span>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-extrabold text-white">
-                  從哲學根基、溯因推理到聯合展示表與後設推論的完整實作指南
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900">
+                  混合方法研究：從哲學基礎、溯因推理到聯合展示表與後設推論
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-300">
-                  本大師課總結 Creswell、Morgan、Fetters 等權威學者精髓，專為高頻市場微結構與台股異常報酬研究打造。
+                <p className="text-xs sm:text-sm text-slate-600">
+                  整理自 Creswell、Morgan、Fetters 等學者的觀點，搭配台股研究的寫法示例；範例僅供示意，不是實際研究結果。
                 </p>
               </div>
 
@@ -968,7 +971,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
               <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
                 <h4 className="font-bold text-slate-900 text-base flex items-center gap-2">
                   <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs">2</span>
-                  <span>聯合展示表 (Joint Display) 範例 — MMR 的靈魂</span>
+                  <span>聯合展示表 (Joint Display) 範例 — MMR 的靈魂（示意，非實際資料）</span>
                 </h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
@@ -983,7 +986,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
                     </thead>
                     <tbody className="divide-y divide-slate-200">
                       <tr>
-                        <td className="p-2 font-semibold">台積電 (2330) 2026-09 賣壓日</td>
+                        <td className="p-2 font-semibold">示意：某權值股的賣壓日</td>
                         <td className="p-2">Order Imbalance 賣方主導，但價格跌幅僅 -0.2%</td>
                         <td className="p-2">法人盤中掛出大量限價買單護盤，法說會重申 2 奈米強勁</td>
                         <td className="p-2">買方限價流動性吸收賣壓</td>
@@ -995,9 +998,9 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
               </div>
 
               {/* 4. Methodology Chapter Template */}
-              <div className="p-5 rounded-2xl bg-slate-900 text-slate-100 shadow-xl space-y-3 font-mono text-xs">
-                <div className="text-amber-300 font-bold text-sm">【方法章節寫作模板】第三章 研究方法</div>
-                <div className="text-slate-300 space-y-1 pl-2">
+              <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
+                <div className="text-slate-900 font-bold text-sm">【方法章節寫作模板】第三章 研究方法</div>
+                <div className="text-slate-700 space-y-1 pl-2">
                   <div>3.1 方法論立場：實用主義與溯因邏輯</div>
                   <div>3.2 混合方法設計之選擇（解釋性依序設計 QUAN → qual；Raman et al., 2022）</div>
                   <div>3.3 第一階段量化研究：FinMind 高頻資料與異常偵測</div>
