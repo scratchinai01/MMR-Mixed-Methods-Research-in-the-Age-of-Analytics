@@ -407,15 +407,15 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
               {/* Gamma Image 8 Preview Card */}
               <div 
                 onClick={() => openLightboxWithImage('img8')}
-                className="group relative rounded-2xl overflow-hidden border border-purple-400/30 bg-slate-950 cursor-pointer shadow-inner max-h-64 flex items-center justify-center"
+                className="group relative rounded-2xl overflow-hidden border border-purple-400/30 bg-slate-950 cursor-pointer shadow-inner flex items-center justify-center"
               >
                 <img
                   src="https://cdn.gamma.app/qczcgzm3dplba12/ceace1f12f5f471d90b70107fa6747b5/original/image.png"
                   alt="資料轉化模式 Data Transformation Model"
-                  className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300 opacity-95 group-hover:opacity-100"
+                  className="w-full h-auto object-contain"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-slate-950/40 group-hover:bg-slate-950/10 transition-colors flex items-center justify-center">
+                <div className="absolute inset-0 flex items-end justify-end p-2.5 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
                   <span className="px-3.5 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-white text-xs font-bold flex items-center gap-2 shadow-lg group-hover:scale-105 transition-transform border border-purple-400/40">
                     <ZoomIn className="w-4 h-4 text-amber-300" />
                     <span>點擊放大檢視「資料轉化模式 (QUAL into quan)」高畫質架構圖</span>
@@ -651,15 +651,15 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
 
               <div 
                 onClick={() => openLightboxWithImage('img2')}
-                className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 cursor-pointer shadow-inner max-h-56 flex items-center justify-center"
+                className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 cursor-pointer shadow-inner flex items-center justify-center"
               >
                 <img
                   src="https://cdn.gamma.app/qczcgzm3dplba12/dc0eae2c65c94d7abcfa76f3816afecc/original/image.png"
                   alt="Raman et al. (2022) 模型對比與架構圖"
-                  className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
+                  className="w-full h-auto object-contain"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-slate-950/30 group-hover:bg-slate-950/10 transition-colors flex items-center justify-center">
+                <div className="absolute inset-0 flex items-end justify-end p-2.5 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
                   <span className="px-3 py-1.5 rounded-xl bg-slate-900/80 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 shadow-md group-hover:scale-105 transition-transform">
                     <ZoomIn className="w-3.5 h-3.5" />
                     <span>點擊放大檢視第二張高畫質圖表 (雙軌模型對比)</span>
@@ -694,15 +694,15 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
 
               <div 
                 onClick={() => openLightboxWithImage('img9')}
-                className="group relative rounded-2xl overflow-hidden border border-indigo-500/30 bg-slate-950 cursor-pointer shadow-inner max-h-64 flex items-center justify-center"
+                className="group relative rounded-2xl overflow-hidden border border-indigo-500/30 bg-slate-950 cursor-pointer shadow-inner flex items-center justify-center"
               >
                 <img
                   src="https://cdn.gamma.app/qczcgzm3dplba12/a258c799d57c43dbb989ede9ff39d03a/original/image.png"
                   alt="主題六：本篇論文真正價值與四大深層經濟真相"
-                  className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300 opacity-95 group-hover:opacity-100"
+                  className="w-full h-auto object-contain"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-indigo-950/40 group-hover:bg-indigo-950/10 transition-colors flex items-center justify-center">
+                <div className="absolute inset-0 flex items-end justify-end p-2.5 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
                   <span className="px-3.5 py-2 rounded-xl bg-slate-900/90 backdrop-blur-md text-amber-300 text-xs font-bold flex items-center gap-2 shadow-lg group-hover:scale-105 transition-transform border border-amber-400/30">
                     <ZoomIn className="w-4 h-4 text-amber-400" />
                     <span>點擊放大檢視主題六：真正價值與 4 大深層經濟真相</span>
@@ -956,15 +956,15 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
 
               <div 
                 onClick={() => openLightboxWithImage('img5')}
-                className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 cursor-pointer shadow-inner max-h-56 flex items-center justify-center"
+                className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 cursor-pointer shadow-inner flex items-center justify-center"
               >
                 <img
                   src="https://cdn.gamma.app/qczcgzm3dplba12/ca044b88abba4ab9b7b11c9b1f51c3c3/original/image.png"
                   alt="博士論文 20 個 Skills 與 MMR 完整檢驗導覽圖"
-                  className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
+                  className="w-full h-auto object-contain"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-slate-950/30 group-hover:bg-slate-950/10 transition-colors flex items-center justify-center">
+                <div className="absolute inset-0 flex items-end justify-end p-2.5 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
                   <span className="px-3.5 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 shadow-md group-hover:scale-105 transition-transform">
                     <ZoomIn className="w-3.5 h-3.5 text-amber-300" />
                     <span>點擊放大檢視第五張高畫質圖表 (MMR + SSCI + IF 20 大 Skills 導覽圖)</span>
@@ -1436,15 +1436,15 @@ Quantitative Data              Textual Data
 
                 <div 
                   onClick={() => openLightboxWithImage('img3')}
-                  className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 cursor-pointer shadow-inner max-h-48 flex items-center justify-center"
+                  className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 cursor-pointer shadow-inner flex items-center justify-center"
                 >
                   <img
                     src="https://cdn.gamma.app/qczcgzm3dplba12/9b94218218934b80a2ff622e4055a893/original/image.png"
                     alt="Raman et al. (2022) MMR 架構圖"
-                    className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
+                    className="w-full h-auto object-contain"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-slate-950/30 group-hover:bg-slate-950/10 transition-colors flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-end justify-end p-2.5 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
                     <span className="px-3 py-1.5 rounded-xl bg-slate-900/80 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 shadow-md group-hover:scale-105 transition-transform">
                       <ZoomIn className="w-3.5 h-3.5" />
                       <span>點擊放大檢視主題二 (三階段協同與正面效果遞減)</span>
@@ -1506,7 +1506,7 @@ Quantitative Data              Textual Data
                   <img
                     src="https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png"
                     alt="MMR 全景架構圖"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    className="w-full h-full object-contain transition-transform"
                   />
                   <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent flex items-center justify-center transition-colors">
                     <ZoomIn className="w-4 h-4 text-white drop-shadow-xs" />

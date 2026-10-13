@@ -523,7 +523,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                   className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-slate-950/40 group-hover:bg-slate-950/10 transition-colors flex items-center justify-center">
+                <div className="absolute inset-0 flex items-end justify-end p-2.5 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
                   <span className="px-3 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 shadow-md group-hover:scale-105 transition-transform">
                     <ZoomIn className="w-3.5 h-3.5 text-rose-400" />
                     <span>點擊放大檢視第 6 張高畫質篩選圖表</span>
@@ -686,7 +686,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                 onError={(e) => {
                   e.currentTarget.src = "https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png";
                 }}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                className="w-full h-full object-contain transition-transform"
               />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent flex items-center justify-center transition-colors">
                 <ZoomIn className="w-3.5 h-3.5 text-white drop-shadow-xs" />
@@ -843,7 +843,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                     onError={(e) => {
                       e.currentTarget.src = "https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png";
                     }}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    className="w-full h-full object-contain transition-transform"
                   />
                   <div className="absolute inset-0 bg-black/30 group-hover:bg-transparent transition-colors flex items-center justify-center">
                     <ZoomIn className="w-6 h-6 text-white drop-shadow-md" />

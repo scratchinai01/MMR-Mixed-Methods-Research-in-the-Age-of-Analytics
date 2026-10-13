@@ -544,7 +544,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
                       onError={(e) => {
                         e.currentTarget.src = "https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png";
                       }}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                      className="w-full h-full object-contain transition-transform" 
                     />
                     <div className="absolute inset-0 bg-black/30 group-hover:bg-transparent transition-colors flex items-center justify-center">
                       <ZoomIn className="w-4 h-4 text-white drop-shadow-sm" />
