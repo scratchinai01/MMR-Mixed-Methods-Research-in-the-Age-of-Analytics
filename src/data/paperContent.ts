@@ -159,20 +159,20 @@ export const AFEGO_2021_SOURCE = {
   titleEn: "What Does Corporate Social Advocacy Signal? Evidence from Boycott Participation Decisions",
   titleZh: "企業社會倡議傳遞了什麼信號？來自抵制參與決策的實證研究",
   journal: "Journal of Capital Markets Studies (JCMS)",
-  journalImpact: "高影響力資本市場與會計研究期刊",
+  journalImpact: "Emerald 開放取用期刊（非 SSCI）",
   volume: "Volume 5, Issue 1, 2021, pp. 49–68",
   doi: "10.1108/JCMS-10-2020-0040",
   doiUrl: "https://doi.org/10.1108/JCMS-10-2020-0040",
   scienceDirectUrl: "https://www.emerald.com/insight/content/doi/10.1108/JCMS-10-2020-0040/full/html",
   googleScholarUrl: "https://scholar.google.com/scholar?q=What+does+corporate+social+advocacy+signal+Evidence+from+boycott+participation+decisions+Afego+Alagidede",
   authors: [
-    { name: "Prince Ngwenya Afego", affil: "Department of Finance, University of Ghana" },
-    { name: "Imhotep Paul Alagidede", affil: "Wits Business School, University of the Witwatersrand" }
+    { name: "Pyemo N. Afego", affil: "（所屬機構請以原文核對）" },
+    { name: "Imhotep P. Alagidede", affil: "（所屬機構請以原文核對）" }
   ],
   apaCitation: "Afego, P. N., & Alagidede, I. P. (2021). What does corporate social advocacy signal? Evidence from boycott participation decisions. Journal of Capital Markets Studies, 5(1), 49–68.",
   bibtex: `@article{afego2021what,
   title={What does corporate social advocacy signal? Evidence from boycott participation decisions},
-  author={Afego, Prince Ngwenya and Alagidede, Imhotep Paul},
+  author={Afego, Pyemo N. and Alagidede, Imhotep P.},
   journal={Journal of Capital Markets Studies},
   volume={5},
   number={1},
@@ -183,71 +183,74 @@ export const AFEGO_2021_SOURCE = {
 }`
 };
 
+// 依原文全文（University of Pretoria 典藏 PDF，CC BY 4.0）整理；非逐字翻譯，數字皆取自原文
 export const AFEGO_2021_PARAGRAPHS: PaperParagraph[] = [
   {
     id: 'afego-meta-1',
     section: 'meta',
     subSection: '文獻引用與出處資訊 (Afego & Alagidede, 2021 JCMS)',
-    pdfPage: 'PDF P.1 (封面與引用)',
-    en: 'Afego, P. N., & Alagidede, I. P. (2021). What does corporate social advocacy signal? Evidence from boycott participation decisions. Journal of Capital Markets Studies, 5(1), 49–68. Open Access (CC BY 4.0). DOI: 10.1108/JCMS-10-2020-0040.',
-    zh: 'Afego, P. N., & Alagidede, I. P. (2021). 企業社會倡議傳遞了什麼信號？來自抵制參與決策的實證研究。《Journal of Capital Markets Studies》，5(1), 49–68。開放獲取 (CC BY 4.0)。',
+    pdfPage: '書目',
+    en: 'Afego, P. N., & Alagidede, I. P. (2021). What does corporate social advocacy signal? Evidence from boycott participation decisions. Journal of Capital Markets Studies, 5(1), 49–68. https://doi.org/10.1108/JCMS-10-2020-0040 (CC BY 4.0). Keywords: Abnormal return; Content analysis; Event study; Boycotts; Corporate social advocacy; Signalling effect.',
+    zh: 'Afego, P. N., & Alagidede, I. P. (2021). 企業社會倡議傳遞了什麼訊號？來自參與抵制決策的證據。Journal of Capital Markets Studies, 5(1), 49–68。開放取用（CC BY 4.0）。關鍵詞：異常報酬、內容分析、事件研究、抵制、企業社會倡議、訊號效果。',
   },
   {
     id: 'afego-abs-1',
     section: 'abstract',
-    subSection: '摘要：質性內容分析與股票事件研究之結合 (TRUE MMR)',
-    pdfPage: 'PDF P.1 (摘要)',
-    en: 'This study adopts a mixed-methods design combining qualitative content analysis of corporate communication statements regarding consumer boycotts with quantitative event study methodologies to examine abnormal stock market reactions. We examine US firms participating in the #StopHateForProfit Facebook advertising boycott.',
-    zh: '本研究採用混合方法設計，結合對企業針對消費者抵制聲明之質性內容分析（QUAL），以及量化事件研究方法（QUAN），檢驗股票市場之異常反應。我們檢驗了參與 #StopHateForProfit Facebook 廣告抵制行動的美國上市公司。',
-    glossaryTerms: ['Mixed Methods Research', 'SCAR'],
+    subSection: '摘要（整理）',
+    pdfPage: '摘要',
+    en: 'Summary of the abstract: The study asks whether a firm\'s public stance on a social-political issue signals its values, identity and reputation, using boycott participation. It uses "a mixed-methods design" combining content analysis with event study methodology on US firms that joined a boycott of Facebook over hate speech, misinformation and discriminatory content.',
+    zh: '摘要整理：研究探討企業對社會政治議題公開表態（以參與抵制為例），是否傳遞其價值、認同與聲譽的訊號。作者採用「混合方法設計」，結合內容分析與事件研究，對象是參與抵制 Facebook（針對仇恨言論、錯誤訊息與歧視內容）的美國公司。',
+    glossaryTerms: ['Mixed Methods Research'],
   },
   {
     id: 'afego-intro-1',
     section: 'intro',
-    subSection: '1. 研究背景：企業社會倡議 (CSA) 的雙軌難題',
-    pdfPage: 'PDF P.2-3 (引言)',
-    en: 'Corporate Social Advocacy (CSA) represents brand stances on contentious sociopolitical issues. Prior studies struggle to answer both "WHY do corporations participate and how do they frame legitimacy?" and "HOW does the financial market react?" simultaneously. A single method is insufficient: QUAL explains corporate motives and values, while QUAN tests investor pricing behavior.',
-    zh: '企業社會倡議 (CSA) 代表品牌在具爭議性社會政治議題上的立場立場。過去研究難以同時解答「企業為何參與、如何建構行動正當性？」以及「金融市場究竟如何定價？」。單一方法無法勝任：QUAL 解釋企業動機與信念，而 QUAN 檢驗投資人定價行為。',
+    subSection: '1–2. 研究問題與假說（整理）',
+    pdfPage: '第 1–2 節',
+    en: 'Research questions: what motivates firms to engage and how they negotiate their legitimacy; and whether such engagement signals a firm\'s reputation or organizational values that are capitalized into its stock price. Hypothesis: announcing engagement will positively impact reputation and short-term stock market performance.',
+    zh: '研究問題：企業為何參與、如何協商（建立）自身的正當性；以及這類參與是否傳遞企業聲譽或組織價值的訊號，並反映在股價上。假說：宣布參與會對企業聲譽與短期股價表現有正面影響。',
   },
   {
     id: 'afego-methods-1',
     section: 'methods',
-    subSection: '3. 研究方法：Content Analysis (QUAL) + Event Study (QUAN)',
-    pdfPage: 'PDF P.6-8 (研究方法)',
-    en: 'In the qualitative phase, inductive content analysis was conducted on corporate official press releases, CEO statements, and social media announcements to identify moral framing, altruistic vs. strategic motives, and stakeholder signaling. In the quantitative phase, standard market-model event study methodology estimated Cumulative Abnormal Returns (CAR) across [-2, +1] and [-1, +2] event windows around boycott declarations.',
-    zh: '質性階段中，對企業官方新聞稿、執行長公開聲明與社群媒體公告進行歸納式內容分析（Content Analysis），識別道德框架、利他與策略性動機及利害關係人信號傳遞；量化階段則採用標準市場模型事件研究法（Event Study），估算抵制宣告日前後 [-2, +1] 與 [-1, +2] 窗口之累積異常報酬 (CAR)。',
+    subSection: '3. 樣本與方法（整理）',
+    pdfPage: '第 3 節',
+    en: 'Sample: 27 announcement events by US firms joining the "Stop Hate for Profit" campaign (17 June – 2 July 2020). Qualitative: content analysis of the firms\' public statements (coding procedure, coders and reliability are not reported). Quantitative: event study using the constant mean return model with a 200-day estimation window; daily abnormal returns for days −5 to +5 and CARs for several windows.',
+    zh: '樣本：參與「Stop Hate for Profit」行動的美國公司共 27 個公告事件（2020 年 6 月 17 日至 7 月 2 日）。質性：對公司公開聲明做內容分析（原文未交代編碼程序、編碼者與信度）。量化：事件研究，採常數平均報酬模型，估計期 200 天；報告第 −5 到 +5 天的每日異常報酬與多個窗口的 CAR。',
   },
   {
     id: 'afego-results-1',
     section: 'results',
-    subSection: '4. 實證結果：抵制參與之超額報酬 (+2.68%) 與質性道德正當化',
-    pdfPage: 'PDF P.12-14 (實證結果)',
-    en: 'Empirical findings reveal that corporate announcements of boycott participation generate an average cumulative abnormal return of approximately +2.68% over a four-day event window (p < 0.001), indicating positive signaling value recognized by investors. Concurrently, qualitative content analysis reveals that firms successfully framed their participation through "altruistic core values", "organizational identity", and "greater social good", effectively shielding against perceived performative activism.',
-    zh: '實證結果顯示，企業宣布參與抵制活動後，在四個交易日的事件窗口內平均產生約 +2.68% 的顯著正累積異常報酬（p < 0.001），顯示投資人給予正向的信號溢酬。同時，質性內容分析揭示，企業成功透過「利他核心價值」、「組織認同與信念」以及「追求更大社會利益」來框架其行動，有效防禦了市場對其「漂綠或作秀式倡議」之質疑。',
+    subSection: '4. 結果（整理）',
+    pdfPage: '第 4 節、表 2–4',
+    en: 'Qualitative (Table 2): six legitimation categories — strengthening communities/social cohesion; standing together for positive change; safe spaces; human respect and dignity; accountability and transparency of internet firms; inclusion and diversity. Quantitative (Table 4): CAR(+1,+4) = 2.68%, significant at 1% on all three tests; CAR(+1,+2) = 1.57%, CAR(+1,+3) = 2.16%, CAR(+1,+5) = 2.30%. Pre-announcement CAR(−5,−1) = 2.13% is also significant.',
+    zh: '質性（表 2）：6 類正當化主題——強化社區與社會凝聚、共同推動正向改變、安全空間、人的尊重與尊嚴、網路平台的問責與透明、包容與多元。量化（表 4）：CAR(+1,+4) = 2.68%，三種檢定皆在 1% 水準顯著；CAR(+1,+2) = 1.57%、CAR(+1,+3) = 2.16%、CAR(+1,+5) = 2.30%。公告前 CAR(−5,−1) = 2.13% 也顯著。',
   },
   {
     id: 'afego-integ-1',
     section: 'discussion',
-    subSection: '5. 方法論整合：QUAL 意義建構 ➔ QUAN 市場信號驗證',
-    pdfPage: 'PDF P.15 (整合討論)',
-    en: 'Methodological integration demonstrates that financial abnormal returns cannot be interpreted without understanding qualitative textual legitimization. The +2.68% CAR is structurally tied to the depth of moral framing uncovered in the qualitative analysis, providing a complete meta-inference for corporate finance and marketing literature.',
-    zh: '方法論整合證實：若缺乏質性文字正當化之理解，財務異常報酬便無法獲得合理解釋。+2.68% 的 CAR 與質性分析中所發現的道德框架深度在結構上密切相連，為公司財務與行銷學文獻提供了完整的元推論 (Meta-Inference)。',
+    subSection: '5. 整合方式（整理與評估）',
+    pdfPage: '第 5–6 節',
+    en: 'The two strands are reported separately and combined narratively in the discussion ("Taken together, the boycott participation announcements are informationally strategic"). There is no test linking themes to returns (e.g., CAR by theme or a cross-sectional regression). The authors note limitations: a single boycott case, a small sample, US stocks only, and no control group.',
+    zh: '兩股結果分開報告，在討論段以敘事方式合併（“Taken together, the boycott participation announcements are informationally strategic”）。沒有檢驗主題與報酬的關係（例如依主題比較 CAR 或做橫斷面迴歸）。作者自述的限制：單一抵制事件、樣本小、只看美股、沒有對照組。因此整合停在詮釋敘事層。',
   }
 ];
 
 export const AFEGO_2021_TABLES: PaperTableData[] = [
   {
     id: 'afego-table-1',
-    titleEn: 'Table 1. Cumulative Abnormal Returns around Boycott Participation Announcements',
-    titleZh: '表 1. 抵制參與公告前後之累積異常報酬 (CAR) 實證結果',
-    description: '事件研究法在 4 日窗口下的市場反應統計',
-    headers: ['事件窗口 (Event Window)', '平均異常報酬 (AAR)', '累積異常報酬 (CAR)', 't 統計量'],
+    titleEn: 'Table 4 (selected). Cumulative abnormal returns around boycott participation announcements',
+    titleZh: '原文表 4（節錄）：參與抵制公告前後的累積異常報酬',
+    description: '依原文表 4 節錄；N = 27 個事件，常數平均報酬模型',
+    headers: ['事件窗口', 'CAR', '顯著性（原文）'],
     rows: [
-      ['Window [-2, +1]', '+0.65%', '+2.10%', '2.84 (***)'],
-      ['Window [-1, +2]', '+0.82%', '+2.68%', '3.52 (***)'],
-      ['Window [0, +3]', '+0.54%', '+1.92%', '2.15 (**)'],
+      ['(+1, +2)', '1.57%', '1%（t 檢定）、10%（符號檢定）'],
+      ['(+1, +3)', '2.16%', '1%（t 檢定、Boehmer）'],
+      ['(+1, +4)', '2.68%', '1%（三種檢定）'],
+      ['(+1, +5)', '2.30%', '1%（t 檢定、Boehmer）'],
+      ['(−5, −1)', '2.13%', '1%（公告前）'],
     ],
-    footer: '註記: *** p < 0.001, ** p < 0.01。'
+    footer: '原文正文把公告前描述為負的異常報酬，但表 3、表 4 顯示為正值，兩者不一致。'
   }
 ];
 

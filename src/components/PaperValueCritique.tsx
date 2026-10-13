@@ -1,5 +1,6 @@
 import { MmrControversy } from './MmrControversy';
 import { ReflectionCards } from './ReflectionCards';
+import { AfegoMmrJudgement } from './AfegoMmrJudgement';
 import React, { useState } from 'react';
 import { 
   AlertTriangle, 
@@ -827,28 +828,26 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                     <span>📋 /SSCI判定 標準輸出格式</span>
                     <span className="text-[10px] text-slate-400">Confidence: 99 / 100</span>
                   </div>
-                  <pre className="text-slate-300 leading-relaxed overflow-x-auto">
-{`╔══════════════════════════════════════════╗
-║             /SSCI判定                    ║
-╠══════════════════════════════════════════╣
-║ 期刊: International Journal of           ║
-║       Information Management             ║
-║ ISSN: 0268-4012 | eISSN: 1873-4707       ║
-║ 出版社: Elsevier                         ║
-║                                          ║
-║ Web of Science Core Collection: ✅       ║
-║ SSCI: 🟢 YES                             ║
-║ SCIE: ❌  | A&HCI: ❌                     ║
-║                                          ║
-║ JCR Category:                            ║
-║   Information Science & Library Science  ║
-║ JCR Quartile: 🟢 Q1 (Rank: 1/172)        ║
-║ 2025 JIF: 31.0 | 2022 JIF: ≈ 21.0        ║
-║ AJG (ABS) 2024: 2                        ║
-║ FT50: ❌ No                              ║
-║ SSCI 判定信心度: 99 / 100                ║
-╚══════════════════════════════════════════╝`}
-                  </pre>
+                  <dl className="divide-y divide-slate-800 font-sans">
+                    {([
+                      ['期刊', 'International Journal of Information Management', ''],
+                      ['ISSN／eISSN', '0268-4012／1873-4707', ''],
+                      ['出版社', 'Elsevier', ''],
+                      ['Web of Science 核心合輯', '✅ 收錄', 'ok'],
+                      ['SSCI', '🟢 是', 'ok'],
+                      ['SCIE／A&HCI', '否／否', ''],
+                      ['JCR 學門', 'Information Science & Library Science', ''],
+                      ['JCR 分區', '🟢 Q1（排名 1/172，請以最新 JCR 核對）', 'ok'],
+                      ['JIF', '2025＝31.0；發表當年 2022＝21.0', 'ok'],
+                      ['AJG（ABS）2024', '2（請以最新 AJG 核對）', 'warn'],
+                      ['FT50', '否', 'no'],
+                    ] as Array<[string, string, string]>).map(([k, v, t]) => (
+                      <div key={k} className="grid grid-cols-[8.5rem_1fr] gap-3 py-1.5">
+                        <dt className="text-slate-400">{k}</dt>
+                        <dd className={t === 'ok' ? 'text-emerald-300' : t === 'warn' ? 'text-amber-300' : t === 'no' ? 'text-rose-300' : 'text-slate-200'}>{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
                 </div>
 
                 {/* Right: 博士論文文獻卡 & 論文圖像 */}
@@ -1387,7 +1386,7 @@ Quantitative Data              Textual Data
               </div>
 
               <div className="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400">
-                💡 <strong>核心機理</strong>：文字情緒指標作為調節變數進入計量回歸，揭露「預期踏車效應」，打破純量化模型的樣本外盲區。
+                💡 <strong>核心機理</strong>：文字情緒指標與財務變數進入同一個計量模型（含交互項），發現營收成長越高、正面情緒的效果越小（原文：diminishing effect）；機器學習則比較加入文字前後的預測表現。
               </div>
             </div>
 
@@ -1456,295 +1455,8 @@ Quantitative Data              Textual Data
             </div>
           </div>
 
-          {/* ---------------- 第三篇 TRUE MMR 核心典範：Afego & Alagidede (2021 JCMS) ---------------- */}
-          <div className="bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 text-slate-100 rounded-3xl p-6 sm:p-8 border-2 border-emerald-500/50 shadow-2xl space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-indigo-900/60 pb-5">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-400 text-slate-950 flex items-center gap-1 shadow-md">
-                    <CheckCircle2 className="w-3.5 h-3.5 fill-slate-950 text-emerald-400" />
-                    <span>/MMR文獻篩選 判定：🟢 TRUE MMR：YES</span>
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-md text-[11px] font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
-                    MMR Integration：91 / 100 — Strong
-                  </span>
-                </div>
-                <h3 className="text-xl sm:text-2xl font-black text-white mt-2 flex items-center gap-2">
-                  <span>What Does Corporate Social Advocacy Signal? Evidence from Boycott Participation Decisions</span>
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-300 mt-1">
-                  <strong>Afego & Alagidede (2021)</strong>, <em>Journal of Capital Markets Studies</em>, Vol. 5(1), pp. 49–68. DOI: 10.1108/JCMS-10-2020-0040 (CC BY 4.0 Open Access)
-                </p>
-              </div>
-
-              <button
-                onClick={() => openLightboxWithImage('img7')}
-                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 rounded-xl text-xs font-black flex items-center gap-2 shadow-lg transition-transform active:scale-95 shrink-0"
-              >
-                <ZoomIn className="w-4 h-4" />
-                <span>放大檢視第三篇圖檔 (Gamma 原圖)</span>
-              </button>
-            </div>
-
-            {/* Core Comparative Card: Logo Dynamism vs Afego */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-indigo-500/30 space-y-3 text-xs">
-              <div className="flex items-center gap-2 font-bold text-amber-300">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>為什麼這篇和上一份 Logo Dynamism (Wang et al., 2023) 是完全不同的案例？</span>
-              </div>
-              <p className="text-slate-300 leading-relaxed">
-                上一份 <strong>Wang et al. (2023)</strong> 雖然宣稱 Mixed Methods，但拆解後其實全部是量化（Pilot study ➔ Event study ➔ Experiment 1 ➔ Experiment 2），完全沒有真正質性資料，實質為 <strong>Multi-study Quantitative Research</strong>。<br />
-                而 <strong>Afego & Alagidede (2021)</strong> 則是<strong>真正的 TRUE MMR</strong>：
-                明確同時使用 🟣 <strong>QUAL：Content Analysis (企業公告質性內容分析)</strong> 與 🔵 <strong>QUAN：Event Study (股票市場事件研究)</strong>，兩者緊密咬合、共同回答同一個核心研究問題！
-              </p>
-            </div>
-
-            {/* 核心判定表格 */}
-            <div className="overflow-x-auto rounded-2xl border border-slate-800">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-slate-900 text-slate-200 font-bold border-b border-slate-800">
-                    <th className="p-3 w-48">MMR 篩選項目</th>
-                    <th className="p-3 w-40 text-center">學術判定</th>
-                    <th className="p-3">實證設計與依據說明</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800 font-sans">
-                  <tr className="hover:bg-slate-900/50">
-                    <td className="p-3 font-semibold text-slate-300">QUAN</td>
-                    <td className="p-3 text-center"><span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">🟢 YES</span></td>
-                    <td className="p-3 text-slate-400">Event Study（市場模型估計 Facebook Boycott 公告異常報酬）</td>
-                  </tr>
-                  <tr className="hover:bg-slate-900/50">
-                    <td className="p-3 font-semibold text-slate-300">QUAL</td>
-                    <td className="p-3 text-center"><span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">🟢 YES</span></td>
-                    <td className="p-3 text-slate-400">Content Analysis（歸納式內容分析企業官方聲明與道德立場）</td>
-                  </tr>
-                  <tr className="hover:bg-slate-900/50">
-                    <td className="p-3 font-semibold text-slate-300">QUAL 方法</td>
-                    <td className="p-3 text-center font-mono font-bold text-indigo-300">Content Analysis</td>
-                    <td className="p-3 text-slate-400">解構執行長發言、道德框架、利他動機與利害關係人正當化敘事</td>
-                  </tr>
-                  <tr className="hover:bg-slate-900/50">
-                    <td className="p-3 font-semibold text-slate-300">QUAN 方法</td>
-                    <td className="p-3 text-center font-mono font-bold text-sky-300">Event Study</td>
-                    <td className="p-3 text-slate-400">公告後 4 天平均 +2.68% 的顯著正異常報酬（依原文摘要）</td>
-                  </tr>
-                  <tr className="hover:bg-slate-900/50">
-                    <td className="p-3 font-semibold text-slate-300">研究對象</td>
-                    <td className="p-3 text-center font-medium text-slate-300">美股 Facebook Boycott</td>
-                    <td className="p-3 text-slate-400">美國上市公司參與 #StopHateForProfit 廣告抵制抵制之行動決策</td>
-                  </tr>
-                  <tr className="hover:bg-slate-900/50">
-                    <td className="p-3 font-semibold text-slate-300">是否同一研究問題</td>
-                    <td className="p-3 text-center"><span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">🟢 YES</span></td>
-                    <td className="p-3 text-slate-400">雙軌共同回答：企業社會倡議 (CSA) 究竟向資本市場傳遞何種訊號？</td>
-                  </tr>
-                  <tr className="hover:bg-slate-900/50">
-                    <td className="p-3 font-semibold text-slate-300">QUAN + QUAL 整合</td>
-                    <td className="p-3 text-center"><span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">🟢 YES (Strong)</span></td>
-                    <td className="p-3 text-slate-400">QUAL 剖析「企業為何參與與如何正當化」，QUAN 測量「資本市場如何定價」</td>
-                  </tr>
-                  <tr className="hover:bg-slate-900/50">
-                    <td className="p-3 font-semibold text-slate-300">作者明確稱 Mixed Methods</td>
-                    <td className="p-3 text-center"><span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">🟢 YES</span></td>
-                    <td className="p-3 text-slate-400">摘要與研究設計章節明確宣告採用 mixed-methods design</td>
-                  </tr>
-                  <tr className="hover:bg-slate-900/50 bg-rose-500/5">
-                    <td className="p-3 font-semibold text-rose-300">是否只是 Multi-method?</td>
-                    <td className="p-3 text-center"><span className="px-2.5 py-0.5 rounded-full font-bold bg-rose-500/20 text-rose-300 border border-rose-400/30">🔴 NO</span></td>
-                    <td className="p-3 text-slate-400">不是兩套統計拼湊：質性回答「企業如何正當化參與」，量化回答「市場如何反應」，共同回答同一個研究問題</td>
-                  </tr>
-                  <tr className="bg-emerald-500/10 font-bold border-t border-emerald-500/40">
-                    <td className="p-3 text-emerald-300">★ 真正 MMR (TRUE MMR)</td>
-                    <td className="p-3 text-center"><span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500 text-slate-950">🟢 YES</span></td>
-                    <td className="p-3 text-emerald-200">高度契合博士論文 MMR Coding 標準，推薦與 Raman et al. (2022) 並列雙典範！</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* 双轨机制传导图与标准输出 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left: ASCII 双轨流程图 */}
-              <div className="bg-slate-900/90 rounded-2xl p-5 border border-slate-800 space-y-3 font-mono text-xs">
-                <div className="text-emerald-400 font-bold text-xs flex items-center justify-between border-b border-slate-800 pb-2">
-                  <span>🔬 双轨机制传导图 (Integration Mechanism)</span>
-                  <span className="text-[10px] text-slate-400">Afego & Alagidede (2021)</span>
-                </div>
-                <pre className="text-slate-300 leading-relaxed overflow-x-auto">
-{`                 MMR
-                  │
-          ┌───────┴───────┐
-          ▼               ▼
-       QUAL              QUAN
-   Content Analysis    Event Study
-          │               │
-          │               │
-   「企業說了什麼？     「市場如何反應？
-    為什麼參與？         股價是否改變？」
-    如何正當化？」       abnormal return」
-          │               │
-          └───────┬───────┘
-                  ▼
-             INTEGRATION
-                  │
-                  ▼
-       Corporate Social Advocacy
-          的「訊號效果」
-                  │
-                  ▼
-       組織價值／聲譽／
-       利害關係人認知
-                  ↓
-          Stock Market Value`}
-                </pre>
-                <div className="text-[11px] text-slate-400 leading-relaxed pt-2 border-t border-slate-800 font-sans">
-                  💡 <strong>方法論深意</strong>：這裡不是單純「用了兩種統計方法」。<strong>QUAL 解釋企業行動的內容與意義；QUAN 檢驗市場對該行動的反應。</strong>這是極具說服力的混合方法整合閉環。
-                </div>
-              </div>
-
-              {/* Right: /MMR文獻篩選 標準輸出 */}
-              <div className="bg-slate-900/90 rounded-2xl p-5 border border-slate-800 space-y-3 font-mono text-xs">
-                <div className="text-amber-300 font-bold text-xs flex items-center justify-between border-b border-slate-800 pb-2">
-                  <span>📋 /MMR文獻篩選 標準輸出</span>
-                  <span className="text-[10px] text-emerald-400 font-bold">TRUE MMR</span>
-                </div>
-                <pre className="text-slate-300 leading-relaxed overflow-x-auto">
-{`╔══════════════════════════════════════════════╗
-║              /MMR文獻篩選                    ║
-╠══════════════════════════════════════════════╣
-║                                              ║
-║ What Does Corporate Social Advocacy Signal? ║
-║ Evidence from Boycott Participation         ║
-║ Decisions                                    ║
-║                                              ║
-║ Afego & Alagidede (2021)                    ║
-║ Journal of Capital Markets Studies          ║
-║ Vol. 5(1), 49–68                            ║
-║ DOI: 10.1108/JCMS-10-2020-0040             ║
-╠══════════════════════════════════════════════╣
-║ QUAN                                        ║
-║ 🟢 YES — Event Study                        ║
-║                                              ║
-║ QUAL                                        ║
-║ 🟢 YES — Content Analysis                   ║
-║                                              ║
-║ QUAN + QUAL                                 ║
-║ 🟢 YES                                      ║
-║                                              ║
-║ Integration                                 ║
-║ 🟢 YES — Strong                             ║
-║                                              ║
-║ 作者明確宣稱 Mixed Methods                  ║
-║ 🟢 YES                                      ║
-║                                              ║
-║ Multi-method only                           ║
-║ 🔴 NO                                       ║
-║                                              ║
-║ ★ TRUE MMR                                  ║
-║ 🟢 YES                                      ║
-╚══════════════════════════════════════════════╝`}
-                </pre>
-              </div>
-            </div>
-
-            {/* 第三篇圖檔卡片 (Gamma 原圖獨立卡片) */}
-            <div className="bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800 space-y-3">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                <div>
-                  <span className="font-bold text-white flex items-center gap-1.5 text-sm">
-                    <ImageIcon className="w-4 h-4 text-emerald-400" />
-                    <span>主題八：Afego & Alagidede (2021) TRUE MMR 核心架構圖 (Gamma 原圖同步)</span>
-                  </span>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    展示 Content Analysis ➔ Event Study ➔ Abnormal Return (+2.68%) 雙軌整合視覺化流程
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <a
-                    href="https://cdn.gamma.app/qczcgzm3dplba12/0405f12a37e64bb7a5577eb329abb03b/original/image.png"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-emerald-400 hover:text-emerald-300 flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30"
-                  >
-                    <span>開啟原圖 (高畫質)</span>
-                    <Maximize2 className="w-3.5 h-3.5" />
-                  </a>
-                  <button
-                    onClick={() => openLightboxWithImage('img7')}
-                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1 shadow-xs"
-                  >
-                    <ZoomIn className="w-3.5 h-3.5" />
-                    <span>放大檢視</span>
-                  </button>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => openLightboxWithImage('img7')}
-                className="group relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 cursor-pointer shadow-inner max-h-72 flex items-center justify-center"
-              >
-                <img
-                  src="https://cdn.gamma.app/qczcgzm3dplba12/0405f12a37e64bb7a5577eb329abb03b/original/image.png"
-                  alt="Afego & Alagidede (2021) TRUE MMR 架構圖"
-                  className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-slate-950/40 group-hover:bg-slate-950/10 transition-colors flex items-center justify-center">
-                  <span className="px-4 py-2 rounded-xl bg-slate-900/90 backdrop-blur-md text-white text-xs font-bold flex items-center gap-2 shadow-lg group-hover:scale-105 transition-transform border border-slate-700">
-                    <ZoomIn className="w-4 h-4 text-emerald-400" />
-                    <span>點擊放大檢視第三篇高畫質架構圖（Content Analysis ＋ Event Study 整合）</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* 博士論文文獻庫收錄建議與評分板 */}
-            <div className="p-5 rounded-2xl bg-indigo-950/60 border border-indigo-500/40 space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-indigo-900/60 pb-3">
-                <div className="font-bold text-amber-300 text-sm flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-amber-400" />
-                  <span>⭐ 特別值得收進博士論文 MMR 文獻庫的核心優勢</span>
-                </div>
-                <div className="text-xs font-mono font-bold text-emerald-300">
-                  MMR Integration 評分（本平台主觀評估）：91 / 100 — Strong
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
-                <div className="p-3 bg-slate-900/90 rounded-xl border border-indigo-900/40 text-center">
-                  <div className="text-slate-400 text-[11px]">QUAN 嚴謹度</div>
-                  <div className="text-amber-400 font-black text-sm mt-1">★★★★★</div>
-                  <div className="text-slate-300 text-[10px] mt-0.5">Event Study</div>
-                </div>
-                <div className="p-3 bg-slate-900/90 rounded-xl border border-indigo-900/40 text-center">
-                  <div className="text-slate-400 text-[11px]">QUAL 深度</div>
-                  <div className="text-amber-400 font-black text-sm mt-1">★★★★★</div>
-                  <div className="text-slate-300 text-[10px] mt-0.5">Content Analysis</div>
-                </div>
-                <div className="p-3 bg-slate-900/90 rounded-xl border border-indigo-900/40 text-center">
-                  <div className="text-slate-400 text-[11px]">Integration 整合度</div>
-                  <div className="text-amber-400 font-black text-sm mt-1">★★★★☆</div>
-                  <div className="text-emerald-400 text-[10px] mt-0.5">雙軌共同回答</div>
-                </div>
-                <div className="p-3 bg-slate-900/90 rounded-xl border border-indigo-900/40 text-center">
-                  <div className="text-slate-400 text-[11px]">股票市場相關性</div>
-                  <div className="text-amber-400 font-black text-sm mt-1">★★★★★</div>
-                  <div className="text-sky-300 text-[10px] mt-0.5">CAR +2.68%</div>
-                </div>
-                <div className="p-3 bg-slate-900/90 rounded-xl border border-indigo-900/40 text-center">
-                  <div className="text-slate-400 text-[11px]">博論示範價值</div>
-                  <div className="text-amber-400 font-black text-sm mt-1">★★★★★</div>
-                  <div className="text-emerald-400 text-[10px] mt-0.5">CC BY 4.0 全文開源</div>
-                </div>
-              </div>
-
-              <p className="text-xs text-slate-300 leading-relaxed">
-                <strong>結論指引：</strong>本研究結果顯示，公開宣布參與抵制活動的公司，在公告後四天平均產生 <strong>+2.68% 的顯著正異常報酬</strong>；質性分析則發現，公司主要透過利他價值、組織價值／信念與「更大的社會利益」來正當化參與。本篇與 Raman et al. (2022) 形成絕佳的互補對照：<strong>一者為文字情緒 × GEE 面板計量，一者為內容分析 × 事件研究</strong>，共同奠定您博士論文「MMR × 股票市場」最堅實的理論與方法論基石！
-              </p>
-            </div>
-          </div>
+          {/* 第三篇：Afego & Alagidede (2021)，與 Raman 同一套判準對齊判定 */}
+          <AfegoMmrJudgement onOpenImage={() => openLightboxWithImage('img7')} />
         </div>
       )}
 

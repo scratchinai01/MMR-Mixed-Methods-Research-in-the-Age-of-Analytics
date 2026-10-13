@@ -631,7 +631,7 @@ export const DECK: DeckSlide[] = [
   {
     quotes: ['theory-14'],
     id: 'r6', section: 'replication', minutes: 3, title: 'SCAR 的建構',
-    left: () => <Bullets items={['以市場模型計算異常報酬', '累積後再標準化（SCAR）', '衡量新聞事件後的股價反應']} />,
+    left: () => <Bullets items={['異常報酬資料來自 Eventus（原文未說明預期報酬模型）', '累積後再標準化（SCAR）', '衡量新聞事件後的股價反應']} />,
     right: (ctx) => <Bullets items={[
       '每日超額報酬 = 個股報酬 − 0050 報酬',
       'SCAR = 新聞日後 5 日累積超額報酬 ÷（前 60 日超額報酬標準差 × √5）',

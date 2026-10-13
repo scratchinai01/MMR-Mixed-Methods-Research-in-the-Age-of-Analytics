@@ -98,7 +98,7 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
       id: 'img7',
       url: 'https://cdn.gamma.app/qczcgzm3dplba12/0405f12a37e64bb7a5577eb329abb03b/original/image.png',
       title: '主題七：/MMR文獻篩選 真正 MMR 典範 (Afego & Alagidede, 2021 JCMS)',
-      caption: '🟢 TRUE MMR：YES • Content Analysis ＋ Event Study 完美雙軌整合',
+      caption: '屬於 MMR（收斂並行）• Content Analysis ＋ Event Study • 整合停在敘事層',
       description: '質性分析企業抵制聲明之動機與正當性價值（QUAL），量化檢驗 Facebook Boycott 公告後 4 天之股票異常報酬 +2.68%（QUAN），共同回答企業社會倡議的市場訊號效應！'
     },
     {
