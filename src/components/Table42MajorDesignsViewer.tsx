@@ -227,7 +227,12 @@ export const Table42MajorDesignsViewer: React.FC<Table42MajorDesignsViewerProps>
   onSelectDesign
 }) => {
   const [activeDesignId, setActiveDesignId] = useState<MajorDesignId>('triangulation');
-  const [viewMode, setViewMode] = useState<'decision_tree' | 'table_view' | 'deep_dive'>('decision_tree');
+  const [viewMode, setViewModeState] = useState<'decision_tree' | 'table_view' | 'deep_dive'>('decision_tree');
+  // 一頁式：三個區塊依序排開，按鈕改為跳到對應區塊
+  const setViewMode = (k: 'decision_tree' | 'table_view' | 'deep_dive') => {
+    setViewModeState(k);
+    document.getElementById(`t42-${k}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   // Wizard state for interactive 2-step decision
   const [wizardTiming, setWizardTiming] = useState<'concurrent' | 'sequential_quan_qual' | 'sequential_qual_quan' | null>(null);
@@ -359,7 +364,8 @@ export const Table42MajorDesignsViewer: React.FC<Table42MajorDesignsViewerProps>
       </div>
 
       {/* MODE 1: Interactive Two-Step Decision Wizard */}
-      {viewMode === 'decision_tree' && (
+      <div id="t42-decision_tree" />
+      {true && (
         <div className="space-y-5 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-xs">
           <div className="space-y-1">
             <h4 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
@@ -605,7 +611,8 @@ export const Table42MajorDesignsViewer: React.FC<Table42MajorDesignsViewerProps>
       )}
 
       {/* MODE 2: Comprehensive Table 4.2 Matrix View (verbatim from the textbook) */}
-      {viewMode === 'table_view' && (
+      <div id="t42-table_view" />
+      {true && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between">
             <div>
@@ -765,7 +772,8 @@ export const Table42MajorDesignsViewer: React.FC<Table42MajorDesignsViewerProps>
       )}
 
       {/* MODE 3: Deep Dive into the 4 Major Designs */}
-      {viewMode === 'deep_dive' && (
+      <div id="t42-deep_dive" />
+      {true && (
         <div className="space-y-4">
           {/* Design Selectors */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">

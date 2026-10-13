@@ -94,4 +94,5 @@ jobs:
       - name: 部署到 Cloud Run
         if: steps.commit.outputs.changed == 'true'
         run: |
+          bash scripts/upload_papers.sh || true
           gcloud run deploy mmr-analytics --source . --region asia-east1 --project payfirebase --quiet

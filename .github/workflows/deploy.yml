@@ -33,6 +33,10 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
 
+      - name: 論文 PDF 上傳 Firebase Storage
+        continue-on-error: true
+        run: bash scripts/upload_papers.sh
+
       - name: 建置並部署
         run: |
           gcloud run deploy mmr-analytics \

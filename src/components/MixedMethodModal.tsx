@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { PaperDownloads } from './PaperDownloads';
 import { 
   X, 
   Sparkles, 
@@ -40,13 +41,39 @@ interface MixedMethodModalProps {
   onOpenUploadModal?: () => void;
 }
 
+type MmTab = 'papers' | 'table42' | 'abcde' | 'infographic' | 'core' | 'designs' | 'paper' | 'gemini' | 'masterclass' | 'comparative';
+
 export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
   isOpen,
   onClose,
   initialTab = 'table42',
   onOpenUploadModal,
 }) => {
-  const [activeTab, setActiveTab] = useState<'table42' | 'abcde' | 'infographic' | 'core' | 'designs' | 'paper' | 'gemini' | 'masterclass' | 'comparative'>(initialTab);
+  const [activeTab, setActiveTab] = useState<MmTab>(initialTab as MmTab);
+  // 一頁式：所有區塊依序排開，上方導覽改為跳到對應區塊並跟著捲動亮起
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const goTab = (k: MmTab) => {
+    setActiveTab(k);
+    const el = bodyRef.current?.querySelector<HTMLElement>(`#mm-${k}`);
+    if (el && bodyRef.current) bodyRef.current.scrollTo({ top: el.offsetTop - 8, behavior: 'smooth' });
+  };
+  useEffect(() => {
+    if (!isOpen) return;
+    const t = setTimeout(() => {
+      const el = bodyRef.current?.querySelector<HTMLElement>(`#mm-${initialTab}`);
+      if (el && bodyRef.current) bodyRef.current.scrollTop = el.offsetTop - 8;
+    }, 30);
+    return () => clearTimeout(t);
+  }, [isOpen, initialTab]);
+  const onBodyScroll = () => {
+    const box = bodyRef.current;
+    if (!box) return;
+    let cur: MmTab | null = null;
+    box.querySelectorAll<HTMLElement>('[data-mm]').forEach((el) => {
+      if (el.offsetTop - box.scrollTop <= 80) cur = el.dataset.mm as MmTab;
+    });
+    if (cur && cur !== activeTab) setActiveTab(cur);
+  };
   const [showLightbox, setShowLightbox] = useState<boolean>(false);
   
   // Gemini AI query states
@@ -118,7 +145,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 via-indigo-50/50 to-purple-50/40 flex items-center justify-between">
+        <div className="px-6 py-4 shrink-0 border-b border-slate-200 bg-gradient-to-r from-slate-50 via-indigo-50/50 to-purple-50/40 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-sm shadow-indigo-200">
               <Sparkles className="w-5 h-5 text-amber-200" />
@@ -146,9 +173,15 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-slate-200 px-6 bg-white gap-2 overflow-x-auto text-sm font-medium">
+        <div className="flex shrink-0 border-b border-slate-200 px-6 bg-white gap-2 overflow-x-auto text-sm font-medium">
           <button
-            onClick={() => setActiveTab('table42')}
+            onClick={() => goTab('papers')}
+            className={`px-3 py-3 border-b-2 whitespace-nowrap transition-colors ${activeTab === 'papers' ? 'border-indigo-600 text-indigo-700 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+          >
+            📄 三篇論文下載
+          </button>
+          <button
+            onClick={() => goTab('table42')}
             className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
               activeTab === 'table42'
                 ? 'border-indigo-600 text-indigo-600 font-semibold bg-indigo-50/50'
@@ -163,7 +196,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('abcde')}
+            onClick={() => goTab('abcde')}
             className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
               activeTab === 'abcde'
                 ? 'border-indigo-600 text-indigo-600 font-semibold bg-indigo-50/50'
@@ -178,7 +211,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('infographic')}
+            onClick={() => goTab('infographic')}
             className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
               activeTab === 'infographic'
                 ? 'border-indigo-600 text-indigo-600 font-semibold bg-indigo-50/50'
@@ -193,7 +226,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('core')}
+            onClick={() => goTab('core')}
             className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
               activeTab === 'core'
                 ? 'border-indigo-600 text-indigo-600 font-semibold'
@@ -205,7 +238,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('designs')}
+            onClick={() => goTab('designs')}
             className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
               activeTab === 'designs'
                 ? 'border-indigo-600 text-indigo-600 font-semibold'
@@ -217,7 +250,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('paper')}
+            onClick={() => goTab('paper')}
             className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
               activeTab === 'paper'
                 ? 'border-indigo-600 text-indigo-600 font-semibold'
@@ -229,7 +262,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('comparative')}
+            onClick={() => goTab('comparative')}
             className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
               activeTab === 'comparative'
                 ? 'border-indigo-600 text-indigo-600 font-semibold bg-indigo-50/50'
@@ -244,7 +277,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('masterclass')}
+            onClick={() => goTab('masterclass')}
             className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
               activeTab === 'masterclass'
                 ? 'border-indigo-600 text-indigo-600 font-semibold bg-amber-50/50'
@@ -259,7 +292,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('gemini')}
+            onClick={() => goTab('gemini')}
             className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
               activeTab === 'gemini'
                 ? 'border-purple-600 text-purple-600 font-semibold bg-purple-50/50'
@@ -272,9 +305,14 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
         </div>
 
         {/* Tab Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 text-slate-700">
-          {/* TAB 0: 表 4.2 主要的混合方法設計類型 (先定大類 ➔ 再定變型) */}
-          {activeTab === 'table42' && (
+        <div ref={bodyRef} onScroll={onBodyScroll} className="flex-1 overflow-y-auto p-6 bg-slate-50/50 text-slate-700 relative">
+          <section id="mm-papers" data-mm="papers" className="pb-8 mb-8 border-b border-slate-200">
+            <h3 className="text-base font-bold text-slate-900 mb-3">三篇論文：原出處與 PDF 下載</h3>
+            <PaperDownloads />
+          </section>
+
+          <section id="mm-table42" data-mm="table42" className="pb-8 mb-8 border-b border-slate-200 last:border-0">
+          {true && (
             <div className="space-y-5">
               {onOpenUploadModal && (
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-500 via-indigo-600 to-purple-600 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-md">
@@ -306,12 +344,12 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
 
               <Table42MajorDesignsViewer
                 onAskGemini={(q) => {
-                  setActiveTab('gemini');
+                  goTab('gemini');
                   handleAskGemini(q);
                 }}
                 onSelectDesign={(d) => {
                   if (d === 'triangulation') {
-                    setActiveTab('abcde');
+                    goTab('abcde');
                   }
                 }}
               />
@@ -319,7 +357,10 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           )}
 
           {/* TAB 0.5: 三角校正設計 ABCDE 型 (圖 4.1 五大變型) */}
-          {activeTab === 'abcde' && (
+          </section>
+
+          <section id="mm-abcde" data-mm="abcde" className="pb-8 mb-8 border-b border-slate-200 last:border-0">
+          {true && (
             <div className="space-y-5">
               {onOpenUploadModal && (
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-50 via-purple-50 to-amber-50 border border-indigo-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs">
@@ -351,7 +392,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
 
               <TriangulationAbcdeViewer
                 onAskGemini={(q) => {
-                  setActiveTab('gemini');
+                  goTab('gemini');
                   handleAskGemini(q);
                 }}
               />
@@ -359,7 +400,135 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           )}
 
           {/* TAB 1: 核心概念與特色 */}
-          {activeTab === 'core' && (
+          </section>
+
+          <section id="mm-infographic" data-mm="infographic" className="pb-8 mb-8 border-b border-slate-200 last:border-0">
+          {true && (
+            <div className="space-y-6">
+              {/* Top Action Bar */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-slate-900 text-base">
+                      混合方法研究 (MMR) 全景圖解與方法論對齊
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
+                      1536 × 1024 高清原圖
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    結合「量化研究」的數字廣度與「質性研究」的敘事深度 • 實用主義哲學 • 三角交叉檢驗
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => setShowLightbox(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs transition-colors"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    <span>燈箱全螢幕</span>
+                  </button>
+                  <a
+                    href="/images/paper_framework_diagram.png"
+                    download="MMR_Framework.png"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>下載</span>
+                  </a>
+                  <button
+                    onClick={() => {
+                      goTab('gemini');
+                      handleAskGemini('請依據這張 MMR 全景架構圖，詳細解析 Raman et al. (2022) 論文的方法論架構！');
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-xs transition-colors border border-purple-200"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Gemini 解析</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Central High-Res Graphic Container with Click to Expand */}
+              <div 
+                onClick={() => setShowLightbox(true)}
+                className="group relative bg-slate-950 rounded-2xl p-3 sm:p-4 border border-slate-800 shadow-xl cursor-pointer overflow-hidden transition-all hover:border-indigo-500/60"
+              >
+                <div className="absolute top-4 right-4 z-10 opacity-90 group-hover:opacity-100 transition-opacity">
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-semibold shadow-lg">
+                    <ZoomIn className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>點擊開啟無損全螢幕燈箱 (可任意縮放)</span>
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-center min-h-[300px] max-h-[560px] overflow-hidden rounded-xl bg-slate-900/50">
+                  <img
+                    src="/images/paper_framework_diagram.png"
+                    alt="混合方法研究 (MMR) 全景架構圖"
+                    onError={(e) => {
+                      e.currentTarget.src = "https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png";
+                    }}
+                    className="max-h-[540px] w-auto object-contain rounded-lg group-hover:scale-[1.01] transition-transform duration-200"
+                  />
+                </div>
+
+                <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 px-2">
+                  <span>💡 提示：此圖為高清 1536×1024 向量精繪圖，放大不會失真模糊。</span>
+                  <span className="text-indigo-400 font-medium">支援鍵盤 ESC 關閉、+/- 縮放</span>
+                </div>
+              </div>
+
+              {/* 4 Quadrants Detailed Academic Alignment Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white p-4.5 rounded-xl border border-slate-200 shadow-xs space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
+                    <span className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">A</span>
+                    <span>1. 核心概念 (Core Concept)</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    整合<strong>數字的廣度</strong>（量化）與<strong>敘事的深度</strong>（質性）。本論文結合 S&P 500 企業的財報量化變數與華爾街日報即時財經新聞，破解單純歷史量化數據的嚴重時滯性。
+                  </p>
+                </div>
+
+                <div className="bg-white p-4.5 rounded-xl border border-slate-200 shadow-xs space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
+                    <span className="w-6 h-6 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs">B</span>
+                    <span>2. 哲學基礎：實用主義 (Pragmatism)</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    強調用最能解決問題的方法。論文結合<strong>資訊理論 (Information Theory)</strong>與<strong>適應性市場假說 (AMH)</strong>，證明新聞情緒調節投資人定價心理，打破傳統有效市場假說 (EMH) 的理性假設。
+                  </p>
+                </div>
+
+                <div className="bg-white p-4.5 rounded-xl border border-slate-200 shadow-xs space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
+                    <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">C</span>
+                    <span>3. 三角交叉檢驗 (Triangulation)</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    GEE 計量模型確認<strong>營收成長 × 正面情緒</strong>具備顯著調節負效應（β = -102.094**），機器學習模型同步驗證加入情緒特徵能將預測準確率自 67.9% 推升至 99.7%，達到相互印證。
+                  </p>
+                </div>
+
+                <div className="bg-white p-4.5 rounded-xl border border-slate-200 shadow-xs space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
+                    <span className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs">D</span>
+                    <span>4. 四大常見研究設計類型</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    包含<strong>收斂平行設計、解釋性順序設計、探索性順序設計與嵌入式設計</strong>。本論文以三階段協同（擷取 ➔ GEE 因果解釋 ➔ 機器學習預測），完美實踐嵌入式與解釋性設計。
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: Gemini 3.8 Flash AI 即時解析顧問 */}
+          </section>
+
+          <section id="mm-core" data-mm="core" className="pb-8 mb-8 border-b border-slate-200 last:border-0">
+          {true && (
             <div className="space-y-6">
               {/* Infographic Teaser Banner */}
               <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-4 rounded-2xl text-white shadow-sm border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -393,7 +562,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => setActiveTab('infographic')}
+                    onClick={() => goTab('infographic')}
                     className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs transition-colors shadow-2xs"
                   >
                     前往圖解專頁
@@ -485,7 +654,10 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           )}
 
           {/* TAB 2: 四大常見研究設計類型 */}
-          {activeTab === 'designs' && (
+          </section>
+
+          <section id="mm-designs" data-mm="designs" className="pb-8 mb-8 border-b border-slate-200 last:border-0">
+          {true && (
             <div className="space-y-4">
               <div className="text-sm text-slate-600 mb-2">
                 Creswell & Plano Clark 提出的四種經典混合方法架構，在金融科技與量化投資中的具體對應：
@@ -578,7 +750,10 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           )}
 
           {/* TAB 3: 本篇論文之 MMR 典範 */}
-          {activeTab === 'paper' && (
+          </section>
+
+          <section id="mm-paper" data-mm="paper" className="pb-8 mb-8 border-b border-slate-200 last:border-0">
+          {true && (
             <div className="space-y-5">
               <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
                 <h3 className="font-bold text-slate-900 text-base mb-2">
@@ -650,217 +825,10 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           )}
 
           {/* TAB 3.5: MMR 全景架構圖專頁 */}
-          {activeTab === 'infographic' && (
-            <div className="space-y-6">
-              {/* Top Action Bar */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-slate-900 text-base">
-                      混合方法研究 (MMR) 全景圖解與方法論對齊
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
-                      1536 × 1024 高清原圖
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    結合「量化研究」的數字廣度與「質性研究」的敘事深度 • 實用主義哲學 • 三角交叉檢驗
-                  </p>
-                </div>
+          </section>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => setShowLightbox(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs transition-colors"
-                  >
-                    <Maximize2 className="w-3.5 h-3.5" />
-                    <span>燈箱全螢幕</span>
-                  </button>
-                  <a
-                    href="/images/paper_framework_diagram.png"
-                    download="MMR_Framework.png"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>下載</span>
-                  </a>
-                  <button
-                    onClick={() => {
-                      setActiveTab('gemini');
-                      handleAskGemini('請依據這張 MMR 全景架構圖，詳細解析 Raman et al. (2022) 論文的方法論架構！');
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-xs transition-colors border border-purple-200"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                    <span>Gemini 解析</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Central High-Res Graphic Container with Click to Expand */}
-              <div 
-                onClick={() => setShowLightbox(true)}
-                className="group relative bg-slate-950 rounded-2xl p-3 sm:p-4 border border-slate-800 shadow-xl cursor-pointer overflow-hidden transition-all hover:border-indigo-500/60"
-              >
-                <div className="absolute top-4 right-4 z-10 opacity-90 group-hover:opacity-100 transition-opacity">
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-semibold shadow-lg">
-                    <ZoomIn className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>點擊開啟無損全螢幕燈箱 (可任意縮放)</span>
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-center min-h-[300px] max-h-[560px] overflow-hidden rounded-xl bg-slate-900/50">
-                  <img
-                    src="/images/paper_framework_diagram.png"
-                    alt="混合方法研究 (MMR) 全景架構圖"
-                    onError={(e) => {
-                      e.currentTarget.src = "https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png";
-                    }}
-                    className="max-h-[540px] w-auto object-contain rounded-lg group-hover:scale-[1.01] transition-transform duration-200"
-                  />
-                </div>
-
-                <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 px-2">
-                  <span>💡 提示：此圖為高清 1536×1024 向量精繪圖，放大不會失真模糊。</span>
-                  <span className="text-indigo-400 font-medium">支援鍵盤 ESC 關閉、+/- 縮放</span>
-                </div>
-              </div>
-
-              {/* 4 Quadrants Detailed Academic Alignment Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white p-4.5 rounded-xl border border-slate-200 shadow-xs space-y-2">
-                  <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                    <span className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">A</span>
-                    <span>1. 核心概念 (Core Concept)</span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    整合<strong>數字的廣度</strong>（量化）與<strong>敘事的深度</strong>（質性）。本論文結合 S&P 500 企業的財報量化變數與華爾街日報即時財經新聞，破解單純歷史量化數據的嚴重時滯性。
-                  </p>
-                </div>
-
-                <div className="bg-white p-4.5 rounded-xl border border-slate-200 shadow-xs space-y-2">
-                  <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                    <span className="w-6 h-6 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs">B</span>
-                    <span>2. 哲學基礎：實用主義 (Pragmatism)</span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    強調用最能解決問題的方法。論文結合<strong>資訊理論 (Information Theory)</strong>與<strong>適應性市場假說 (AMH)</strong>，證明新聞情緒調節投資人定價心理，打破傳統有效市場假說 (EMH) 的理性假設。
-                  </p>
-                </div>
-
-                <div className="bg-white p-4.5 rounded-xl border border-slate-200 shadow-xs space-y-2">
-                  <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                    <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">C</span>
-                    <span>3. 三角交叉檢驗 (Triangulation)</span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    GEE 計量模型確認<strong>營收成長 × 正面情緒</strong>具備顯著調節負效應（β = -102.094**），機器學習模型同步驗證加入情緒特徵能將預測準確率自 67.9% 推升至 99.7%，達到相互印證。
-                  </p>
-                </div>
-
-                <div className="bg-white p-4.5 rounded-xl border border-slate-200 shadow-xs space-y-2">
-                  <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                    <span className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs">D</span>
-                    <span>4. 四大常見研究設計類型</span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    包含<strong>收斂平行設計、解釋性順序設計、探索性順序設計與嵌入式設計</strong>。本論文以三階段協同（擷取 ➔ GEE 因果解釋 ➔ 機器學習預測），完美實踐嵌入式與解釋性設計。
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: Gemini 3.8 Flash AI 即時解析顧問 */}
-          {activeTab === 'gemini' && (
-            <div className="flex flex-col h-[520px]">
-              {/* Chat Messages Log */}
-              <div className="flex-1 overflow-y-auto space-y-4 pr-1 mb-4">
-                {chatHistory.map((msg, idx) => (
-                  <div
-                    key={idx}
-                    className={`flex items-start gap-3 text-xs sm:text-sm ${
-                      msg.role === 'user' ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
-                    {msg.role === 'ai' && (
-                      <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shrink-0 shadow-xs">
-                        <Sparkles className="w-4 h-4 text-amber-200" />
-                      </div>
-                    )}
-                    <div
-                      className={`max-w-[85%] rounded-2xl ${
-                        msg.role === 'user'
-                          ? 'bg-indigo-600 text-white shadow-xs rounded-tr-xs p-4 leading-relaxed whitespace-pre-wrap'
-                          : 'bg-transparent text-slate-800 shadow-none'
-                      }`}
-                    >
-                      {msg.role === 'user' ? (
-                        msg.text
-                      ) : (
-                        <MarkdownReportViewer content={msg.text} fileName="Gemini_MMR_Consultant" />
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {loading && (
-                  <div className="flex items-center gap-2 text-xs text-indigo-600 font-medium p-2 bg-indigo-50/50 rounded-lg w-fit">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Gemini 3.8 Flash 正在思考並撰寫學術分析...</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Preset prompt buttons */}
-              <div className="mb-3">
-                <div className="text-[11px] font-semibold text-slate-400 mb-1.5 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-purple-500" />
-                  點選熱門學術與台股實證問題：
-                </div>
-                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-                  {presetQuestions.map((q, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleAskGemini(q)}
-                      disabled={loading}
-                      className="px-2.5 py-1 rounded-full text-xs bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 hover:border-indigo-300 transition-all text-left truncate max-w-full"
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Chat Input */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleAskGemini(query);
-                }}
-                className="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-slate-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all shadow-xs"
-              >
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="詢問 Gemini：關於混合方法研究 (MMR)、實用主義、GEE模型或台股復刻..."
-                  className="flex-1 px-3 py-2 text-xs sm:text-sm bg-transparent outline-hidden text-slate-800 placeholder-slate-400"
-                  disabled={loading}
-                />
-                <button
-                  type="submit"
-                  disabled={!query.trim() || loading}
-                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>提問</span>
-                </button>
-              </form>
-            </div>
-          )}
-
-          {/* TAB: 多元文獻比較 (Comparative) */}
-          {activeTab === 'comparative' && (
+          <section id="mm-comparative" data-mm="comparative" className="pb-8 mb-8 border-b border-slate-200 last:border-0">
+          {true && (
             <div className="space-y-6 text-xs sm:text-sm text-slate-800 leading-relaxed">
               <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 text-white shadow-xl space-y-3">
                 <div className="flex items-center gap-2">
@@ -947,7 +915,10 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           )}
 
           {/* TAB: 博士生方法論大師課 (Masterclass) */}
-          {activeTab === 'masterclass' && (
+          </section>
+
+          <section id="mm-masterclass" data-mm="masterclass" className="pb-8 mb-8 border-b border-slate-200 last:border-0">
+          {true && (
             <div className="space-y-6 text-xs sm:text-sm text-slate-800 leading-relaxed">
               <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-400 text-slate-950">
@@ -1038,10 +1009,103 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
               </div>
             </div>
           )}
+          </section>
+
+          <section id="mm-gemini" data-mm="gemini" className="pb-8 mb-8 border-b border-slate-200 last:border-0">
+          {true && (
+            <div className="flex flex-col h-[520px]">
+              {/* Chat Messages Log */}
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1 mb-4">
+                {chatHistory.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex items-start gap-3 text-xs sm:text-sm ${
+                      msg.role === 'user' ? 'justify-end' : 'justify-start'
+                    }`}
+                  >
+                    {msg.role === 'ai' && (
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shrink-0 shadow-xs">
+                        <Sparkles className="w-4 h-4 text-amber-200" />
+                      </div>
+                    )}
+                    <div
+                      className={`max-w-[85%] rounded-2xl ${
+                        msg.role === 'user'
+                          ? 'bg-indigo-600 text-white shadow-xs rounded-tr-xs p-4 leading-relaxed whitespace-pre-wrap'
+                          : 'bg-transparent text-slate-800 shadow-none'
+                      }`}
+                    >
+                      {msg.role === 'user' ? (
+                        msg.text
+                      ) : (
+                        <MarkdownReportViewer content={msg.text} fileName="Gemini_MMR_Consultant" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {loading && (
+                  <div className="flex items-center gap-2 text-xs text-indigo-600 font-medium p-2 bg-indigo-50/50 rounded-lg w-fit">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Gemini 3.8 Flash 正在思考並撰寫學術分析...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Preset prompt buttons */}
+              <div className="mb-3">
+                <div className="text-[11px] font-semibold text-slate-400 mb-1.5 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-purple-500" />
+                  點選熱門學術與台股實證問題：
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                  {presetQuestions.map((q, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleAskGemini(q)}
+                      disabled={loading}
+                      className="px-2.5 py-1 rounded-full text-xs bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 hover:border-indigo-300 transition-all text-left truncate max-w-full"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Chat Input */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAskGemini(query);
+                }}
+                className="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-slate-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all shadow-xs"
+              >
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="詢問 Gemini：關於混合方法研究 (MMR)、實用主義、GEE模型或台股復刻..."
+                  className="flex-1 px-3 py-2 text-xs sm:text-sm bg-transparent outline-hidden text-slate-800 placeholder-slate-400"
+                  disabled={loading}
+                />
+                <button
+                  type="submit"
+                  disabled={!query.trim() || loading}
+                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>提問</span>
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* TAB: 多元文獻比較 (Comparative) */}
+          </section>
+
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-3 border-t border-slate-200 bg-white flex items-center justify-between text-xs text-slate-500">
+        <div className="px-6 py-3 shrink-0 border-t border-slate-200 bg-white flex items-center justify-between text-xs text-slate-500">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-700">文獻來源:</span>
             <span>Raman et al. (2022) IJIM 64, 102451</span>
@@ -1061,7 +1125,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
         onClose={() => setShowLightbox(false)}
         onAskGemini={(prompt) => {
           setShowLightbox(false);
-          setActiveTab('gemini');
+          goTab('gemini');
           handleAskGemini(prompt);
         }}
       />
