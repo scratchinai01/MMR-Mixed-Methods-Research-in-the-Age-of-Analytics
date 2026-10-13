@@ -12,6 +12,7 @@ import { NewsDownload } from './NewsDownload.tsx';
 import { RepQuickBar, useAnchorJump } from './RepQuickBar.tsx';
 import { PAPER_TABLES } from '../data/paperContent.ts';
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
+import { MlExampleVideo } from './MlExampleVideo.tsx';
 import { 
   Zap, 
   Database, 
@@ -1308,6 +1309,8 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
               : `真實結果：比較「純量化」與「量化＋情緒」兩列，看加入新聞情緒後是否真的贏過基準準確率 ${mlResults.baselineAcc}（全部猜多數類別）。差距很小或反而變差，也是有意義的實證發現。`}
           </p>
         </div>
+
+        <MlExampleVideo />
       </div>
 
       {/* Interactive Simulator: Sensitivity & Interaction Surface */}
