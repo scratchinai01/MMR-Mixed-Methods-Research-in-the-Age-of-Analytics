@@ -546,7 +546,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
               <div className="p-5 rounded-2xl bg-indigo-50/50 border border-indigo-100 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-indigo-950 text-sm">4 層 Integration 整合度評估</span>
-                  <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-emerald-100 text-emerald-800">Overall: 93 / 100</span>
+                  <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-emerald-100 text-emerald-800" title="本平台依正方觀點的主觀評分；反方認為缺少詮釋層整合">正方主觀評分：93 / 100</span>
                 </div>
                 <div className="space-y-1.5 text-xs text-indigo-950/90">
                   <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-indigo-100">
@@ -576,7 +576,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                 <span>Model A (QUAN only) vs. Model B (QUAN + Text) 預測效能對比</span>
               </h4>
               <p className="text-xs text-emerald-900 leading-relaxed">
-                文章最後證實：加入文字情緒指標後，整體預測準確率顯著提升、預測誤差大幅下降。例如以 <strong>Two-Class Bayes Point Machine</strong> 為例：
+                原文表 7→8：加入文字情緒後，九種分類演算法的準確率全部提升；但連續 SCAR 的迴歸預測（表 5→6）並非全面改善，五個模型中有四個 RMSE 上升。分類結果例如以 <strong>Two-Class Bayes Point Machine</strong> 為例：
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div className="p-3 bg-white rounded-xl border border-emerald-200 text-center">
@@ -585,7 +585,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                 </div>
                 <div className="p-3 bg-emerald-600 text-white rounded-xl border border-emerald-500 text-center shadow-md">
                   <div className="text-emerald-100 font-semibold">Model B (財務量化 + WSJ 文字情緒)</div>
-                  <div className="text-lg font-extrabold text-amber-300 mt-1">84.0% 準確率 <span className="text-xs font-mono font-bold text-white">(+13.3%)</span></div>
+                  <div className="text-lg font-extrabold text-amber-300 mt-1">84.0% 準確率 <span className="text-xs font-mono font-bold text-white">(+13.3 個百分點)</span></div>
                 </div>
               </div>
             </div>
@@ -621,7 +621,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                 </div>
                 <div className="p-3 bg-slate-900 rounded-xl border border-slate-800">
                   <div className="text-slate-400">Integration 評分</div>
-                  <div className="text-emerald-400 font-bold mt-0.5">93 / 100 (Strong)</div>
+                  <div className="text-emerald-400 font-bold mt-0.5">93 / 100（正方主觀評分；僅分析層）</div>
                 </div>
                 <div className="p-3 bg-slate-900 rounded-xl border border-slate-800">
                   <div className="text-slate-400">核心應用領域</div>
@@ -688,7 +688,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
               </div>
 
               <p className="text-xs text-indigo-200 leading-relaxed">
-                情緒不是「主菜」而是放大鏡與扭曲器！深入剖析為何跑機器學習或 FinMind 數據會虧損：因為缺乏實用主義哲學與三角交叉檢驗。揭示 <strong>Sales_growth × Positive = -102.094</strong> 的反直覺真理與 <strong>Priced to Perfection</strong> 假說。
+                情緒除了直接影響報酬，也會調節基本面的效果。重點看 <strong>Sales_growth × Positive = −102.094**</strong>：營收成長越高，正面新聞的加分越小（原文：diminishing effect）；「預期已反映」是本報告的解讀，原文未檢驗。
               </p>
 
               <div 
@@ -811,7 +811,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                       <td className="p-3.5 font-mono font-bold text-emerald-300">/論文可信度</td>
                       <td className="p-3.5 text-slate-200">
                         <strong>整體可信度：高 ★★★★★</strong>。<br />
-                        理由：① 頂級出版商 Elsevier 權威來源；② 名校作者群 (Virginia Tech, Pittsburgh, Arkansas)；③ 嚴謹混合大數據（S&P 500 + Compustat + Eventus + 2,500 篇 WSJ 全文）；④ LM 金融詞典與 GEE 固定/隨機效應；⑤ ML 預測 Model B (84.0%) 顯著超越 Model A (70.7%)。
+                        理由：① 頂級出版商 Elsevier 權威來源；② 名校作者群 (Virginia Tech, Pittsburgh, Arkansas)；③ 資料來源明確（S&P 500 + Compustat + Eventus + 約 2,500 篇 WSJ 文章）；④ LM 金融詞典、GEE 與固定／隨機效果模型；⑤ 分類預測加入文字後提升（貝氏點機 70.7% → 84.0%）。注意：表 2 部分星號與括號數字不一致、未說明資料切分方式，引用時宜保留。
                       </td>
                       <td className="p-3.5 text-center font-bold text-emerald-300">✅ 極高 (核心必讀)</td>
                     </tr>
@@ -1022,7 +1022,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                     <td className="p-3 font-mono font-bold text-slate-500 text-center">04</td>
                     <td className="p-3 font-mono font-bold text-indigo-700 bg-indigo-50/50">/MMR整合度</td>
                     <td className="p-3 text-slate-800 font-medium">判斷量化與質化是否真正 Integration</td>
-                    <td className="p-3 text-slate-600">資料、變數、分析與預測 4 層深度整合；建構非線性交互項並比較模型預測增量</td>
+                    <td className="p-3 text-slate-600">資料、變數、分析與預測 4 層整合（正方觀點；反方認為缺詮釋層整合）；建構交互項並比較模型預測增量</td>
                     <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800">🔗 高度整合 (L4)</span></td>
                     <td className="p-3 text-center">
                       <button onClick={() => onAskGemini('請依據 /MMR整合度，詳細說明本篇如何達成 4 個層次的深層 Integration？')} className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px]">解析</button>
@@ -1122,7 +1122,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                     <td className="p-3 font-mono font-bold text-slate-500 text-center">14</td>
                     <td className="p-3 font-mono font-bold text-indigo-700 bg-indigo-50/50">/FT50判定</td>
                     <td className="p-3 text-slate-800 font-medium">判斷是否屬 Financial Times 50 (FT50) 商管頂刊</td>
-                    <td className="p-3 text-slate-600">未收錄於 Financial Times 50 期刊清單中（FT50 涵蓋 ISR、MISQ、JMIS 等）</td>
+                    <td className="p-3 text-slate-600">未收錄於 Financial Times 50 期刊清單中（FT50 中的資訊系統期刊為 ISR 與 MISQ）</td>
                     <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">❌ 不是 FT50</span></td>
                     <td className="p-3 text-center">
                       <button onClick={() => onAskGemini('請依據 /FT50判定，說明 FT50 清單的篩選邏輯與本篇投稿定位？')} className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px]">解析</button>
@@ -1142,18 +1142,18 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                     <td className="p-3 font-mono font-bold text-slate-500 text-center">16</td>
                     <td className="p-3 font-mono font-bold text-indigo-700 bg-indigo-50/50">/變數對齊</td>
                     <td className="p-3 text-slate-800 font-medium">檢驗質化情緒特徵與量化財務指標之尺度與時序對齊</td>
-                    <td className="p-3 text-slate-600">2013–2016 年 S&P 500 季度財務指標與 WSJ 當期新聞時序匹配，標準化與 Mean-centering</td>
-                    <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800">🔄 時序嚴格對齊</span></td>
+                    <td className="p-3 text-slate-600">2013–2016 年 S&P 500 的年度（fiscal year）財務指標，搭配每家公司每年的新聞情緒彙總；字數以總字數標準化並做平均數中心化。原文未說明時間對齊（是否落後一期）</td>
+                    <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800">⚠️ 原文未交代對齊</span></td>
                     <td className="p-3 text-center">
-                      <button onClick={() => onAskGemini('請依據 /變數對齊，解析文本情感詞頻轉化為季度面板指標時的時間窗設定細節？')} className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px]">解析</button>
+                      <button onClick={() => onAskGemini('請依據 /變數對齊，解析文本情感詞頻轉化為年度面板指標時的時間對齊方式（原文未說明，請指出可能的風險）？')} className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px]">解析</button>
                     </td>
                   </tr>
                   <tr className="hover:bg-slate-50 transition-colors">
                     <td className="p-3 font-mono font-bold text-slate-500 text-center">17</td>
                     <td className="p-3 font-mono font-bold text-indigo-700 bg-indigo-50/50">/計量架構</td>
                     <td className="p-3 text-slate-800 font-medium">檢核 GEE / 固定隨機效果 / 交互項之模型穩健性與內生性防禦</td>
-                    <td className="p-3 text-slate-600">GEE 克服個體內序列自相關，指定 AR(1) 相關矩陣並採用 Robust Sandwich 標準誤</td>
-                    <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800">📈 GEE 嚴謹穩健</span></td>
+                    <td className="p-3 text-slate-600">以 GEE 處理自我相關，並報告獨立、AR(1)、可交換三種相關結構（表 2）；原文未說明是否使用穩健（sandwich）標準誤</td>
+                    <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800">📈 三種結構＋固定／隨機效果</span></td>
                     <td className="p-3 text-center">
                       <button onClick={() => onAskGemini('請依據 /計量架構，解析 GEE 在處理重複測量面板資料時相比 OLS 的統計優越性？')} className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px]">解析</button>
                     </td>
@@ -1162,8 +1162,8 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                     <td className="p-3 font-mono font-bold text-slate-500 text-center">18</td>
                     <td className="p-3 font-mono font-bold text-indigo-700 bg-indigo-50/50">/ML預測力</td>
                     <td className="p-3 text-slate-800 font-medium">評估機器學習分類準確率增量 (ΔAccuracy) 與混淆矩陣</td>
-                    <td className="p-3 text-slate-600">Model B (加入情緒特徵) 比 Model A (純量化) 分類準確率從 70.7% 顯著躍升至 84.0% (+13.3%)</td>
-                    <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">🤖 ΔAccuracy +13.3%</span></td>
+                    <td className="p-3 text-slate-600">Model B (加入情緒特徵) 比 Model A (純量化) 分類準確率從 70.7% 顯著躍升至 84.0% (+13.3 個百分點)</td>
+                    <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">🤖 ΔAccuracy +13.3 pp</span></td>
                     <td className="p-3 text-center">
                       <button onClick={() => onAskGemini('請依據 /ML預測力，分析 Two-Class Bayes Point Machine 為何在非平衡樣本中表現最優？')} className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px]">解析</button>
                     </td>
@@ -1171,8 +1171,8 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                   <tr className="hover:bg-slate-50 transition-colors">
                     <td className="p-3 font-mono font-bold text-slate-500 text-center">19</td>
                     <td className="p-3 font-mono font-bold text-indigo-700 bg-indigo-50/50">/預期踏車效應</td>
-                    <td className="p-3 text-slate-800 font-medium">剖析非線性交互項（-102.094）與 Priced to Perfection 假說</td>
-                    <td className="p-3 text-slate-600">Table 2 實證交互項 Sales_growth × Positive = -102.094 (p &lt; 0.001) 揭示利多出盡反轉定價</td>
+                    <td className="p-3 text-slate-800 font-medium">剖析交互項（−102.094）與「預期已反映」的解讀（本報告用語）</td>
+                    <td className="p-3 text-slate-600">表 2 交互項 Sales_growth × Positive = −102.094**（p &lt; 0.01）：營收成長越高，正面情緒的效果越小（原文：diminishing effect）定價</td>
                     <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">⚡ 反直覺負係數</span></td>
                     <td className="p-3 text-center">
                       <button onClick={() => onAskGemini('請依據 /預期踏車效應，詳細推導 Sales_growth × Positive 負係數的資本市場微觀定價原理？')} className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px]">解析</button>
@@ -1255,7 +1255,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                     <td className="p-3.5 text-center">
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">✅ 達成</span>
                     </td>
-                    <td className="p-3.5 text-slate-700">直接比較「quantitative only」與「quantitative + text」模型，證明加入文字情緒後預測誤差大幅收斂。</td>
+                    <td className="p-3.5 text-slate-700">直接比較「quantitative only」與「quantitative + text」模型：分類準確率全部提升（表 7→8）；連續迴歸則有 4/5 模型 RMSE 上升（表 5→6）。</td>
                   </tr>
                   <tr className="hover:bg-slate-50/80 transition-colors">
                     <td className="p-3.5 font-bold text-slate-900">明確使用 mixed-methods 概念</td>
@@ -1376,7 +1376,7 @@ Quantitative Data              Textual Data
                      │
                      ▼
               Machine Learning
-           (GBM, RF, NN, SVM, Ridge)
+           (Boosted DT, Decision Forest, NN, BPM, SVM…)
                      │
                      ▼
               Firm Performance
@@ -1528,7 +1528,7 @@ Quantitative Data              Textual Data
                   <tr className="hover:bg-slate-900/50">
                     <td className="p-3 font-semibold text-slate-300">QUAN 方法</td>
                     <td className="p-3 text-center font-mono font-bold text-sky-300">Event Study</td>
-                    <td className="p-3 text-slate-400">4 日事件窗口下測得 +2.68% 累積異常報酬（CAR, p &lt; 0.001）</td>
+                    <td className="p-3 text-slate-400">公告後 4 天平均 +2.68% 的顯著正異常報酬（依原文摘要）</td>
                   </tr>
                   <tr className="hover:bg-slate-900/50">
                     <td className="p-3 font-semibold text-slate-300">研究對象</td>
@@ -1553,7 +1553,7 @@ Quantitative Data              Textual Data
                   <tr className="hover:bg-slate-900/50 bg-rose-500/5">
                     <td className="p-3 font-semibold text-rose-300">是否只是 Multi-method?</td>
                     <td className="p-3 text-center"><span className="px-2.5 py-0.5 rounded-full font-bold bg-rose-500/20 text-rose-300 border border-rose-400/30">🔴 NO</span></td>
-                    <td className="p-3 text-slate-400">並非單純兩套統計或多實驗拼湊，而是質性與量化互為因果依據</td>
+                    <td className="p-3 text-slate-400">不是兩套統計拼湊：質性回答「企業如何正當化參與」，量化回答「市場如何反應」，共同回答同一個研究問題</td>
                   </tr>
                   <tr className="bg-emerald-500/10 font-bold border-t border-emerald-500/40">
                     <td className="p-3 text-emerald-300">★ 真正 MMR (TRUE MMR)</td>
@@ -1708,7 +1708,7 @@ Quantitative Data              Textual Data
                   <span>⭐ 特別值得收進博士論文 MMR 文獻庫的核心優勢</span>
                 </div>
                 <div className="text-xs font-mono font-bold text-emerald-300">
-                  MMR Integration 評分：91 / 100 — Strong
+                  MMR Integration 評分（本平台主觀評估）：91 / 100 — Strong
                 </div>
               </div>
 
@@ -1779,7 +1779,7 @@ Quantitative Data              Textual Data
                 <span>本篇論文（Raman et al., 2022）的「真正價值」究竟在哪裡？</span>
               </h2>
               <p className="text-sm text-slate-600 mt-2">
-                Venkatesh 院士與 Richardson 教授之所以能發表在頂級期刊，絕非因為他們列出了那幾張流程圖，而是因為他們發現了以下 <strong>4 個顛覆傳統直覺的深層經濟真相</strong>：
+                以下是本報告對本篇價值的解讀（非原文主張）；重點不在流程圖，而是因為他們發現了以下 <strong>4 個顛覆傳統直覺的深層經濟真相</strong>：
               </p>
             </div>
 
@@ -1809,7 +1809,7 @@ Quantitative Data              Textual Data
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500 text-white">1536×1024</span>
                   </div>
                   <p className="text-xs text-indigo-200/80 mt-1 max-w-xl">
-                    為什麼純跑機器學習或純調 FinMind 數據會虧損？因為缺乏此架構圖中的<strong>「實用主義哲學」</strong>與<strong>「三角交叉檢驗」</strong>！
+                    本報告觀點：只跑機器學習、不交代機制，結果很難解釋也難以重現。架構圖中的「實用主義」「三角交叉檢驗」是 MMR 方法論的概念，<strong>原文並未使用</strong>。
                   </p>
                 </div>
               </div>
@@ -1840,7 +1840,7 @@ Quantitative Data              Textual Data
                       </span>
                     </div>
                     <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                      傳統研究把情緒當成單獨的預測因子（Y = β · Sentiment），這在學術與投資界已被證明無效（雜訊太大）。本論文的突破在於：<strong>新聞情緒的作用是「調節（Moderate）」市場對營收成長、本益比與淨值比的定價效率</strong>！新聞不是告訴你股價是多少，而是決定了市場願意給這家公司的基本面打幾折或溢價幾倍。
+                      原文同時發現情緒的<strong>直接效應</strong>（表 2：正面 13.665*、負面 −11.119***）與<strong>交互效應</strong>。本報告認為較有新意的是後者：情緒會<strong>調節</strong>營收成長率與市值淨值比對累積異常報酬的影響（原文：sentiments shape the effects of quantitative measures）。用白話說，新聞不只直接影響報酬，也會改變市場怎麼看待同一份基本面數字。
                     </p>
                     <div className="mt-2 p-2.5 bg-white/90 rounded-lg border border-indigo-200 text-xs text-indigo-950 flex flex-wrap items-center gap-2">
                       <span className="font-bold text-indigo-700 font-mono">📐 Creswell (c) 資料轉化模式落實：</span>
@@ -1859,22 +1859,22 @@ Quantitative Data              Textual Data
                   <div className="space-y-3 flex-1">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <h3 className="text-base font-bold text-slate-900">
-                        驚人的反直覺發現：「預期踏車效應 (Expectation Treadmill)」
+                        反直覺的交互作用：正面情緒在高營收成長時「效果遞減」（本報告稱為「預期踏車效應」，非原文用語）
                       </h3>
                       <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                        Table 2: Sales_growth × Positive = -102.094 (p &lt; 0.001)
+                        表 2：Sales_growth × Positive = −102.094**（p &lt; 0.01）
                       </span>
                     </div>
                     <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                      一般人以為：<strong>「營收高成長 + 正面新聞樂觀 = 股價大暴漲」</strong>。但論文的實證 GEE 模型卻爆出一個驚人的<strong>負係數 (-102.094)</strong>！
+                      一般人以為：<strong>「營收高成長 + 正面新聞 = 效果加倍」</strong>。但 GEE 的交互項是<strong>負的（−102.094）</strong>。原文的解讀是：<em>positive sentiments show a diminishing effect at higher values of sales growth</em>——營收成長越高，正面新聞的加分越小。注意：這是「加分變小」，不是「超額報酬變成負的」。
                     </p>
                     <div className="p-4 rounded-xl bg-white/80 border border-amber-200/80 text-xs text-slate-800 space-y-2">
                       <div className="font-semibold text-amber-900 flex items-center gap-1.5">
                         <Zap className="w-4 h-4 text-amber-600" />
-                        <span>為什麼營收狂飆 + 新聞大好，超額報酬反而顯著為負？</span>
+                        <span>為什麼營收越好，正面新聞的加分越小？（以下為本報告的解讀，原文未提出此機制）</span>
                       </div>
                       <p className="leading-relaxed">
-                        這就是行為財務學上的<strong>「預期被完全透支（Priced to Perfection）」</strong>！當一家公司營收狂增，媒體又日夜歌頌時，市場投資人把預期拉到了天花板。下一季度哪怕公司依舊繳出 25% 的高成長，只要沒有達到瘋狂預期的 35%，或者只要出現任何微小瑕疵，市場就會毫不留情地引發「估值踩踏式崩跌」。這正是台股投資人最常遇到的「利多出盡跌停」現象！
+                        一個可能的解釋是<strong>「預期已反映（priced in）」</strong>：營收已經很好的公司，市場早有高預期，再多的好消息帶來的「意外」就比較少，所以正面新聞的邊際效果變小。這和台股常說的「利多出盡」概念相近。但原文只報告了係數方向，並沒有檢驗這個機制；而且依表 2，營收成長率本身的主效應仍為正（1.225***）。
                       </p>
                     </div>
                   </div>
@@ -1893,11 +1893,11 @@ Quantitative Data              Textual Data
                         非對稱負面情緒懲罰 (Asymmetric Negative Penalty)
                       </h3>
                       <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-sky-100 text-sky-800 border border-sky-200">
-                        Table 2: MB_ratio × Negative = -6.447 (p &lt; 0.001)
+                        表 2：MB_ratio × Negative = −0.052**（括號 0.081）
                       </span>
                     </div>
                     <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                      高市值淨值比（MB Ratio 高）的成長股，在面臨負面新聞時，跌幅遠比低估值價值股慘烈得多。因為成長股的估值全部依賴未來敘事；當負面質性文本出現，敘事泡沫被戳破，引發估值懸崖式下修。相反地，傳統價值股（如水電、傳產）即使面臨負面新聞，因有實體資產與淨值支撐，情緒懲罰係數趨近於零。
+                      原文的解讀是：市值淨值比越高，負面情緒的效果越強（the magnitude of the negative sentiments effect becomes strong at higher values of MB_ratio）。本報告的延伸理解：高估值公司的股價較依賴未來預期，壞消息的衝擊可能較大。但要注意兩點：係數只有 −0.052，且若括號內是標準誤，z ≈ −0.64，按一般檢定並不顯著；原文也沒有分「成長股／價值股」做比較。
                     </p>
                   </div>
                 </div>
@@ -1912,14 +1912,14 @@ Quantitative Data              Textual Data
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-base font-bold text-slate-900">
-                        從「黑箱擬合」昇華為「可執行的元推論 (Actionable Meta-Inference)」
+                        本篇「沒有做到」、但 MMR 應該做的：用質性分析解釋異常值（元推論）
                       </h3>
                       <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-200/70 text-emerald-900">
                         解決實戰痛點
                       </span>
                     </div>
                     <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                      這篇論文最珍貴的不是跑出 GEE 數字，而是<strong>「當量化模型失靈（出現極端殘差 Outliers）時，如何借道質性新聞文本還原真相」</strong>。比如公司財報數字極佳但股價重挫，質性分析能瞬間揭示其背後的高層內鬥、海外反壟斷調查或客戶抽單傳聞。這正是純量化工程師最欠缺的「商業情報能力」。
+                      原文<strong>沒有</strong>針對極端殘差或異常個案做質性分析，所有結論都來自統計結果。這正是反方認為它「不算完整 MMR」的原因。若要補強，可以挑出模型解釋不了的極端事件（例如財報很好但股價大跌），回頭閱讀新聞做主題編碼，看看是否有高層異動、訴訟、客戶流失等統計變數沒捕捉到的因素——這才是質性與量化互相對話的元推論。
                     </p>
                   </div>
                 </div>
@@ -2291,14 +2291,14 @@ Quantitative Data              Textual Data
                       <td className="p-2">2022 (IJIM)</td>
                       <td className="p-2">S&P 500 / Abnormal Returns</td>
                       <td className="p-2">Data Transformation (QUAN + QUAL ➔ quan)</td>
-                      <td className="p-2 text-emerald-700 font-bold">✅ Q1 (IF 27.0)</td>
+                      <td className="p-2 text-emerald-700 font-bold">✅ Q1（JIF 2025＝31.0；發表當年 2022＝21.0）</td>
                     </tr>
                     <tr>
                       <td className="p-2 font-semibold">Wang et al.</td>
                       <td className="p-2">2023 (JBR)</td>
                       <td className="p-2">Hong Kong Stock Market (Event Study)</td>
                       <td className="p-2">Sequential Integration</td>
-                      <td className="p-2 text-emerald-700 font-bold">✅ Q1 (IF 9.8)</td>
+                      <td className="p-2 text-emerald-700 font-bold">✅ Q1（IF 請以最新 JCR 核對）</td>
                     </tr>
                     <tr>
                       <td className="p-2 font-semibold">Afego & Alagidede</td>
@@ -2309,9 +2309,9 @@ Quantitative Data              Textual Data
                     </tr>
                     <tr>
                       <td className="p-2 font-semibold">Soon et al.</td>
-                      <td className="p-2">2024 (JIS)</td>
-                      <td className="p-2">Malaysia KLCI / Pandemic Sentiment</td>
-                      <td className="p-2">Exploratory Sequential (QUAN ➔ qual)</td>
+                      <td className="p-2">2025 (Journal of International Studies, UUM, 21(2))</td>
+                      <td className="p-2">Malaysia FTSE Bursa KLCI / COVID-19 與經濟指標對報酬波動</td>
+                      <td className="p-2">Exploratory Sequential（原文自稱；探索式通常為 QUAL ➔ quan）</td>
                       <td className="p-2 text-amber-700">⚠️ 另行確認</td>
                     </tr>
                   </tbody>
