@@ -246,7 +246,7 @@ export function ConferencePaper({ data }: { data: any | null }) {
       </P>
       <H2>四、實證模型</H2>
       <P>本研究沿用原研究之模型設定，以廣義估計方程式估計下列模型：</P>
-      <Eq no={1} tex={'SCAR_{it} = \\beta_0 + \\beta_1 Prior\\_SCAR_{it} + \\beta_2 Size_{it} + \\beta_3 Pos_{it} + \\beta_4 Neg_{it} + \\beta_5 PE_{it} + \\beta_6 SG_{it} + \\beta_7 MB_{it} + \\sum_{F}\\sum_{S} \\gamma_{FS}\\,(F_{it} \\times S_{it}) + \\varepsilon_{it}'} />
+      <Eq no={1} tex={'\\begin{aligned} SCAR_{it} ={}& \\beta_0 + \\beta_1 Prior\\_SCAR_{it} + \\beta_2 Size_{it} + \\beta_3 Pos_{it} + \\beta_4 Neg_{it} \\\\ &+ \\beta_5 PE_{it} + \\beta_6 SG_{it} + \\beta_7 MB_{it} + \\sum_{F}\\sum_{S} \\gamma_{FS}\\,(F_{it} \\times S_{it}) + \\varepsilon_{it} \\end{aligned}'} />
       <P>
         其中 <MathRenderer math={'F \\in \\{PE, SG, MB\\}'} showCopy={false} />，<MathRenderer math={'S \\in \\{Pos, Neg\\}'} showCopy={false} />，共六個交互作用項；
         交互作用項之變數均先進行平均數中心化，連續變數於 1% 與 99% 分位數進行縮尾處理。GEE 以個股為群組、依交易日排序，
