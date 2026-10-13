@@ -807,54 +807,32 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
                   </span>
                 </div>
 
+                {/* 依期刊正式版 PDF（IJIM 64, 102451）逐項核對；列順序與右欄相同，方便左右對照 */}
                 <div className="space-y-2.5 text-xs">
-                  <div className="flex items-start gap-2">
-                    <span className="text-blue-300 font-bold shrink-0 w-20">文獻出處:</span>
-                    <span className="text-slate-200 font-semibold">
-                      Raman, Aljafari, Venkatesh, & Richardson (2022)
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-blue-300 font-bold shrink-0 w-20">研究市場:</span>
-                    <span className="text-slate-300">
-                      <strong>美股 S&P 500</strong> 大型權值股季面板
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-blue-300 font-bold shrink-0 w-20">質性語料:</span>
-                    <span className="text-slate-300">
-                      2,500+ 篇 <strong>Wall Street Journal (WSJ)</strong> 深度財經新聞
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-blue-300 font-bold shrink-0 w-20">量化財報:</span>
-                    <span className="text-slate-300">
-                      <strong>Compustat</strong> 面板數據 (PE, MB, 營收年增率)
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-blue-300 font-bold shrink-0 w-20">情緒轉化:</span>
-                    <span className="text-slate-300">
-                      Loughran-McDonald (LM) 英文金融情緒詞庫 (Positive/Negative)
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-blue-300 font-bold shrink-0 w-20">計量實證:</span>
-                    <span className="text-amber-300 font-mono font-bold">
-                      Table 2 (Model 3): Sales_growth × Positive = {String(PAPER_TABLES.find((t) => t.id === 'table-2')?.rows.find((r) => String(r[0]).startsWith('Sales_growth X Positive'))?.[3] ?? '—')}
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-blue-300 font-bold shrink-0 w-20">機器學習:</span>
-                    <span className="text-slate-300">
-                      5 種演算法比較「純量化」與「加入情緒」的預測表現（見原文表 7–8）
-                    </span>
-                  </div>
+                  {([
+                    ['研究市場:', <>美股 <strong>S&P 500</strong> 指數成分公司（約 500 家）</>, 'P.3–4'],
+                    ['期間:', <>2013–2016 年，年度（fiscal year）資料</>, 'P.3'],
+                    ['質性語料:', <>Python 爬取 <strong>Wall Street Journal</strong> 約 <strong>2,500</strong> 篇文章（日期、網址、文字內容）</>, 'P.4'],
+                    ['情緒判讀:', <>McDonald-Loughran 金融詞典；只取正面、負面字數，除以總字數並做平均數中心化（R 程式）</>, 'P.4'],
+                    ['量化財報:', <><strong>Compustat</strong> 與 <strong>Eventus</strong>：本益比、市值淨值比、營收成長率；控制前期 SCAR 與公司規模</>, 'P.3–4'],
+                    ['GEE 樣本:', <>原文未報告樣本數；GEE 三種相關結構（獨立、AR(1)、可交換），另以固定／隨機效果模型與 SCAR 二元化做穩健性</>, 'P.4–6'],
+                    ['主要發現:', <>
+                      <span className="font-mono text-amber-300 font-bold">Sales_growth × Positive = {String(PAPER_TABLES.find((t) => t.id === 'table-2')?.rows.find((r) => String(r[0]).startsWith('Sales_growth X Positive'))?.[3] ?? '—')}</span>
+                      <span className="block text-slate-300">表 2 可交換結構；營收成長越高，正面情緒的效果越小（diminishing effect）。Positive 13.654*、Negative −11.117***</span>
+                    </>, 'P.5–6'],
+                    ['機器學習:', <>迴歸 5 種（表 5–6）＋分類 9 種（表 7–8），60% 訓練／40% 驗證；分類準確率由 67.9%～72.9% 提升到 78.2%～99.7%，原文未報告全猜多數類別基準</>, 'P.6–7'],
+                  ] as Array<[string, React.ReactNode, string]>).map(([k, v, pg]) => (
+                    <div key={k} className="flex items-start gap-2">
+                      <span className="text-blue-300 font-bold shrink-0 w-20">{k}</span>
+                      <span className="text-slate-300 flex-1">{v}</span>
+                      <span className="text-[10px] font-mono text-blue-300/60 shrink-0">{pg}</span>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="pt-2 text-[11px] font-mono text-blue-300/80 border-t border-blue-500/20 flex items-center justify-between">
-                  <span>奠定因果機理與方法論基石</span>
-                  <span className="text-blue-400 font-bold">🟦 權威原著對照組</span>
+                  <span>右側頁碼＝期刊正式版 PDF 頁碼（已逐項核對）</span>
+                  <span className="text-blue-400 font-bold">🟦 原著對照組</span>
                 </div>
               </div>
 
@@ -888,7 +866,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
               <div className="flex items-center gap-2.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
                 <span className="text-slate-200">
-                  <strong className="text-amber-300">告別空洞架構：</strong> FinMind 數據工具的真價值不在於把全市場新聞塞進黑箱 XGBoost，而在於識別情緒如何作為「調節變數」引發預期踏車效應與非對稱懲罰！
+                  <strong className="text-amber-300">復刻的重點：</strong> 不是把新聞塞進黑箱模型，而是檢驗情緒是否像原著一樣「調節」基本面的效果（原著：營收成長越高，正面情緒效果越小）。
                 </span>
               </div>
               <button
@@ -1051,7 +1029,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
               <span>💡 教授提問解析：新聞量多寡對計量模型與 GEE 迴歸有影響嗎？</span>
             </div>
             <p className="text-slate-200 leading-relaxed">
-              <strong>答案是：有決定性影響！</strong> 在計量金融與文本探勘文獻中（如 Raman et al., 2022）：
+              <strong>會有影響。</strong> 以下是一般的計量常識；Raman et al. (2022) 原文並未討論新聞量的影響，只說明是把每家公司每年的文章字數彙總後計算情緒比例：
             </p>
             <ul className="space-y-1 text-slate-300 list-disc list-inside text-[11px] leading-relaxed">
               <li><strong>樣本噪聲與抽樣變異：</strong> 若新聞量過少（例如僅 3 筆），容易受到單一突發消息的極端情緒干擾，導致標準誤 (Standard Error) 膨脹、係數無法通過顯著性檢定 (t-stat)。</li>
@@ -1326,7 +1304,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
           </div>
           <p className="text-[11px] text-slate-500 italic">
             {mlResults.isDemo
-              ? '示範數字來自原論文。實務上用新聞預測股價，準確率穩定超過 55%～60% 已屬不易；若出現 99% 這類數字，通常代表資料洩漏（模型偷看到未來資訊），值得帶學生一起檢討。'
+              ? '示範數字來自原論文。實務上用新聞預測股價，準確率穩定超過 55%～60% 已屬不易；原文表 8 出現 99.7%，而原文沒有說明 60/40 是否依時間切分，可能有資料洩漏（模型偷看到未來資訊）的疑慮，值得帶學生一起檢討。'
               : `真實結果：比較「純量化」與「量化＋情緒」兩列，看加入新聞情緒後是否真的贏過基準準確率 ${mlResults.baselineAcc}（全部猜多數類別）。差距很小或反而變差，也是有意義的實證發現。`}
           </p>
         </div>
