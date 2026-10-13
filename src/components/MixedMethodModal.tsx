@@ -315,17 +315,17 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
           {true && (
             <div className="space-y-5">
               {onOpenUploadModal && (
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-500 via-indigo-600 to-purple-600 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-md">
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 border-l-4 border-l-indigo-500 text-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shrink-0">
-                      <UploadCloud className="w-5 h-5 text-amber-200" />
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+                      <UploadCloud className="w-5 h-5 text-indigo-600" />
                     </div>
                     <div>
-                      <div className="font-extrabold text-sm flex items-center gap-2">
+                      <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
                         <span>不確定您的論文屬於哪種主要設計？</span>
-                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-400 text-slate-950">AI 智慧判定</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">AI 判定</span>
                       </div>
-                      <div className="text-white/85 mt-0.5">
+                      <div className="text-slate-500 mt-0.5">
                         上傳學術論文 (PDF/TXT)，由 Gemini 依據表 4.2 檢驗「時機與權重」，先判定大類、再推導子變型！
                       </div>
                     </div>
@@ -335,7 +335,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
                       onClose();
                       onOpenUploadModal();
                     }}
-                    className="px-4 py-2 rounded-xl bg-white text-indigo-900 font-bold hover:bg-slate-100 transition-all shrink-0 shadow-xs whitespace-nowrap active:scale-95"
+                    className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shrink-0 whitespace-nowrap"
                   >
                     上傳論文進行兩階段診斷 ➔
                   </button>

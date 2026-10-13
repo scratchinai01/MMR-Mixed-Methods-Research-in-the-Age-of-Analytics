@@ -277,37 +277,37 @@ export const Table42MajorDesignsViewer: React.FC<Table42MajorDesignsViewerProps>
   return (
     <div className="space-y-6">
       {/* Golden Warning Banner: "先決定哪一種，不是直接三角校正！" */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 text-white shadow-lg space-y-2">
+      <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center font-bold text-amber-200">
-            <Lightbulb className="w-5 h-5 text-amber-200" />
+          <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center shrink-0">
+            <Lightbulb className="w-5 h-5 text-amber-600" />
           </div>
           <div>
-            <h3 className="font-extrabold text-sm sm:text-base tracking-wide flex items-center gap-2">
-              <span>【重要研究方法綱領】先決定四大主要設計類型，不是直接三角校正！</span>
+            <h3 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+              <span>先決定四大主要設計類型，再談三角校正等變型</span>
             </h3>
-            <p className="text-xs text-amber-100 opacity-95">
-              依據 Creswell & Plano Clark 經典教材《表 4.2 主要的混合方法設計類型》，任何研究必須先依據「時機」、「權重」、「混合方式」決定大類，再深入子變型！
+            <p className="text-xs text-slate-500">
+              依據 Creswell & Plano Clark 經典教材《表 4.2 主要的混合方法設計類型》，先依「時機」、「權重」、「混合方式」決定大類，再深入子變型。
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-[11px]">
-          <div className="bg-black/20 backdrop-blur-xs rounded-xl p-2 border border-white/10">
-            <div className="font-bold text-amber-200">1. 三角校正</div>
-            <div className="text-white/80">同時進行 • 通常等重 • QUAN + QUAL</div>
+          <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200 border-l-4 border-l-amber-400">
+            <div className="font-bold text-amber-700">1. 三角校正</div>
+            <div className="text-slate-600">同時進行 • 通常等重 • QUAN + QUAL</div>
           </div>
-          <div className="bg-black/20 backdrop-blur-xs rounded-xl p-2 border border-white/10">
-            <div className="font-bold text-blue-200">2. 嵌入式</div>
-            <div className="text-white/80">同時或連續 • 不相等 • QUAN(qual)</div>
+          <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200 border-l-4 border-l-sky-400">
+            <div className="font-bold text-sky-700">2. 嵌入式</div>
+            <div className="text-slate-600">同時或連續 • 不相等 • QUAN(qual)</div>
           </div>
-          <div className="bg-black/20 backdrop-blur-xs rounded-xl p-2 border border-white/10">
-            <div className="font-bold text-emerald-200">3. 解釋式</div>
-            <div className="text-white/80">連續(先量後質) • 強調量 • QUAN ➔ qual</div>
+          <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200 border-l-4 border-l-emerald-400">
+            <div className="font-bold text-emerald-700">3. 解釋式</div>
+            <div className="text-slate-600">連續(先量後質) • 強調量 • QUAN ➔ qual</div>
           </div>
-          <div className="bg-black/20 backdrop-blur-xs rounded-xl p-2 border border-white/10">
-            <div className="font-bold text-purple-200">4. 探索式</div>
-            <div className="text-white/80">連續(先質後量) • 強調質 • QUAL ➔ quan</div>
+          <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200 border-l-4 border-l-violet-400">
+            <div className="font-bold text-violet-700">4. 探索式</div>
+            <div className="text-slate-600">連續(先質後量) • 強調質 • QUAL ➔ quan</div>
           </div>
         </div>
       </div>
