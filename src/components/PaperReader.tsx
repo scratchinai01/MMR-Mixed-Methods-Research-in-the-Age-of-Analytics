@@ -39,6 +39,22 @@ import {
 import { PdfImmersiveReader } from './PdfImmersiveReader.tsx';
 import { PARA_EXPLAIN, buildExplainMarkdown } from '../data/paraExplain.ts';
 import { findTerms } from '../data/termVocab.ts';
+import { GLOSSARY_PLUS } from '../data/glossaryPlus.ts';
+
+/** 段落下方的名詞小標籤：原本指定的＋英文原文中實際出現、且名詞辭典有條目的名詞（最多 4 個，避免版面雜亂） */
+// 一般英文也常用、不一定是專有名詞的字：仍列在「深入解說」，但不做成標籤
+const CHIP_SKIP = new Set(['significant', 'moderate', 'benchmark', 'uncertainty', 'dictionary', 'control variables']);
+const chipCache = new Map<string, string[]>();
+function chipTermsFor(para: { id: string; en: string; glossaryTerms?: string[] }): string[] {
+  const hit = chipCache.get(para.id);
+  if (hit) return hit;
+  const auto = findTerms(para.en, 99)
+    .filter((t) => !CHIP_SKIP.has(t.en.toLowerCase()))
+    .map((t) => t.g).filter((g): g is string => !!g && !!GLOSSARY_PLUS[g]);
+  const list = [...new Set([...(para.glossaryTerms || []), ...auto])].slice(0, 4);
+  chipCache.set(para.id, list);
+  return list;
+}
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
 import { PARA_KIND_LABEL } from '../data/paperAudit.ts';
 
@@ -1019,10 +1035,11 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
 
                 {/* Glossary terms & Ask Gemini */}
                 <div className="flex flex-wrap items-center gap-1.5 ml-auto">
-                  {para.glossaryTerms?.map((term) => (
+                  {chipTermsFor(para).map((term) => (
                     <button
                       key={term}
                       onClick={() => onOpenGlossaryTerm(term)}
+                      title={`${GLOSSARY_PLUS[term]?.zh || term}：點開看白話、公式與例子`}
                       className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 font-mono text-[11px] transition-colors flex items-center gap-1"
                     >
                       <Info className="w-3 h-3 text-indigo-600" />
