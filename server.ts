@@ -220,7 +220,7 @@ function generateAcademicCritiqueFallback(topic: string, scores?: any): string {
 2. **缺乏因果機理 (Causality Void)**：機器學習將情緒當成扁平特徵，忽視了 Raman et al. (2022) 最核心的發現——**情緒是「調節變數 (Moderator)」而非獨立的「主效應」**！
 
 **【實證因果真相：Table 2 的反直覺真理】**
-- **預期踏車效應 (The Expectation Treadmill)**：論文 Table 2 實證係數 \`Sales_growth × Positive = -102.094 (p < 0.001)\`。當一家企業營收狂飆且新聞極度樂觀時，市場定價已透支至完美（Priced to Perfection），次季超額報酬反而顯著暴跌！
+- **正面情緒效果遞減（原文：diminishing effect）**：論文 Table 2 實證係數 \`Sales_growth × Positive = -102.094 (p < 0.01)\`。當一家企業營收狂飆且新聞極度樂觀時，市場定價已透支至完美（Priced to Perfection），次季超額報酬反而顯著暴跌！
 - **非對稱性重估 (Asymmetric Penalty)**：高淨值比（MB Ratio）股票面對負面新聞無險可守，引發估值懸崖；而低估值價值股卻具備情緒防禦性。
 ${scores ? `\n**【架構評分診斷回饋】**\n當前因果解釋度 (${scores.causality ?? 40}%) 與元推論深度 (${scores.metaInference ?? 30}%) 偏低，顯示系統目前過度依賴統計工具表面，必須強化質性情報對量化異常值的穿透解讀！` : ''}
 
@@ -240,7 +240,7 @@ function generateSmartAcademicResponse(question: string, context?: string): { te
     return {
       text: `### 🎯 深度延伸探討：如何將此機理應用於「台股半導體產業」？
 
-#### 1. 產業特定性與「預期踏車效應 (Expectation Treadmill)」重現
+#### 1. 產業特定性與「正面情緒效果遞減」重現
 - **實務痛點**：台股半導體族群（如台積電 2330、聯發科 2454、日月光投控 3711）常出現「法說會展望調高、營收創歷史新高，隔日股價卻跌停重挫」之反常現象。
 - **機理解構**：當市場對半導體先進製程（如 2nm、CoWoS 產能）的預期被新聞吹捧至完美極限時，**任何未達市場最高超額預期的細節（如折舊毛利微幅受壓）都會引發極度劇烈的定價懸崖**。這正是 Raman et al. (2022) 實證交互項 $\\text{Sales\\_growth} \\times \\text{Positive} < 0$ 在台股半導體的真實寫照！
 
@@ -284,7 +284,7 @@ function generateSmartAcademicResponse(question: string, context?: string): { te
 
 #### 3. 交互項檢定步驟與邊際效應分析 (Simple Slopes Test)
 1. **Wald 檢定係數顯著性**：
-   檢驗迴歸式中 $\\beta_{\\text{Interaction}}$ 之 $p$-value。若顯著且為負（如 Raman et al. 的 $-102.094, p < 0.001$），證明存在顯著調節效應。
+   檢驗迴歸式中 $\\beta_{\\text{Interaction}}$ 之 $p$-value。若顯著且為負（如 Raman et al. 的 $-102.094, p < 0.01$），證明存在顯著調節效應。
 2. **Simple Slopes 分析（Aiken & West 1991）**：
    將調節變數設定在「平均數 $+ 1\\text{SD}$（高正面情緒）」與「平均數 $- 1\\text{SD}$（低正面情緒）」，分別檢驗自變數對依變數的邊際斜率。
 3. **繪製邊際效應圖 (Marginal Effect Plots)**：
@@ -320,7 +320,7 @@ function generateSmartAcademicResponse(question: string, context?: string): { te
 
 #### 2. 口試委員 / Reviewer 最常發動的 3 大致命質疑與防禦對策
 - **質疑 1：「為什麼不直接跑兩篇獨立的論文，非要叫混合方法？」**
-  - **防禦話術**：本研究若單獨做質性無法驗證資本市場普適性；若單獨做量化則無法解釋負向交互項的心理機制（預期踏車）。唯有資料轉化模式才能在統計方程中捕捉兩者的非線性激盪。
+  - **防禦話術**：本研究若單獨做質性無法驗證資本市場普適性；若單獨做量化則無法解釋負向交互項的心理機制（效果遞減）。唯有資料轉化模式才能在統計方程中捕捉兩者的非線性激盪。
 - **質疑 2：「情緒轉化為數字後，質性的豐富語境是否流失？」**
   - **防禦話術**：本研究在第四章與第五章設置了「質性元推論深化段落」，針對 GEE 預測誤差最大的離群值樣本，重返法說會逐字稿進行深度個案語意追蹤，確保質性深度並未因數字化而折損。
 - **質疑 3：「這是否為方法拜物教（Methodological Fetishism）？」**
@@ -355,7 +355,7 @@ news = api.taiwan_stock_news(
 )
 \`\`\`
 
-#### 2. 回測效能與風險指標（預期踏車效應避險策略）
+#### 2. 回測效能與風險指標（正面情緒效果遞減避險策略）
 - **單純追利多策略**：年化報酬率 14.2%，最大回撤（MDD）-38.6%，夏普值僅 0.58。
 - **加入非線性交互項（避開利多出盡最高點）**：年化報酬率提升至 **28.4%**，最大回撤收斂至 **-14.2%**，夏普值顯著躍升至 **1.82**！
 - **核心洞察**：在新聞正面情緒達到前 5% 極值且近季營收增長超過 30% 時，模型自動觸發「獲利了結 / 空頭避險」，避開後續平均 4.8% 的超額回調！`,
@@ -418,7 +418,7 @@ Compustat 財報 / SCAR 行情            華爾街日報新聞 / 重訊法說�
                            │
                            ▼
                   【元推論 (Meta-Inference)】
-               預期踏車效應：利多出盡反直覺定價機制
+               正面情緒效果遞減：利多出盡反直覺定價機制
 \`\`\`
 
 #### 2. 口試委員 3 分鐘答辯口訣
@@ -476,7 +476,7 @@ Compustat 財報 / SCAR 行情            華爾街日報新聞 / 重訊法說�
       coreDefinition: '指傳統詞袋模型（Bag-of-Words）或機械式情緒詞庫僅統計「正面詞」與「負面詞」頻率，卻無法理解言外之意、利多出盡與反諷反語。',
       academicCritique: '法說會上的「樂觀預期」往往伴隨著主力倒貨；而在台股重大利多見報當天，通常也是短線波段高點。純詞彙計數完全無法捕捉此種市場反身性（Reflexivity）。',
       empiricalImplication: '必須結合 Loughran-McDonald 詞典在地化修正，並將情緒指標作為調節變數（Moderator）而非獨立主效應。',
-      keyTakeaway: '新聞語意不能單看文字，必須與當前定價透支程度（預期踏車效應）交叉檢驗。'
+      keyTakeaway: '新聞語意不能單看文字，必須與當前定價透支程度（正面情緒效果遞減）交叉檢驗。'
     },
     'meta-inference': {
       zhTitle: '元推論 / 後設推論',
@@ -619,8 +619,8 @@ ${item.coreDefinition}
 #### 1. 核心研究綱領與範型轉移
 Raman et al. (2022, *IJIM*) 之核心貢獻在於**將現代巨量文本分析 (Text Analytics) 與計量財務學有機結合**。傳統財務計量過度依賴歷史財報數字（存在嚴重時滯性），而純質性文本分析則難以在資本市場大樣本檢驗統計顯著性。本研究透過**三角校正設計中的「資料轉化模式 (Data Transformation Model)」**，將質性新聞轉化為量化情緒分數，實現跨典範對話。
 
-#### 2. 最震撼的反直覺實證真相：預期踏車效應 (The Expectation Treadmill)
-- **Table 2 關鍵交互項**：$\\text{Sales\\_growth} \\times \\text{Positive} = -102.094 (p < 0.001)$
+#### 2. 最震撼的反直覺實證真相：正面情緒效果遞減（原文：diminishing effect）
+- **Table 2 關鍵交互項**：$\\text{Sales\\_growth} \\times \\text{Positive} = -102.094 (p < 0.01)$
 - **經濟意涵**：營收高成長且新聞極度正面的企業，股價已被市場「定價至完美 (Priced to Perfection)」。後續稍有風吹草動便引發劇烈重估與超額報酬崩跌。這打破了純量化模型「利多即漲」的扁平幻想！
 
 #### 3. 台灣股市 (FinMind) 實務落地啟示
@@ -764,7 +764,7 @@ function generatePaperMmrAnalysisFallback(fileName?: string, textSnippet?: strin
 ### 4. 📊 雙軌數據與模型架構拆解 (Dual Data Streams)
 1. **量化軌道 (QUAN Track)**：Compustat 企業財務報表、Eventus 累積超額報酬 (SCAR)、CRSP 股價行情。
 2. **質性軌道 (QUAL Track ➔ quan)**：華爾街日報 (WSJ) 2,500+ 篇財經新聞非結構化文本，經 LM 詞庫轉化為 Positive/Negative 數值分數。
-3. **跨軌道調節作用 (Cross-Track Moderation)**：發現關鍵交互項 $\\text{Sales\\_growth} \\times \\text{Positive} = -102.094 (p < 0.001)$，揭露「預期踏車效應 (Expectation Treadmill)」。
+3. **跨軌道調節作用 (Cross-Track Moderation)**：發現關鍵交互項 $\\text{Sales\\_growth} \\times \\text{Positive} = -102.094 (p < 0.01)$，揭露「正面情緒效果遞減」。
 
 ---
 
@@ -927,6 +927,7 @@ ${evidenceRule}
 你的任務是針對用戶上傳的學術論文（包含全文 PDF、摘要、方法論章節或文字），進行深度的「混合方法研究 (MMR) 架構診斷與評估報告」。
 解說時緊扣 Creswell & Plano Clark 經典方法論體系《表 4.2 主要的混合方法設計類型》：
 - 第一階段：先依據【時機】與【權重】決定四大主要設計類型（三角校正、嵌入式、解釋式、探索式），嚴禁未經審查直接跳入三角校正！
+- 用語：提到 Raman et al. (2022) 的 Sales_growth × Positive 交互項（−102.094，p < 0.01）時，請稱為「正面情緒效果遞減」（原文 diminishing effect），不要使用「預期踏車效應」等原文沒有的名稱。
 - 第二階段：確定大類後，再判定具體子變型（如資料轉化模式、聚斂模式、追蹤解釋模式等）。
 請以繁體中文專業、結構清晰、條理分明、深具批判性思維的學術報告風格呈現。`;
 
@@ -1012,7 +1013,7 @@ app.post('/api/gemini/critique-value', async (req, res) => {
    - 如何避免形式主義，聚焦研究揭示了什麼實質經濟真理？
    - 為什麼真正的混合方法研究（MMR）關鍵在於「元推論的質量對話」而非單純並列模型？
 2. 本篇標竿論文（Raman et al., 2022）的「真正價值」究竟在哪裡？
-   - 預期落差機制（Expectation Treadmill / Table 2: Sales_growth × Positive = -102.094 的反直覺真理）
+   - 預期落差機制（diminishing effect / Table 2: Sales_growth × Positive = -102.094 的反直覺真理）
    - 非對稱調節效應（MB_ratio × Negative 的懸崖式重估）
    - 元推論（Meta-Inference）：質性敘事如何解釋異常值，量化面板如何錨定規律，兩者如何產生不可替代的商業與投資洞察。
 3. 在地化實務（如台股市場與 FinMind 數據）如何有效對接？
@@ -1064,7 +1065,7 @@ function getStageTitle(stage: number): string {
   const titles: Record<number, string> = {
     1: '階段 1：核心概念解構與資料取得',
     2: '階段 2：計量模型與 GEE 相關結構檢定',
-    3: '階段 3：非線性交互作用與預期踏車效應',
+    3: '階段 3：非線性交互作用與正面情緒效果遞減',
     4: '階段 4：機器學習演算法與預測增量對比',
     5: '階段 5：元推論 (Meta-Inference) 整合與頂刊防禦',
     6: '階段 6：台股在地化微結構與 FinMind 實戰',
@@ -1084,7 +1085,7 @@ function getStageProgressionFallback(stage: number, lastQuery?: string, lastAnsw
   if (stage === 3) {
     return [
       '⚡ 階段 3：Table 2 實證係數 Sales_growth × Positive = -102.094 的非線性邊際圖繪製？',
-      '📉 階段 3：預期踏車效應（Expectation Treadmill）在成長股 vs. 價值股的非對稱懲罰比較？',
+      '📉 階段 3：正面情緒效果遞減（diminishing effect）在成長股 vs. 價值股的非對稱懲罰比較？',
       '🎯 階段 3：在台股中高營收動能伴隨媒體極端樂觀時，次季超額報酬（SCAR）的下墜路徑？',
       '⚖️ 階段 3：如何運用 Simple Slopes 檢驗調節變數在 Mean ± 1SD 時的邊際顯著性？',
     ];
@@ -1124,7 +1125,7 @@ app.post('/api/ai/dynamic-questions', async (req, res) => {
 要求：
 1. 嚴格輸出 4 個問題，每個問題一行。
 2. 每個問題格式：[Emoji] 階段 ${nextStage}：[深入探討問題，包含具體計量變數、微結構指標、台股實務或博論口試防禦策略]
-3. 嚴禁重複先前階段的基礎問題，必須層層深入（例如：階段1概念定位 ➔ 階段2計量模型與GEE ➔ 階段3交互項與踏車效應 ➔ 階段4機器學習預測 ➔ 階段5元推論整合與頂刊防禦 ➔ 階段6台股高頻微結構落地）。
+3. 嚴禁重複先前階段的基礎問題，必須層層深入（例如：階段1概念定位 ➔ 階段2計量模型與GEE ➔ 階段3交互項與效果遞減 ➔ 階段4機器學習預測 ➔ 階段5元推論整合與頂刊防禦 ➔ 階段6台股高頻微結構落地）。
 4. 繁體中文，直截了當，不要任何前言、後記或無關文字。`;
 
     const contents = `【當前階段】：階段 ${stage}

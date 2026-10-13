@@ -174,7 +174,7 @@ export const TABLE_4_2_DESIGNS: Record<MajorDesignId, MajorDesignInfo> = {
       }
     ],
     coreLogic: '「先有量化結果，再用質性深入解釋其內在因果機理」。質性階段的角色是為初期的統計數字提供解釋與脈絡。',
-    whenToUse: '當量化分析結果出現反直覺結果（如預期踏車效應）、或僅知道「數字有顯著差異」但不知道「底層為什麼會這樣」時。',
+    whenToUse: '當量化分析結果出現反直覺結果（如正面情緒效果遞減）、或僅知道「數字有顯著差異」但不知道「底層為什麼會這樣」時。',
     finmindPractice: 'Phase 1 用 FinMind 跑出量化預測誤差；Phase 2 針對前 10% 預測失誤的個股檢索財經雜誌長篇報導以查明原委。',
     diagramSteps: {
       phase1: '第一階段 (QUAN)：量化數據蒐集與統計回歸 (找出規律與異常)',

@@ -114,7 +114,7 @@ export const PaperUploadAnalysisModal: React.FC<PaperUploadAnalysisModalProps> =
 
   // Checked Skills Checklist state for joint diagnosis
   const [checkedSkillCodes, setCheckedSkillCodes] = useState<string[]>([
-    '/MMR判定', '/MMR類型', '/QUANQUAL比例', '/MMR整合度', '/計量架構', '/預期踏車效應'
+    '/MMR判定', '/MMR類型', '/QUANQUAL比例', '/MMR整合度', '/計量架構', '/交互作用解讀'
   ]);
   const [showSkillsChecklist, setShowSkillsChecklist] = useState<boolean>(true);
 
@@ -153,7 +153,7 @@ export const PaperUploadAnalysisModal: React.FC<PaperUploadAnalysisModalProps> =
     { id: '16', code: '/變數對齊', name: '變數對齊', desc: '檢驗質化情緒特徵（Sentiment）與量化財務指標（Compustat）尺度與時序對齊', category: '特徵工程', icon: '🔄' },
     { id: '17', code: '/計量架構', name: '計量架構', desc: '檢核 GEE / 固定隨機效果 / 交互作用項之模型穩健性與內生性防禦', category: '計量模型', icon: '📈' },
     { id: '18', code: '/ML預測力', name: 'ML預測力', desc: '評估機器學習分類準確率增量 (ΔAccuracy: 70.7% ➔ 84.0%) 與混淆矩陣', category: '機器學習', icon: '🤖' },
-    { id: '19', code: '/預期踏車效應', name: '預期踏車效應', desc: '剖析非線性交互項（-102.094）與市場預期透支（Priced to Perfection）機理', category: '因果機理', icon: '⚡' },
+    { id: '19', code: '/交互作用解讀', name: '交互作用解讀', desc: '解讀交互項（−102.094**）：營收成長越高，正面情緒效果越小', category: '因果機理', icon: '⚡' },
     { id: '20', code: '/博論寫作指引', name: '博論寫作指引', desc: '產出符合國際頂級期刊標準之方法論章節段落建議與口試口委答辯策略', category: '博士指引', icon: '🎓' }
   ];
 
@@ -515,7 +515,7 @@ Abstract: This paper quantitatively measures the interactions between media pess
                     <span>這裡 先勾選要用的快捷指令 (已勾選 {checkedSkillCodes.length} / 20 項)</span>
                   </h3>
                   <p className="text-[11px] text-indigo-200/80">
-                    利用勾選的 skills 直接進行聯合診斷（如 /MMR判定、/計量架構、/預期踏車效應等）
+                    利用勾選的 skills 直接進行聯合診斷（如 /MMR判定、/計量架構、/交互作用解讀等）
                   </p>
                 </div>
               </div>
@@ -659,7 +659,7 @@ Abstract: This paper quantitatively measures the interactions between media pess
                     <option value="【博士論文技能】：/變數對齊 檢驗質化情緒特徵與量化財務指標之尺度與時序對齊">16. /變數對齊 (雙軌特徵對齊)</option>
                     <option value="【博士論文技能】：/計量架構 檢核 GEE/固定隨機效果/交互項之穩健性與內生性防禦">17. /計量架構 (GEE與面板回歸)</option>
                     <option value="【博士論文技能】：/ML預測力 評估機器學習分類準確率增量 (ΔAccuracy) 與混淆矩陣">18. /ML預測力 (70.7%➔84.0%)</option>
-                    <option value="【博士論文技能】：/預期踏車效應 剖析非線性交互項（-102.094）與預期透支機理">19. /預期踏車效應 (反直覺負係數)</option>
+                    <option value="【博士論文技能】：/交互作用解讀 解讀交互項（−102.094**）與正面情緒效果遞減">19. /交互作用解讀 (反直覺負係數)</option>
                     <option value="【博士論文技能】：/博論寫作指引 產出符合國際頂級期刊標準之方法論章節撰寫建議">20. /博論寫作指引 (頂刊寫作規範)</option>
                   </optgroup>
                   <optgroup label="📖 Creswell 經典方法論診斷">

@@ -135,7 +135,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
         level: '典範級高價值研究 (Exemplar Research & Actionable Alpha)',
         color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
         badge: '卓越：兼具學術厚度與實戰價值',
-        summary: '真正掌握了混合方法研究 (MMR) 的精髓：將質性敘事與量化面板進行深度交叉印證，不僅能精準捕捉「預期踏車效應」與非線性轉折，更具備強大的實戰決策指導價值！',
+        summary: '真正掌握了混合方法研究 (MMR) 的精髓：將質性敘事與量化面板進行深度交叉印證，不僅能精準捕捉「正面效果遞減」與非線性轉折，更具備強大的實戰決策指導價值！',
         remedy: '持續透過 FinMind 工具在地化即時特徵與台股微觀結構進行動態滾動校準。'
       };
     }
@@ -193,7 +193,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
     },
     {
       title: 'Table 2 核心秘密：Sales_growth × Positive 為何是 -102.094？',
-      query: '請深入解構 Raman et al. (2022) Table 2 中最震撼的反直覺發現：為何營收超高成長碰到正面情緒，超額報酬反而暴跌（係數 -102.094）？這如何揭露了市場預期踏車效應的真價值？'
+      query: '請深入解構 Raman et al. (2022) Table 2 中最震撼的反直覺發現：為何營收成長越高，正面情緒對超額報酬的加分越小（交互項係數 −102.094**）？這如何揭露了市場正面效果遞減的真價值？'
     },
     {
       title: '在地化調適：如何將美股文獻模型有效對接台股微觀結構？',
@@ -243,7 +243,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-xs backdrop-blur-md text-slate-200 border border-white/10">
               <span className="w-2 h-2 rounded-full bg-amber-400" />
-              <span>突破：Table 2 預期踏車效應 (-102.094)</span>
+              <span>突破：Table 2 正面效果遞減 (-102.094)</span>
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-xs backdrop-blur-md text-slate-200 border border-white/10">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
@@ -1169,12 +1169,12 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                   </tr>
                   <tr className="hover:bg-slate-50 transition-colors">
                     <td className="p-3 font-mono font-bold text-slate-500 text-center">19</td>
-                    <td className="p-3 font-mono font-bold text-indigo-700 bg-indigo-50/50">/預期踏車效應</td>
+                    <td className="p-3 font-mono font-bold text-indigo-700 bg-indigo-50/50">/交互作用解讀</td>
                     <td className="p-3 text-slate-800 font-medium">剖析交互項（−102.094）與「預期已反映」的解讀（本報告用語）</td>
                     <td className="p-3 text-slate-600">表 2 交互項 Sales_growth × Positive = −102.094**（p &lt; 0.01）：營收成長越高，正面情緒的效果越小（原文：diminishing effect）定價</td>
                     <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">⚡ 反直覺負係數</span></td>
                     <td className="p-3 text-center">
-                      <button onClick={() => onAskGemini('請依據 /預期踏車效應，詳細推導 Sales_growth × Positive 負係數的資本市場微觀定價原理？')} className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px]">解析</button>
+                      <button onClick={() => onAskGemini('請依據 /交互作用解讀，詳細推導 Sales_growth × Positive 負係數的資本市場微觀定價原理？')} className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px]">解析</button>
                     </td>
                   </tr>
                   <tr className="hover:bg-slate-50 transition-colors">
@@ -1447,7 +1447,7 @@ Quantitative Data              Textual Data
                   <div className="absolute inset-0 bg-slate-950/30 group-hover:bg-slate-950/10 transition-colors flex items-center justify-center">
                     <span className="px-3 py-1.5 rounded-xl bg-slate-900/80 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 shadow-md group-hover:scale-105 transition-transform">
                       <ZoomIn className="w-3.5 h-3.5" />
-                      <span>點擊放大檢視主題二 (三階段協同與預期踏車效應)</span>
+                      <span>點擊放大檢視主題二 (三階段協同與正面效果遞減)</span>
                     </span>
                   </div>
                 </div>
@@ -1562,7 +1562,7 @@ Quantitative Data              Textual Data
                 </div>
               </div>
 
-              {/* Breakthrough 2: The Expectation Treadmill (Table 2 -102.094) */}
+              {/* 突破 2：正面情緒效果遞減（表 2 −102.094） */}
               <div className="p-6 rounded-2xl bg-gradient-to-r from-amber-50/70 to-rose-50/50 border border-amber-200">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-xs">
@@ -1571,7 +1571,7 @@ Quantitative Data              Textual Data
                   <div className="space-y-3 flex-1">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <h3 className="text-base font-bold text-slate-900">
-                        反直覺的交互作用：正面情緒在高營收成長時「效果遞減」（本報告稱為「預期踏車效應」，非原文用語）
+                        反直覺的交互作用：正面情緒在高營收成長時「效果遞減」（原文：diminishing effect）
                       </h3>
                       <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-rose-100 text-rose-800 border border-rose-200">
                         表 2：Sales_growth × Positive = −102.094**（p &lt; 0.01）
@@ -1701,7 +1701,7 @@ Quantitative Data              Textual Data
                   />
                   <div className="flex justify-between text-[10px] text-slate-400">
                     <span>只看單一線性主效應 (0%)</span>
-                    <span>捕捉預期踏車與負面情緒非對稱懲罰 (100%)</span>
+                    <span>捕捉交互作用與正負情緒不對稱 (100%)</span>
                   </div>
                 </div>
 
@@ -2065,7 +2065,7 @@ Quantitative Data              Textual Data
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => onAskGemini('請解說 Table 2 實證係數為何會出現預期踏車效應？')}
+            onClick={() => onAskGemini('請解說 Table 2 的交互項為何顯示正面情緒在高營收成長時效果遞減？')}
             className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-indigo-300 text-indigo-600 font-medium transition-colors shadow-2xs"
           >
             快速詢問 Table 2 實證機理

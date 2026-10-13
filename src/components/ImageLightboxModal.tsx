@@ -69,7 +69,7 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
     {
       id: 'img3',
       url: 'https://cdn.gamma.app/qczcgzm3dplba12/9b94218218934b80a2ff622e4055a893/original/image.png',
-      title: '主題三：三階段協同與預期踏車效應分析圖',
+      title: '主題三：三階段協同與正面效果遞減分析圖',
       caption: 'Identify ➔ Explain ➔ Predict • 嚴謹文獻判定與係數解讀',
       description: '揭示 Sales_growth × Positive = -102.094 的負係數真諦：當預期被完全透支（Priced to Perfection），超額報酬反而顯著為負。'
     },
@@ -112,7 +112,7 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
       id: 'img9',
       url: 'https://cdn.gamma.app/qczcgzm3dplba12/a258c799d57c43dbb989ede9ff39d03a/original/image.png',
       title: '主題九：本篇論文 (Raman et al., 2022) 的「真正價值」與四大深層經濟真相',
-      caption: '情緒不是「主菜」而是放大鏡與扭曲器 • Table 2 預期踏車效應 (-102.094)',
+      caption: '情緒不是「主菜」而是放大鏡與扭曲器 • Table 2 正面效果遞減 (-102.094)',
       description: '深入剖析為何跑機器學習或 FinMind 數據會虧損：因為缺乏實用主義哲學與三角交叉檢驗。揭示 Sales_growth × Positive = -102.094 的反直覺真理與 Priced to Perfection 假說！'
     }
   ];
@@ -124,7 +124,7 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
     { id: 'img1', stage: 'MMR 是什麼', slides: ['p5'] },
     { id: 'img8', stage: '資料轉化設計', slides: ['p5', 'p8'] },
     { id: 'img2', stage: '方法：雙軌模型', slides: ['p9', 'p11'] },
-    { id: 'img9', stage: '結果：預期踏車', slides: ['p10', 'r10', 'c3'] },
+    { id: 'img9', stage: '結果：效果遞減', slides: ['p10', 'r10', 'c3'] },
     { id: 'img6', stage: '對照：非典型 MMR', slides: ['c5'] },
     { id: 'img7', stage: '對照：典型 MMR', slides: ['c5'] },
     { id: 'img5', stage: '延伸：研究技能總覽', slides: ['c6'] },
@@ -461,7 +461,7 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
                   <div className="p-3 bg-white rounded-xl border border-emerald-100 text-xs text-emerald-950 space-y-1">
                     <div className="font-semibold text-emerald-700">📜 論文落實 (Raman et al., 2022)：</div>
                     <div>• <strong>相互印證：</strong>GEE 面板計量模型證明情緒具有顯著調節效應，四種機器學習演算法 (Tree, Neural Net) 亦同步確認加入文本情緒能顯著降低預測誤差。</div>
-                    <div>• <strong>互補：</strong>量化揭示統計相關，質性新聞文本剖析市場「預期踏車效應」與過度狂熱。</div>
+                    <div>• <strong>互補：</strong>量化揭示統計相關，質性新聞文本可協助解釋正面情緒「效果遞減」的原因。</div>
                   </div>
                 </div>
 
