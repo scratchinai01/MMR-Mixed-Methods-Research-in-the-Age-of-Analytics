@@ -127,14 +127,24 @@ export const DECK_TALK: Record<string, (c: DeckContext) => Talk> = {
       : `其中「本益比 × 好消息」在台股是 ${disp(c, 'PE_ratio X Positive')}，沒有看到「期待越高、好消息越打折」的型態。`,
   }),
   r12: (c) => {
-    const ms: any[] = Object.values(c.data?.gee?.models || {});
+    const models = c.data?.gee?.models || {};
+    const ms: any[] = Object.values(models);
     const ok = ['Positive', 'Negative', 'Sales_growth X Positive'].every((t) => {
       const xs = ms.map((m) => m.rows.find((r: any) => r.term === t)).filter(Boolean);
       return xs.every((x: any) => Math.sign(x.coef) === Math.sign(xs[0].coef) && (x.p < 0.05) === (xs[0].p < 0.05));
     });
-    return ok
-      ? { say: '我們換了三種不同的計算假設，結論的方向都一樣，所以不是碰巧算出來的。', ex: '就像用三台不同的體重計量體重，三台都說差不多，你就比較相信這個數字。' }
-      : { say: '我們換了三種計算假設：兩種結果接近，但 AR(1) 這種假設下有幾個係數變了，所以結論要講得保守一點。', ex: '就像用三台體重計，兩台說 60 公斤、一台說 58 公斤：大致可信，但不能說得太篤定。我們主要依原著採用「可交換」這一種。' };
+    const row = (m: string, t: string) => models[m]?.rows?.find((r: any) => r.term === t);
+    const sigPos = (m: string, t: string) => { const r = row(m, t); return r && r.coef > 0 && r.p < 0.05; };
+    const bothPos = ['independence', 'exchangeable'].every((m) => sigPos(m, 'Positive') && sigPos(m, 'Negative'));
+    const arPos = row('ar1', 'Positive');
+    const intro = '同一家公司的資料會重複出現很多天，彼此不是獨立的，GEE 需要先假設這些資料之間怎麼相關。我們依原著用了三種假設：第一，Independent，假設同一家公司不同天的資料互不相關；第二，AR(1)，假設越相近的兩天越相關，隔得越遠相關越弱；第三，Exchangeable，假設同一家公司任兩天的相關程度都一樣。主要結果依原著採用 Exchangeable。';
+    const ex = '同一個學生每週考一次小考。Independent：每次成績都當成不同學生的成績來看；AR(1)：這週和上週的成績最像，和三個月前的就沒那麼像；Exchangeable：同一個學生任兩次成績的相似程度都一樣，只要是他考的就有同樣的關聯。';
+    if (ok) return { say: `${intro}三種假設下，結論的方向和顯著性都一樣，所以不是碰巧算出來的。`, ex };
+    const detail = [
+      bothPos ? 'Independent 和 Exchangeable 的結果接近，正面、負面係數都顯著為正' : 'Independent 和 Exchangeable 的結果接近',
+      arPos && arPos.p >= 0.05 ? '但在 AR(1) 下，正面新聞的係數變得不顯著' : '但在 AR(1) 下有幾個係數的方向或顯著性改變',
+    ].join('；');
+    return { say: `${intro}${detail}，所以我們對結論採取保守的說法。`, ex };
   },
   r13: (c) => ({
     say: '接著我們讓電腦自己學，看看加了新聞之後，能不能更準地猜出股票會不會跑贏大盤。',
