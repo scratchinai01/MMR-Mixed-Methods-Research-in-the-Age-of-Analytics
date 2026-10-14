@@ -21,7 +21,7 @@ export const DECK_TALK: Record<string, (c: DeckContext) => Talk> = {
   }),
   a2: () => ({
     say: '大家都知道新聞會影響股價，但「新聞」和「財報」放在一起時會怎樣，以前很少人研究。',
-    ex: '就像大家知道颱風會讓菜價漲，也知道過年會讓菜價漲，但「過年剛好遇到颱風」會漲多少，很少人算過。',
+    ex: '就像大家知道「網路評價好」和「開在熱鬧地段」都會讓餐廳客人變多，但兩個加在一起時，好評還能再多帶來多少客人，很少人算過。',
   }),
   a3: () => ({
     say: '作者把新聞讀成「好消息或壞消息」的分數，再跟財報數字一起，去看股價比大盤多漲還是多跌。',
@@ -96,9 +96,9 @@ export const DECK_TALK: Record<string, (c: DeckContext) => Talk> = {
     say: '這頁是真實的新聞標題和 AI 給的分數，大家可以看看判得準不準。',
     ex: '大部分判讀跟我們的直覺一樣；但如果一則標題說「A 公司大漲，B 公司跌」，AI 就可能搞錯是在講誰。這是用標題判情緒的限制。',
   }),
-  r5: () => ({
+  r5: (c) => ({
     say: '這些是各個變數的平均和起伏程度，先讓大家知道這些公司長什麼樣子。',
-    ex: '這一年權值股的本益比平均二十多倍，表示市場很看好；營收成長的起伏很大，反映 AI 和半導體這一年特別熱。',
+    ex: `這一年權值股的本益比平均約 ${d(c)?.gee?.descriptives?.PE_ratio?.mean ? Math.round(d(c).gee.descriptives.PE_ratio.mean) : '—'} 倍，表示市場給的評價不低；營收成長的起伏很大，這一年 AI 與半導體相關公司特別熱。`,
   }),
   r6: () => ({
     say: '我們怎麼判斷股價「特別好」或「特別差」？先扣掉大盤，再看它平常的起伏有多大。',
@@ -140,13 +140,40 @@ export const DECK_TALK: Record<string, (c: DeckContext) => Talk> = {
     say: '接著我們讓電腦自己學，看看加了新聞之後，能不能更準地猜出股票會不會跑贏大盤。',
     ex: `我們用前面約七成的日子讓電腦練習（${d(c)?.split?.trainN ?? '—'} 筆），再用後面的日子考試（${d(c)?.split?.testN ?? '—'} 筆）。就像用前幾次小考練習，再用沒看過的期末考測驗。`,
   }),
-  r14: () => ({
-    say: '結果是：加了新聞，電腦並沒有變得比較會猜。',
-    ex: '五個模型有的進步一點、有的退步一點，變化都只有一兩個百分點。就像換了一支新球拍，有時候打得好一點、有時候差一點，看不出明顯差別。',
-  }),
+  r14: (c) => {
+    const rows: any[] = d(c)?.rows || [];
+    const diffs = rows.map((r) => ((r.raw?.textAcc ?? 0) - (r.raw?.quantAcc ?? 0)) * 100);
+    const name = (r: any) => String(r.algorithm).replace(/ \(.*\)/, '').replace(/^.*\((.*)\)$/, '$1');
+    const zh = (r: any) => (String(r.algorithm).match(/\(([^)]+)\)/)?.[1] || name(r));
+    const sigUp = rows.filter((r) => r.mcnemar && r.mcnemar.p < 0.05 && r.mcnemar.c > r.mcnemar.b).map(zh);
+    const sigDown = rows.filter((r) => r.mcnemar && r.mcnemar.p < 0.05 && r.mcnemar.b > r.mcnemar.c).map(zh);
+    const lo = diffs.length ? Math.min(...diffs) : 0;
+    const hi = diffs.length ? Math.max(...diffs) : 0;
+    const f = (x: number) => `${x >= 0 ? '+' : '−'}${Math.abs(x).toFixed(1)}`;
+    const sigTxt = sigUp.length
+      ? `經過檢定，${sigUp.join('、')}有顯著進步${sigDown.length ? `，但${sigDown.join('、')}反而顯著變差` : ''}。`
+      : sigDown.length
+        ? `經過檢定，沒有一個顯著進步，${sigDown.join('、')}反而顯著變差，可能是多加的資訊讓模型學到了雜訊。`
+        : '經過檢定，沒有一個有顯著差別。';
+    return {
+      say: '結果是：加了新聞，電腦並沒有變得比較會猜。',
+      ex: rows.length
+        ? `五個模型加了新聞以後，準確率的變化在 ${f(lo)} 到 ${f(hi)} 個百分點之間。${sigTxt}就像換了一支新球拍，沒有打得比較好。`
+        : '尚未計算。',
+    };
+  },
   r15: (c) => ({
-    say: '判斷模型有沒有用，要跟「什麼都不學、全部猜同一邊」比。我們的模型只比這招好一點點。',
-    ex: `台北下雨天佔六成的話，天天猜「會下雨」就有六成準。我們的測試期，全猜同一邊就有 ${d(c)?.split?.baselineAcc ?? '—'}，最好的模型也只多一點點。這是誠實的結果：新聞很難拿來準確預測短期股價。`,
+    say: (() => {
+      const best = Math.max(0, ...((d(c)?.rows || []) as any[]).map((r) => r.raw?.textAcc ?? 0)) * 100;
+      const base = parseFloat(d(c)?.split?.baselineAcc ?? '0');
+      return best > base + 0.5
+        ? '判斷模型有沒有用，要跟「什麼都不學、全部猜同一邊」比。我們最好的模型只比這招好一點點。'
+        : '判斷模型有沒有用，要跟「什麼都不學、全部猜同一邊」比。我們的模型和這招差不多，甚至沒有比較好。';
+    })(),
+    ex: (() => {
+      const best = Math.max(0, ...((d(c)?.rows || []) as any[]).map((r) => r.raw?.textAcc ?? 0)) * 100;
+      return `如果一年裡有六成的日子下雨，天天猜「會下雨」就有六成準。我們的測試期，全猜同一邊就有 ${d(c)?.split?.baselineAcc ?? '—'}，最好的模型是 ${best ? best.toFixed(1) + '%' : '—'}。這是誠實的結果：新聞很難拿來準確預測短期股價。`;
+    })(),
   }),
   r16: () => ({
     say: '每家公司的新聞量差很多，結果比較受新聞多的幾家影響。',
