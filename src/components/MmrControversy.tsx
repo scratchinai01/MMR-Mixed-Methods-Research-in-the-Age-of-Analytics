@@ -1,4 +1,5 @@
 import { MmrDefense } from './MmrDefense';
+import { QualAnalysisStages } from './QualAnalysisStages';
 import { Scale, ThumbsUp, ThumbsDown, BookOpen, MessageSquareQuote } from 'lucide-react';
 
 // =====================================================================
@@ -113,6 +114,9 @@ export function MmrControversy() {
 
       {/* 答辯：四項質疑逐點回應（接在兩種定義的判定之後） */}
       <MmrDefense />
+
+      {/* 從質性分析的發展階段看判定：Raman 與本研究各落在哪裡 */}
+      <QualAnalysisStages />
 
       {/* 引用建議 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
