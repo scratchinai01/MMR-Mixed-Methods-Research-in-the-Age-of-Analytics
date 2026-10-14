@@ -208,6 +208,8 @@ export const TERMS: Term[] = [
   { en: 'textual information', zh: '文字資訊', x: '從文章、報導中得到的資訊。', g: 'Quantitizing' },
   { en: 'affective', zh: '情感性的', x: '和情緒有關的，本文指正面、負面情緒字詞。', g: 'Sentiment' },
   { en: 'validation', zh: '驗證', x: '用模型沒看過的資料檢查它準不準。', g: 'Train-Test Split' },
+  { en: 'price limit', zh: '漲跌幅限制', x: '一天股價最多能漲跌的幅度，台股為 10%。', g: 'Price Limit' },
+  { en: 'subsample', zh: '分組樣本', x: '依條件把樣本分組，各自估計再比較。', g: 'Subsample Analysis' },
   { en: 'press releases', zh: '新聞稿', x: '公司主動對外發布的正式聲明。' },
 ];
 

@@ -21,6 +21,27 @@ export const GlossaryModal: React.FC<GlossaryModalProps> = ({ isOpen, onClose, a
   const [speaking, setSpeaking] = useState<string | null>(null);
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
 
+  // 例子中的台股數字直接讀每日計算結果（{{POS}} 等標記），避免名詞辭典的數字過期
+  const [vars, setVars] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!isOpen || Object.keys(vars).length) return;
+    fetch('/data/ml_results.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).then((d: any) => {
+      const rows: any[] = d?.gee?.models?.exchangeable?.rows || [];
+      const get = (t: string) => rows.find((x) => x.term === t);
+      const pos = get('Positive'); const it = get('Sales_growth X Positive');
+      const sd = d?.gee?.descriptives?.Sales_growth?.sd;
+      if (!pos || !it || typeof sd !== 'number') return;
+      const f3 = (x: number) => x.toFixed(3);
+      setVars({
+        POS: f3(pos.coef), INT: f3(it.coef), INT_P: it.p < 0.001 ? '< .001' : it.p.toFixed(3).replace(/^0/, ''),
+        SGSD: f3(sd), SGSD_PCT: String(Math.round(sd * 100)),
+        EFF_SD: f3(pos.coef + it.coef * sd), EFF_10: f3(pos.coef + it.coef * 0.1),
+        DATE: String(d.generatedAt || '').slice(0, 10),
+      });
+    }).catch(() => {});
+  }, [isOpen]);
+  const fill = (t: string) => t.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? '（讀取中）');
+
   useEffect(() => {
     if (!isOpen) return;
     const key = activeTerm && Object.keys(GLOSSARY_PLUS).find((k) => k.toLowerCase() === activeTerm.toLowerCase());
@@ -132,7 +153,7 @@ export const GlossaryModal: React.FC<GlossaryModalProps> = ({ isOpen, onClose, a
                     {g.calc && (
                       <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
                         <div className="text-xs font-bold text-emerald-900 mb-1">{g.f ? '算一次給你看' : '補充'}</div>
-                        <ol className="list-decimal pl-5 space-y-1 text-slate-800">{g.calc.map((c, i) => <li key={i}>{c}</li>)}</ol>
+                        <ol className="list-decimal pl-5 space-y-1 text-slate-800">{g.calc.map((c, i) => <li key={i}>{fill(c)}</li>)}</ol>
                       </div>
                     )}
 

@@ -112,7 +112,7 @@ export const DECK_SCRIPTS: Record<string, Script> = {
   p10: () => [
     '這是原著最重要的表 2，我們看 Model 3，也就是 Exchangeable 結構的結果。',
     `正面情緒的係數是 ${paperCell('Positive')}，負面情緒是 ${paperCell('Negative')}：正面新聞提高超額報酬、負面新聞降低超額報酬，而且負面的係數絕對值比較大，對應摘要說的「負面影響更深遠」。`,
-    `營收成長本身是 ${paperCell('Sales_growth')}，為正向顯著。最關鍵的是營收成長乘以正面情緒：${paperCell('Sales_growth X Positive')}，顯著為負。意思是營收成長越高，正面新聞帶來的超額報酬越小，也就是「利多遞減」。另外營收成長乘以負面情緒是 ${paperCell('Sales_growth X Negative')}。`,
+    `營收成長本身是 ${paperCell('Sales_growth')}，為正向顯著。最關鍵的是營收成長乘以正面情緒：${paperCell('Sales_growth X Positive')}，顯著為負。意思是營收成長越高，正面新聞帶來的超額報酬越小，也就是「正面情緒效果遞減」。另外營收成長乘以負面情緒是 ${paperCell('Sales_growth X Negative')}。`,
     '提醒一下，這些原著數字取自本平台的論文翻譯表格，正式報告前我們會再用原文 PDF 核對一次。台股的同一張表，會在第二部分逐列放在原著旁邊。',
   ],
   p11: () => [
@@ -322,7 +322,7 @@ export const DECK_SCRIPTS: Record<string, Script> = {
       ? ['Negative', 'Positive', 'Sales_growth X Positive', 'Sales_growth X Negative', 'MB_ratio X Negative'].map((t) => `${t}：${verdictFor(ctx, t)}。`).join('')
       : '台股結果尚未計算。',
     has(ctx)
-      ? `用一句話總結：原著最核心的「利多遞減」機制，在台股的判定是「${verdictFor(ctx, 'Sales_growth X Positive')}」；負面情緒主效果的判定是「${verdictFor(ctx, 'Negative')}」。接下來三頁，一個一個討論，最後再看預測能力。`
+      ? `用一句話總結：原著最核心的「正面情緒效果遞減」機制，在台股的判定是「${verdictFor(ctx, 'Sales_growth X Positive')}」；負面情緒主效果的判定是「${verdictFor(ctx, 'Negative')}」。接下來三頁，一個一個討論，最後再看預測能力。`
       : '接下來三頁，一個一個討論。',
   ],
   c2: (ctx) => {
@@ -340,7 +340,7 @@ export const DECK_SCRIPTS: Record<string, Script> = {
     ];
   },
   c3: (ctx) => [
-    '第二個問題，也是最重要的問題：利多遞減效應是否存在？',
+    '第二個問題，也是最重要的問題：正面情緒效果遞減是否存在？',
     `原著的營收成長乘以正面情緒是 ${paperCell('Sales_growth X Positive')}。`,
     has(ctx)
       ? `台股是 ${disp(ctx, 'Sales_growth X Positive')}，${pv(ctx, 'Sales_growth X Positive')}，判定「${verdictFor(ctx, 'Sales_growth X Positive')}」。另外本益比乘以正面情緒是 ${disp(ctx, 'PE_ratio X Positive')}。這一項在原著是不顯著的正值，所以比較表上標為「${verdictFor(ctx, 'PE_ratio X Positive')}」；但從機制來看，本益比高代表期待高，${(ourTerm(ctx, 'PE_ratio X Positive')?.coef ?? 0) < 0 ? '台股的負值和「期待越高、好消息效果越小」的方向一致，可以當作補充證據。' : '台股這一項沒有提供額外的支持。'}`

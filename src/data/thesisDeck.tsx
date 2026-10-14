@@ -690,7 +690,7 @@ export const DECK: DeckSlide[] = [
         <p>{explain(r, '台股中營收成長越高，正面新聞的效果反而越大（與原著方向相反）', '台股中營收成長越高，正面新聞的效果越小（與原著方向相同）')}</p>
       </div>;
     },
-    notes: '這是原著最重要的發現。依右邊結果說明台股是否也有「利多遞減」的現象。',
+    notes: '這是原著最重要的發現。依右邊結果說明台股是否也有「正面情緒效果遞減」的現象。',
   },
   {
     quotes: ['results-7', 'results-8'],
@@ -824,11 +824,11 @@ export const DECK: DeckSlide[] = [
   },
   {
     quotes: ['abs-5'],
-    id: 'c3', section: 'compare', minutes: 3, title: '利多遞減效應是否存在？',
+    id: 'c3', section: 'compare', minutes: 3, title: '正面情緒效果遞減是否存在？',
     left: () => <p>原著：Sales_growth X Positive = {paperCell('Sales_growth X Positive')}，營收成長高時正面新聞效果減弱。</p>,
     right: (ctx) => {
       const r = ourTerm(ctx, 'Sales_growth X Positive');
-      if (!r) return <Pending what="利多遞減效應" />;
+      if (!r) return <Pending what="正面情緒效果遞減" />;
       return <div className="space-y-2">
         <div>判定：<VerdictChip v={verdictFor(ctx, 'Sales_growth X Positive')} /></div>
         <p>{explain(r, '台股方向與原著相反', '台股方向與原著相同')}</p>
