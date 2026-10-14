@@ -1,0 +1,24 @@
+name: 臨時：下載圖片供內容檢查
+on:
+  push:
+    branches: [img-review]
+permissions:
+  contents: write
+jobs:
+  fetch:
+    if: "!contains(github.event.head_commit.message, '[images]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p review_images
+          while read u; do
+            id=$(echo "$u" | cut -d/ -f5)
+            curl -sSL --max-time 60 -o "review_images/$id.png" "$u" || echo "fail $u"
+          done < review_image_urls.txt
+          ls -la review_images
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add review_images
+          git commit -m "[images] 下載圖片供檢查" || true
+          git push origin HEAD:img-review
