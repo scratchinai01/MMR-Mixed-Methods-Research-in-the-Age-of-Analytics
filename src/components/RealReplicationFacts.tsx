@@ -8,6 +8,16 @@ export function geeTerm(data: any, term: string, model = 'exchangeable') {
   return data?.gee?.models?.[model]?.rows?.find((r: any) => r.term === term);
 }
 
+/** 台股主要發現的白話總結（依當天係數方向自動產生） */
+function plainSummary(pos: any, neg: any, inter: any): string {
+  const parts: string[] = [];
+  if (pos && pos.p < 0.05) parts.push(pos.coef > 0 ? '正面新聞多的日子，之後 5 天比大盤好' : '正面新聞多的日子，之後 5 天反而比大盤差');
+  if (inter && inter.p < 0.05) parts.push(inter.coef < 0 ? '營收成長越快的公司，這個好處越小（與原著方向相同）' : '營收成長越快的公司，這個好處反而越大（與原著方向相反）');
+  else if (inter) parts.push('營收成長快或慢，正面新聞的效果看不出明確差別');
+  if (neg && neg.p < 0.05) parts.push(neg.coef > 0 ? '負面新聞多的日子，之後反而也比大盤好，可能是當天已跌完、之後反彈，這點與原著相反' : '負面新聞多的日子，之後比大盤差，與原著相同');
+  return parts.length ? parts.join('；') + '。' : '目前沒有達到顯著的結果。';
+}
+
 export function RealReplicationFacts({ data }: { data: any }) {
   if (!data) {
     return <div className="text-xs text-slate-300">尚未計算：真實結果產生後會自動顯示在這裡。</div>;
@@ -36,10 +46,12 @@ export function RealReplicationFacts({ data }: { data: any }) {
       <Row k="主要發現:">
         <span className="font-mono text-amber-300 font-bold">Sales_growth × Positive = {inter?.display ?? '—'}</span>
         <span className="block text-slate-300">{sign}；{sig}。Positive {pos?.display}、Negative {neg?.display}</span>
+        <span className="block mt-1 text-sky-200">白話：{plainSummary(pos, neg, inter)}</span>
       </Row>
       <Row k="機器學習:">
         {rows.length} 種演算法（含情緒）準確率 {(Math.min(...rows.map((r) => r.raw?.textAcc ?? 1)) * 100).toFixed(1)}%～
         {best ? best.quantTextAcc : '—'}，全猜多數類別基準為 {data.split?.baselineAcc}；加入情緒後沒有穩定提升
+        <span className="block mt-1 text-sky-200">白話：預測「之後 5 天會不會贏大盤」，準確率和每次都猜同一邊（{data.split?.baselineAcc}）差不多；加入新聞情緒也沒有幫上忙。新聞情緒和報酬「平均來說」有關，但不足以預測每一次的漲跌。</span>
       </Row>
       <div className="text-[11px] text-emerald-300/70 pt-1">計算時間 {String(data.generatedAt || '').replace('T', ' ')}・與「論文報告」簡報同一份資料</div>
     </div>
