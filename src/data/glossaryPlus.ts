@@ -165,7 +165,7 @@ export const GLOSSARY_PLUS: Record<string, GlossItem> = {
     p: '用公司市值的自然對數代表公司大小。取對數是因為大公司和小公司的市值差太多，取對數後比較不會被少數巨型公司拉走。',
     e: '比較 100 元和 1 億元時，用「幾位數」來比，比直接相減直觀得多；對數就是在算「幾位數」。',
     f: 'Size = \\ln(\\text{市值})',
-    calc: ['市值 1 兆元', 'Size = ln(1,000,000,000,000) ≈ 27.6', '本研究 10 檔權值股的 Size 平均約 28.6'],
+    calc: ['市值 1 兆元', 'Size = ln(1,000,000,000,000) ≈ 27.6', '本研究 10 檔權值股的 Size 平均約 {{SIZE_MEAN}}（{{DATE}} 計算）'],
     k: 'Size＝市值取對數，讓大小公司可以比較。',
   },
   Prior_SCAR: {
@@ -184,7 +184,7 @@ export const GLOSSARY_PLUS: Record<string, GlossItem> = {
     p: '假設「其實沒有任何效果」，那麼看到現在這麼極端（或更極端）的結果，機率有多小。p 值越小，越不像是巧合。',
     e: '朋友說他的硬幣是公平的，結果連丟 10 次都是正面。如果硬幣真的公平，這種事發生的機率大約只有千分之一，你就會懷疑硬幣有問題。',
     f: '* \\; p<.05 \\qquad ** \\; p<.01 \\qquad *** \\; p<.001',
-    calc: ['公平硬幣連續 10 次正面的機率 = (1/2)¹⁰ = 1/1024 ≈ 0.001', '台股 Sales_growth × Positive 的 p = 0.031，標一顆星（< .05）'],
+    calc: ['公平硬幣連續 10 次正面的機率 = (1/2)¹⁰ = 1/1024 ≈ 0.001', '台股 Sales_growth × Positive 的 p = {{INT_P}}（{{DATE}} 計算）；小於 .05 標一顆星'],
     k: 'p 值越小，越不像巧合；但不代表效果越大。',
   },
   'Standard Error': {
@@ -194,7 +194,7 @@ export const GLOSSARY_PLUS: Record<string, GlossItem> = {
     p: '標準誤表示估計值「可能誤差多大」。係數除以標準誤得到 z 值，z 越大代表係數離 0 越遠、越可信。表格中括號裡的數字就是標準誤。',
     e: '量體重的磅秤誤差 ±0.1 公斤時，你說瘦了 2 公斤很可信；如果磅秤誤差 ±3 公斤，瘦 2 公斤可能只是誤差。',
     f: 'z = \\dfrac{\\hat\\beta}{SE(\\hat\\beta)} \\qquad |z| > 1.96 \\Rightarrow p < .05',
-    calc: ['台股 Positive = 0.307，標準誤 0.050', 'z = 0.307 ÷ 0.050 ≈ 6.1，遠大於 1.96，非常顯著'],
+    calc: ['台股 Positive = {{POS}}，標準誤 {{POS_SE}}（{{DATE}} 計算）', 'z = {{POS}} ÷ {{POS_SE}} ≈ {{POS_Z}}；大於 1.96 就達 5% 顯著'],
     k: '括號裡是誤差；係數 ÷ 誤差 越大越可信。',
   },
   QIC: {
@@ -203,7 +203,7 @@ export const GLOSSARY_PLUS: Record<string, GlossItem> = {
     cat: '計量方法',
     p: '用來比較 GEE 不同相關結構哪一個比較合適的分數。數字越小越好。',
     e: '試穿三件衣服，用「不合身分數」來比，分數最低的最合身。',
-    calc: ['本研究台股三種結構的 QIC：Independence 2296.3、AR(1) 2411.9、Exchangeable 2344.2', 'Independence 最低；本研究依原著以 Exchangeable 為主要模型，AR(1) 下部分係數方向不同，解讀時需保守'],
+    calc: ['本研究台股三種結構的 QIC（{{DATE}} 計算）：Independence {{QIC_IND}}、AR(1) {{QIC_AR1}}、Exchangeable {{QIC_EXC}}', '{{QIC_MIN}} 最低；本研究依原著以 Exchangeable 為主要模型，AR(1) 下部分係數方向不同，解讀時需保守'],
     k: 'QIC 越小，模型越合適。',
   },
   Autocorrelation: {
@@ -230,9 +230,9 @@ export const GLOSSARY_PLUS: Record<string, GlossItem> = {
     en: 'Accuracy and Baseline Accuracy',
     cat: '機器學習',
     p: '準確率是猜對的比例。但一定要和「基準」比：什麼都不學、全部猜比較多的那一類，也能得到一定的準確率。模型要明顯贏過基準才有用。',
-    e: '台北下雨的天數若佔六成，天天猜「會下雨」就有 60% 準確率。氣象模型只有 62%，其實沒比這招好多少。',
+    e: '假設一年裡有六成的日子下雨，天天猜「會下雨」就有 60% 準確率。如果氣象模型只有 62%，其實沒比這招好多少。',
     f: 'Accuracy = \\dfrac{\\text{猜對筆數}}{\\text{總筆數}} \\qquad Baseline = \\dfrac{\\max(\\#\\text{漲},\\#\\text{跌})}{\\text{總筆數}}',
-    calc: ['台股測試期 625 筆，較多的那一類約 328 筆', '基準準確率 = 328 ÷ 625 ≈ 52.5%', '最佳模型 53.8%，只比基準多約 1 個百分點'],
+    calc: ['台股測試期 {{TEST_N}} 筆，較多的那一類約 {{BASE_N}} 筆（{{DATE}} 計算）', '基準準確率 = {{BASE_N}} ÷ {{TEST_N}} ≈ {{BASE_ACC}}', '最佳模型 {{BEST_ACC}}，比基準多 {{BEST_GAP}} 個百分點'],
     k: '準確率要跟「全猜同一邊」比，才知道有沒有用。',
   },
   AUC: {
@@ -241,7 +241,7 @@ export const GLOSSARY_PLUS: Record<string, GlossItem> = {
     cat: '機器學習',
     p: '衡量模型「分辨好壞」的能力。隨機挑一個會漲的和一個會跌的，模型給會漲的那個較高分數的機率，就是 AUC。0.5 等於亂猜，1 等於完全分得出來。',
     e: '老師看兩份作文，一份 A 一份 C，能正確指出哪份比較好的機率。亂猜就是 50%。',
-    calc: ['AUC = 0.50：和丟硬幣一樣', 'AUC = 0.55：只比亂猜好一點（台股模型大約在這裡）', 'AUC = 0.80 以上：通常算不錯'],
+    calc: ['AUC = 0.50：和丟硬幣一樣', 'AUC = 0.55：只比亂猜好一點（台股五個模型介於 {{AUC_LO}}～{{AUC_HI}}）', 'AUC = 0.80 以上：通常算不錯'],
     k: 'AUC 0.5 是亂猜，越接近 1 越會分辨。',
   },
   'Data Leakage': {

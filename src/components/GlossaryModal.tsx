@@ -32,7 +32,24 @@ export const GlossaryModal: React.FC<GlossaryModalProps> = ({ isOpen, onClose, a
       const sd = d?.gee?.descriptives?.Sales_growth?.sd;
       if (!pos || !it || typeof sd !== 'number') return;
       const f3 = (x: number) => x.toFixed(3);
+      const ms = d?.gee?.models || {};
+      const qn: Record<string, string> = { independence: 'Independence', ar1: 'AR(1)', exchangeable: 'Exchangeable' };
+      const qics = Object.entries(ms).filter(([, m]: any) => typeof m?.qic === 'number') as Array<[string, any]>;
+      const qmin = qics.length ? qics.reduce((a, b) => (b[1].qic < a[1].qic ? b : a))[0] : '';
+      const mrows: any[] = d?.rows || [];
+      const accs = mrows.map((r) => r.raw?.textAcc ?? 0);
+      const aucs = mrows.map((r) => r.raw?.textAuc ?? 0);
+      const best = accs.length ? Math.max(...accs) * 100 : 0;
+      const base = parseFloat(d?.split?.baselineAcc ?? '0');
+      const testN = d?.split?.testN ?? 0;
       setVars({
+        POS_SE: f3(pos.se), POS_Z: (pos.coef / pos.se).toFixed(1),
+        SIZE_MEAN: (d?.gee?.descriptives?.Size?.mean ?? 0).toFixed(1),
+        QIC_IND: ms.independence?.qic?.toFixed(1) ?? '—', QIC_AR1: ms.ar1?.qic?.toFixed(1) ?? '—', QIC_EXC: ms.exchangeable?.qic?.toFixed(1) ?? '—',
+        QIC_MIN: qn[qmin] || '—',
+        TEST_N: String(testN), BASE_N: String(Math.round(testN * base / 100)), BASE_ACC: d?.split?.baselineAcc ?? '—',
+        BEST_ACC: best.toFixed(1) + '%', BEST_GAP: (best - base).toFixed(1),
+        AUC_LO: accs.length ? Math.min(...aucs).toFixed(2) : '—', AUC_HI: accs.length ? Math.max(...aucs).toFixed(2) : '—',
         POS: f3(pos.coef), INT: f3(it.coef), INT_P: it.p < 0.001 ? '< .001' : it.p.toFixed(3).replace(/^0/, ''),
         SGSD: f3(sd), SGSD_PCT: String(Math.round(sd * 100)),
         EFF_SD: f3(pos.coef + it.coef * sd), EFF_10: f3(pos.coef + it.coef * 0.1),

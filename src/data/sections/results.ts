@@ -41,9 +41,9 @@ export const RESULTS_PARAGRAPHS: PaperParagraph[] = [
     id: 'results-5',
     section: 'results',
     subSection: '4.1 核心震撼發現：Sales_growth × Positive = -102.094**',
-    pdfPage: 'PDF P.14-15 (預期踏車效應)',
+    pdfPage: 'PDF P.5 (正面情緒效果遞減)',
     en: 'Key Interaction 1: Interaction of positive sentiments and sales growth has a significant negative effect on abnormal returns (β = -102.094, p < 0.01 across Independent and AR(1); β = -102.135, p < 0.01 in Exchangeable). Such a pattern suggests that positive sentiments show a diminishing effect at higher values of sales growth.',
-    zh: '【本論文最震撼的因果發現】正面新聞情緒與營收成長率的交互作用項呈極顯著負向（β = -102.094, p < 0.01）。此形態清楚揭示出「預期踏車效應（Expectation Treadmill / Diminishing Effect）」：當一家公司營收已經極高時，市場定價已透支至完美，此時再多的正面新聞利多反而無法激勵股價，次季超額報酬反而顯著滑落！',
+    zh: '【本論文最震撼的因果發現】正面新聞情緒與營收成長率的交互作用項呈極顯著負向（β = -102.094, p < 0.01）。此型態顯示「正面情緒效果遞減」（原文：diminishing effect）：營收成長率越高，正面情緒對超額報酬的正向效果越小。',
     glossaryTerms: ['Sales_growth', 'SCAR'],
   },
   {

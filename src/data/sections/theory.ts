@@ -178,10 +178,10 @@ export const THEORY_PARAGRAPHS: PaperParagraph[] = [
   {
     id: 'theory-21',
     section: 'theory',
-    subSection: '2.4 預期踏車效應 (Expectation Treadmill) 的行為金融學機轉',
-    pdfPage: 'PDF P.8-9 (預期踏車假說)',
-    en: 'Drawing on behavioral economics, the expectation treadmill hypothesis posits that when a company exhibits stellar fundamental growth, market participants price in flawless future execution. Additional positive news produces diminishing marginal cognitive lift, whereas even slight negative signals trigger disproportionate disillusionment.',
-    zh: '植根於行為金融學，「預期踏車效應（Expectation Treadmill）」假說指出：當企業展現出極致的營收高成長時，市場早已將其未來預期定價至完美無瑕。此時額外的正面利多新聞僅能產生遞減的邊際認知拉抬，反而任何微小瑕疵都會引發市場劇烈的預期破滅。',
+    subSection: '2.4 正面情緒效果遞減的一種行為財務解釋（本平台延伸）',
+    pdfPage: '非原文',
+    en: 'One possible behavioral-finance explanation for the diminishing effect is that, when a firm already shows strong revenue growth, investors may have priced high expectations into the stock. Additional positive news may then add relatively little to returns. This mechanism is an interpretation offered by this platform; the original paper does not test it.',
+    zh: '說明（非原文）：對「正面情緒效果遞減」的一種行為財務解釋是，當公司營收已經成長很快時，投資人可能早已把很高的期待反映在股價上，此時額外的正面新聞能帶來的超額報酬相對有限。這是本平台提出的可能解釋，原文並未檢驗此機制。',
     glossaryTerms: ['Sales_growth'],
   },
   {
