@@ -46,12 +46,12 @@ export function RealReplicationFacts({ data }: { data: any }) {
       <Row k="主要發現:">
         <span className="font-mono text-amber-300 font-bold">Sales_growth × Positive = {inter?.display ?? '—'}</span>
         <span className="block text-slate-300">{sign}；{sig}。Positive {pos?.display}、Negative {neg?.display}</span>
-        <span className="block mt-1 text-sky-200">白話：{plainSummary(pos, neg, inter)}</span>
+        <span className="block mt-1 text-sky-200">解讀：{plainSummary(pos, neg, inter)}</span>
       </Row>
       <Row k="機器學習:">
         {rows.length} 種演算法（含情緒）準確率 {(Math.min(...rows.map((r) => r.raw?.textAcc ?? 1)) * 100).toFixed(1)}%～
         {best ? best.quantTextAcc : '—'}，全猜多數類別基準為 {data.split?.baselineAcc}；加入情緒後沒有穩定提升
-        <span className="block mt-1 text-sky-200">白話：預測「之後 5 天會不會贏大盤」，準確率和每次都猜同一邊（{data.split?.baselineAcc}）差不多；加入新聞情緒也沒有幫上忙。新聞情緒和報酬「平均來說」有關，但不足以預測每一次的漲跌。</span>
+        <span className="block mt-1 text-sky-200">解讀：預測「之後 5 天會不會贏大盤」，準確率和每次都猜同一邊（{data.split?.baselineAcc}）差不多；加入新聞情緒也沒有幫上忙。新聞情緒和報酬「平均來說」有關，但不足以預測每一次的漲跌。</span>
       </Row>
       <div className="text-[11px] text-emerald-300/70 pt-1">計算時間 {String(data.generatedAt || '').replace('T', ' ')}・與「論文報告」簡報同一份資料</div>
     </div>

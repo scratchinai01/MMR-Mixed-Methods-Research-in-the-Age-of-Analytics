@@ -821,10 +821,10 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
                     ['主要發現:', <>
                       <span className="font-mono text-amber-300 font-bold">Sales_growth × Positive = {String(PAPER_TABLES.find((t) => t.id === 'table-2')?.rows.find((r) => String(r[0]).startsWith('Sales_growth X Positive'))?.[3] ?? '—')}</span>
                       <span className="block text-slate-300">表 2 可交換結構；營收成長越高，正面情緒的效果越小（diminishing effect）。Positive 13.654*、Negative −11.117***</span>
-                      <span className="block mt-1 text-sky-200">白話：正面新聞會讓股價比大盤好，負面新聞會讓股價比大盤差；但營收成長越快的公司，正面新聞帶來的好處越小，可能是市場早已把「高成長」算進股價。</span>
+                      <span className="block mt-1 text-sky-200">解讀：正面新聞會讓股價比大盤好，負面新聞會讓股價比大盤差；但營收成長越快的公司，正面新聞帶來的好處越小，可能是市場早已把「高成長」算進股價。</span>
                     </>, 'P.5–6'],
                     ['機器學習:', <>迴歸 5 種（表 5–6）＋分類 9 種（表 7–8），60% 訓練／40% 驗證；分類準確率由 67.9%～72.9% 提升到 78.2%～99.7%，原文未報告全猜多數類別基準
-                      <span className="block mt-1 text-sky-200">白話：加入新聞情緒後，預測「漲或跌」的準確率明顯提高。但原文沒說明訓練和驗證是否依時間切開，最高 99.7% 高得不尋常，可能有「偷看到未來資料」的問題。</span>
+                      <span className="block mt-1 text-sky-200">解讀：加入新聞情緒後，預測「漲或跌」的準確率明顯提高。但原文沒說明訓練和驗證是否依時間切開，最高 99.7% 高得不尋常，可能有「偷看到未來資料」的問題。</span>
                     </>, 'P.6–7'],
                   ] as Array<[string, React.ReactNode, string]>).map(([k, v, pg]) => (
                     <div key={k} className="flex items-start gap-2">
@@ -1193,7 +1193,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
         </div>
 
         <div className="rounded-xl border border-sky-200 bg-sky-50/60 p-4">
-          <div className="text-xs font-bold text-sky-900 mb-2">怎麼看這張表（白話）</div>
+          <div className="text-xs font-bold text-sky-900 mb-2">怎麼看這張表</div>
           <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs text-slate-700 leading-relaxed">
             {HOW_TO_READ.map(([k, v]) => (
               <div key={k} className="flex gap-2"><dt className="shrink-0 w-20 font-bold text-sky-800">{k}</dt><dd>{v}</dd></div>
@@ -1209,7 +1209,7 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
                 <th className="px-4 py-3">台股 GEE 迴歸係數</th>
                 <th className="px-4 py-3">穩健標準誤</th>
                 <th className="px-4 py-3">顯著性 (p-value)</th>
-                <th className="px-4 py-3 min-w-[18rem]">白話解讀（上台可直接講）</th>
+                <th className="px-4 py-3 min-w-[18rem]">解讀</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700 font-mono">
