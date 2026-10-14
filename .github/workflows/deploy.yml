@@ -43,5 +43,6 @@ jobs:
             --source . \
             --region asia-east1 \
             --project payfirebase \
+            --update-env-vars GEMINI_TRANSLATE_MODEL=gemini-3.1-flash-lite,GEMINI_ANALYSIS_MODEL=gemini-3.8-flash,GEMINI_ANALYSIS_THINKING=LOW,GEMINI_SEARCH_GROUNDING=auto \
             --quiet
           echo "網址：$(gcloud run services describe mmr-analytics --region asia-east1 --project payfirebase --format='value(status.url)')"

@@ -68,26 +68,51 @@ interface AiExecutionResult {
 // =====================================================================
 // 🟦 Gemini AI 設定（翻譯、解析、情緒判讀全部使用 Gemini）
 // ---------------------------------------------------------------------
-// 為了壓低成本，預設全部使用最便宜的 Flash-Lite 模型：
-//   - 翻譯、情緒判讀：gemini-3.1-flash-lite，思考程度 MINIMAL（最省）
-//   - 學術解析：同一個模型，思考程度 LOW（稍微多想一點，仍很便宜）
+// 依工作分開使用模型：
+//   - 翻譯、情緒判讀、推薦問題（量大、簡單）：gemini-3.1-flash-lite，思考程度 MINIMAL
+//     情緒判讀是研究資料的測量工具，模型必須固定，不要隨意更換
+//   - 深入解析、追問、方法論思辨、論文診斷（量少、要準）：gemini-3.8-flash，思考程度 LOW
+//     （高思考設定第一個字要等很久，現場報告不適合）
 // 可用環境變數調整（不設定就用預設值）：
 //   GEMINI_TRANSLATE_MODEL=gemini-3.1-flash-lite
-//   GEMINI_ANALYSIS_MODEL=gemini-3.1-flash-lite   （想要更深入的解析可改 gemini-3.8-flash，費用較高）
+//   GEMINI_ANALYSIS_MODEL=gemini-3.8-flash
 //   GEMINI_ANALYSIS_THINKING=LOW                   （MINIMAL / LOW / MEDIUM / HIGH）
-// 主要模型失敗時，會自動改用 gemini-3.5-flash-lite 再試一次。
+//   GEMINI_SEARCH_GROUNDING=auto                   （auto：問到現行制度、最新數字時先用 Google 搜尋查證；off：不使用）
+// 主要模型失敗時，會自動改用備援模型再試一次。
 // AI 呼叫順序：Gemini ➔ 本地知識庫備援
 // =====================================================================
 type AiTask = 'translate' | 'analysis' | 'classify';
 
 const GEMINI_DEFAULT_MODEL = 'gemini-3.1-flash-lite';
+const GEMINI_ANALYSIS_DEFAULT_MODEL = 'gemini-3.8-flash';
 const GEMINI_BACKUP_MODEL = 'gemini-3.5-flash-lite';
 const THINKING_LEVELS = ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH'] as const;
 
 function getGeminiModels(task: AiTask): string[] {
   const env = task === 'analysis' ? process.env.GEMINI_ANALYSIS_MODEL : process.env.GEMINI_TRANSLATE_MODEL;
-  const primary = (env || '').trim() || GEMINI_DEFAULT_MODEL;
-  return primary === GEMINI_BACKUP_MODEL ? [primary] : [primary, GEMINI_BACKUP_MODEL];
+  const primary = (env || '').trim() || (task === 'analysis' ? GEMINI_ANALYSIS_DEFAULT_MODEL : GEMINI_DEFAULT_MODEL);
+  // 解析失敗時退回便宜的 Flash-Lite，至少還有回答
+  const backup = task === 'analysis' ? GEMINI_DEFAULT_MODEL : GEMINI_BACKUP_MODEL;
+  return primary === backup ? [primary] : [primary, backup];
+}
+
+// ── Google 搜尋查證（grounding）：問到現行制度、最新數字、期刊指標等「會變動的事實」時才啟用 ──
+// Gemini 3 以上每月前 5,000 次免費（各模型共用），之後每 1,000 次 US$14
+const SEARCH_TRIGGER = /現行|目前|最新|今年|近期|現在|制度|規定|法規|規則|交易所|證交所|櫃買|金管會|漲跌幅|公布時間|何時公布|收費|費用|價格|費率|影響係數|impact factor|JIF|SSCI|JCR|排名|收錄|上市|下市|20[2-3]\d 年/i;
+function shouldUseSearch(text: string): boolean {
+  const mode = (process.env.GEMINI_SEARCH_GROUNDING || 'auto').trim().toLowerCase();
+  if (mode === 'off') return false;
+  if (mode === 'always') return true;
+  return SEARCH_TRIGGER.test(text);
+}
+
+/** 把搜尋查證的來源附在回答最後 */
+function appendGroundingSources(text: string, meta: any): string {
+  const chunks: any[] = meta?.groundingChunks || [];
+  const seen = new Set<string>();
+  const items = chunks.map((c) => c?.web).filter((w: any) => w?.uri && !seen.has(w.uri) && seen.add(w.uri)).slice(0, 8);
+  if (!items.length) return text;
+  return `${text}\n\n---\n**查證來源（Google 搜尋）**\n${items.map((w: any) => `- [${w.title || w.uri}](${w.uri})`).join('\n')}`;
 }
 
 function getThinkingLevel(task: AiTask): string {
@@ -126,6 +151,7 @@ async function callAiWithGemini(options: {
   temperature?: number;
   timeoutMs?: number;
   task?: AiTask;
+  useSearch?: boolean;
 }): Promise<AiExecutionResult> {
   const startTime = Date.now();
   const contentString = typeof options.contents === 'string'
@@ -139,7 +165,7 @@ async function callAiWithGemini(options: {
       const result = await callGeminiWithFallback(options);
       return {
         text: result.text,
-        modelUsed: `Gemini ${result.model}`,
+        modelUsed: `Gemini ${result.model}${result.searched ? '＋Google 搜尋查證' : ''}`,
         latencyMs: Date.now() - startTime,
       };
     } catch (geminiErr: any) {
@@ -164,7 +190,8 @@ async function callGeminiWithFallback(options: {
   timeoutMs?: number;
   task?: AiTask;
   jsonMode?: boolean;
-}): Promise<{ text: string; model: string }> {
+  useSearch?: boolean;
+}): Promise<{ text: string; model: string; searched?: boolean }> {
   if (!hasValidApiKey()) {
     throw new Error('No valid GEMINI_API_KEY configured');
   }
@@ -172,7 +199,8 @@ async function callGeminiWithFallback(options: {
   const task: AiTask = options.task || 'analysis';
   const level = getThinkingLevel(task);
   const candidateModels = getGeminiModels(task);
-  const timeoutMs = options.timeoutMs ?? 30000;
+  // 3.8 Flash 會先思考再回答，解析類給較長的等待時間
+  const timeoutMs = options.timeoutMs ?? (task === 'analysis' ? 60000 : 30000);
   let lastError: any = null;
 
   // Normalize contents payload for @google/genai SDK
@@ -191,6 +219,8 @@ async function callGeminiWithFallback(options: {
         thinkingConfig: buildThinkingConfig(model, level),
       };
       if (options.jsonMode) config.responseMimeType = 'application/json';
+      const search = !!options.useSearch && !options.jsonMode;
+      if (search) config.tools = [{ googleSearch: {} }];
 
       const callPromise = ai.models.generateContent({ model, contents: formattedContents, config });
       const timeoutPromise = new Promise<never>((_, reject) =>
@@ -199,7 +229,9 @@ async function callGeminiWithFallback(options: {
 
       const response: any = await Promise.race([callPromise, timeoutPromise]);
       if (response && response.text && response.text.trim().length > 0) {
-        return { text: response.text.trim(), model };
+        const meta = response.candidates?.[0]?.groundingMetadata;
+        const text = search ? appendGroundingSources(response.text.trim(), meta) : response.text.trim();
+        return { text, model, searched: search && !!meta?.groundingChunks?.length };
       }
       lastError = new Error(`Model ${model} returned empty content`);
     } catch (err: any) {
@@ -796,6 +828,9 @@ function generatePaperMmrAnalysisFallback(fileName?: string, textSnippet?: strin
 //   （偵測層級的作法如 Farquhar et al. (2024) Nature 的語意熵，需多次取樣，未在此使用）
 // 領域事實只放已查證的內容；制度有變動時請一併更新
 // ─────────────────────────────────────────────────────────────────────
+const SEARCH_NOTE = `
+【若有使用 Google 搜尋】現行制度、最新數字、期刊指標等會變動的事實，以搜尋到的可靠來源（官方機構、期刊官網、學術資料庫）為準；搜尋結果彼此矛盾或來源不可靠時，說明不確定。來源清單會自動附在回答最後，正文不必另列網址。`;
+
 const ACCURACY_GUARD = `
 【正確性守則（務必遵守）】
 一般守則
@@ -851,7 +886,8 @@ app.post('/api/gemini/explain', async (req, res) => {
     try {
       const result = await callAiWithGemini({
         contents: `${context ? `[論文或研究背景]\n${context}\n\n` : ''}[提問或選取文字]\n${question}`,
-        systemInstruction,
+        systemInstruction: isTranslationReq ? systemInstruction : systemInstruction + SEARCH_NOTE,
+        useSearch: !isTranslationReq && shouldUseSearch(question),
         temperature: isTranslationReq ? 0.3 : 0.4,
         task: isTranslationReq ? 'translate' : 'analysis',
       });
