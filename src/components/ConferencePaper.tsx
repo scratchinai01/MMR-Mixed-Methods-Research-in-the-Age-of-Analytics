@@ -208,7 +208,12 @@ export function ConferencePaper({ data }: { data: any | null }) {
       <P>
         Johnson、Onwuegbuzie 與 Turner（2007）將混合方法研究定義為結合質性與量化研究元素之研究取向。原研究將新聞文字量化為情緒指標後與財務資料整合，
         屬 Creswell 與 Plano Clark（2018）所稱收斂設計之資料轉換變體。惟依 Fetters、Curry 與 Creswell（2013）之整合層次觀點，
-        其文字資料未經詮釋性質性分析，亦缺乏詮釋層面之整合，故是否屬嚴格意義之混合方法研究仍有討論空間。本研究沿用相同設計，於結論中討論此限制。
+        其文字資料未經詮釋性質性分析，亦缺乏詮釋層面之整合，故是否屬嚴格意義之混合方法研究仍有討論空間。
+        Sandelowski、Voils 與 Knafl（2009）指出，將質性資料轉為數字（quantitizing）雖為混合方法之常見技術，但轉換過程涉及研究者之判斷，並非中立之計數；
+        原研究以詞典計算正、負面詞頻，正屬此類轉換，卻未說明轉換所依據之詮釋判斷。
+        就財金領域之文字研究脈絡而言，此類將文字轉為變數、再納入計量或預測模型之做法，通常歸為計算文本分析（Gentzkow, Kelly, &amp; Taddy, 2019; Loughran &amp; McDonald, 2016）。
+        若要成為整合質性詮釋之研究，資訊系統領域已提出計算密集之理論建構途徑，強調以計算方法偵測模式後，由研究者回到原始資料詮釋與精煉，再以計算方法確認
+        （Berente, Seidel, &amp; Safadi, 2019; Miranda et al., 2022; Nelson, 2020）。本研究沿用原研究之設計，定位為以文字為資料之計算文本分析，並於結論中討論此限制。
       </P>
 
       {/* ── 參、研究方法 ── */}
@@ -429,35 +434,45 @@ export function ConferencePaper({ data }: { data: any | null }) {
       </P>
       <H2>三、研究限制與未來研究方向</H2>
       <P>
-        本研究具有下列限制：第一，情緒衡量以新聞標題與大型語言模型判讀為基礎，與原研究以全文及詞典衡量之方式不同；第二，研究期間約一年，
+        本研究具有下列限制：第一，情緒衡量以新聞標題與大型語言模型判讀為基礎，與原研究以全文及詞典衡量之方式不同。
+        既有研究顯示，語言模型之財金情緒分類表現可優於 Loughran-McDonald 詞典（Huang, Wang, &amp; Yang, 2023），
+        但大型語言模型之分類與人工標註僅具一定程度之一致性，宜作為人工編碼之輔助而非取代（Ziems et al., 2024）；本研究尚未以人工標註樣本檢驗判讀之信度，此為後續應補強之處；第二，研究期間約一年，
         且樣本集中於大型權值股，結論未必適用於中小型企業或其他市場狀態；第三，五日事件窗口相互重疊，殘差可能存在自我相關，GEE 僅能部分處理，且部分係數在不同工作相關結構下並不穩定；
         第四，本研究與原研究相同，未對新聞文字進行詮釋性之質性分析，嚴格而言較接近以文字為資料之量化研究。
-        未來研究可延長研究期間並擴大樣本、納入三大法人買賣超與社群情緒等台灣市場特有變數，並針對極端報酬事件之新聞進行主題編碼，
-        以詮釋性質性分析補充量化結果，使研究成為較完整之混合方法設計。
+        未來研究可延長研究期間並擴大樣本、納入三大法人買賣超與社群情緒等台灣市場特有變數，並參考計算紮根理論（Nelson, 2020）之程序，
+        針對極端報酬事件之新聞全文進行主題編碼，以詮釋性質性分析回頭解釋量化結果，使研究成為較完整之混合方法設計。
       </P>
 
       {/* ── 參考文獻 ── */}
       <H1>參考文獻</H1>
       <div className="text-[0.9em] space-y-1.5 pl-[2em] -indent-[2em] leading-[1.8]">
-        <p>Creswell, J. W., &amp; Plano Clark, V. L. (2018). <em>Designing and conducting mixed methods research</em> (3rd ed.). SAGE.</p>
+        <p>Berente, N., Seidel, S., &amp; Safadi, H. (2019). Research commentary—Data-driven computationally intensive theory development. <em>Information Systems Research, 30</em>(1), 50–64. https://doi.org/10.1287/isre.2018.0774</p>
         <p>Breiman, L. (2001). Random forests. <em>Machine Learning, 45</em>(1), 5–32.</p>
         <p>Cortes, C., &amp; Vapnik, V. (1995). Support-vector networks. <em>Machine Learning, 20</em>(3), 273–297.</p>
+        <p>Creswell, J. W., &amp; Plano Clark, V. L. (2018). <em>Designing and conducting mixed methods research</em> (3rd ed.). SAGE.</p>
         <p>Dietterich, T. G. (1998). Approximate statistical tests for comparing supervised classification learning algorithms. <em>Neural Computation, 10</em>(7), 1895–1923.</p>
         <p>Fetters, M. D., Curry, L. A., &amp; Creswell, J. W. (2013). Achieving integration in mixed methods designs—Principles and practices. <em>Health Services Research, 48</em>(6pt2), 2134–2156.</p>
         <p>Friedman, J. H. (2001). Greedy function approximation: A gradient boosting machine. <em>The Annals of Statistics, 29</em>(5), 1189–1232.</p>
+        <p>Gentzkow, M., Kelly, B., &amp; Taddy, M. (2019). Text as data. <em>Journal of Economic Literature, 57</em>(3), 535–574. https://doi.org/10.1257/jel.20181020</p>
+        <p>Huang, A. H., Wang, H., &amp; Yang, Y. (2023). FinBERT: A large language model for extracting information from financial text. <em>Contemporary Accounting Research, 40</em>(2), 806–841. https://doi.org/10.1111/1911-3846.12832</p>
         <p>Huang, A. H., Zang, A. Y., &amp; Zheng, R. (2014). Evidence on the information content of text in analyst reports. <em>The Accounting Review, 89</em>(6), 2151–2180.</p>
         <p>Johnson, R. B., Onwuegbuzie, A. J., &amp; Turner, L. A. (2007). Toward a definition of mixed methods research. <em>Journal of Mixed Methods Research, 1</em>(2), 112–133.</p>
         <p>Liang, K.-Y., &amp; Zeger, S. L. (1986). Longitudinal data analysis using generalized linear models. <em>Biometrika, 73</em>(1), 13–22.</p>
         <p>Lo, A. W. (2004). The adaptive markets hypothesis. <em>The Journal of Portfolio Management, 30</em>(5), 15–29.</p>
         <p>Loughran, T., &amp; McDonald, B. (2011). When is a liability not a liability? Textual analysis, dictionaries, and 10-Ks. <em>The Journal of Finance, 66</em>(1), 35–65.</p>
+        <p>Loughran, T., &amp; McDonald, B. (2016). Textual analysis in accounting and finance: A survey. <em>Journal of Accounting Research, 54</em>(4), 1187–1230. https://doi.org/10.1111/1475-679X.12123</p>
         <p>McNemar, Q. (1947). Note on the sampling error of the difference between correlated proportions or percentages. <em>Psychometrika, 12</em>(2), 153–157.</p>
+        <p>Miranda, S., Berente, N., Seidel, S., Safadi, H., &amp; Burton-Jones, A. (2022). Editor's comments: Computationally intensive theory construction: A primer for authors and reviewers. <em>MIS Quarterly, 46</em>(2), iii–xviii.</p>
+        <p>Nelson, L. K. (2020). Computational grounded theory: A methodological framework. <em>Sociological Methods &amp; Research, 49</em>(1), 3–42. https://doi.org/10.1177/0049124117729703</p>
         <p>Pan, W. (2001). Akaike's information criterion in generalized estimating equations. <em>Biometrics, 57</em>(1), 120–125.</p>
         <p>Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., … Duchesnay, É. (2011). Scikit-learn: Machine learning in Python. <em>Journal of Machine Learning Research, 12</em>, 2825–2830.</p>
         <p>Raman, R., Aljafari, R., Venkatesh, V., &amp; Richardson, V. (2022). Mixed-methods research in the age of analytics, an exemplar leveraging sentiments from news articles to predict firm performance. <em>International Journal of Information Management, 64</em>, 102451. https://doi.org/10.1016/j.ijinfomgt.2021.102451</p>
+        <p>Sandelowski, M., Voils, C. I., &amp; Knafl, G. (2009). On quantitizing. <em>Journal of Mixed Methods Research, 3</em>(3), 208–222. https://doi.org/10.1177/1558689809334210</p>
         <p>Shannon, C. E. (1948). A mathematical theory of communication. <em>Bell System Technical Journal, 27</em>(3), 379–423.</p>
         <p>Shmueli, G., &amp; Koppius, O. R. (2011). Predictive analytics in information systems research. <em>MIS Quarterly, 35</em>(3), 553–572.</p>
         <p>Tetlock, P. C. (2007). Giving content to investor sentiment: The role of media in the stock market. <em>The Journal of Finance, 62</em>(3), 1139–1168.</p>
         <p>Venkatesh, V., Brown, S. A., &amp; Bala, H. (2013). Bridging the qualitative–quantitative divide: Guidelines for conducting mixed methods research in information systems. <em>MIS Quarterly, 37</em>(1), 21–54.</p>
+        <p>Ziems, C., Held, W., Shaikh, O., Chen, J., Zhang, Z., &amp; Yang, D. (2024). Can large language models transform computational social science? <em>Computational Linguistics, 50</em>(1), 237–291. https://doi.org/10.1162/coli_a_00502</p>
       </div>
 
       {/* ── 附錄 ── */}
