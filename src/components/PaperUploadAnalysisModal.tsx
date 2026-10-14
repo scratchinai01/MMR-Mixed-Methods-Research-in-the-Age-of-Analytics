@@ -1291,14 +1291,14 @@ Abstract: This paper quantitatively measures the interactions between media pess
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-950">
-                      主題九：全景導覽圖
+                      MMR 判別流程圖
                     </span>
                     <span className="text-xs font-bold text-slate-200">
-                      MMR 混合方法研究與 20 大 Skills 導覽架構圖 (Gamma 原圖同步)
+                      MMR 文獻篩選判別流程（五關判定）
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-400">
-                    本圖視覺化展示量質雙軌整合、Creswell 表 4.2 判定鏈與 SSCI 頂級期刊品質查核之閉環。
+                    本圖以五個關卡（關鍵字、資料類型、整合分析、設計類型、使用理由）判斷一篇論文是否為混合方法研究。
                   </p>
                 </div>
 

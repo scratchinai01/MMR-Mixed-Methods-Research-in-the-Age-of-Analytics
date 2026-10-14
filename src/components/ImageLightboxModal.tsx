@@ -60,20 +60,6 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
       description: '本圖精準概括了管理學 SSCI 頂級期刊對 MMR 的四維要求，直接對應本論文各項計量與機器學習設計。'
     },
     {
-      id: 'img2',
-      url: 'https://cdn.gamma.app/qczcgzm3dplba12/dc0eae2c65c94d7abcfa76f3816afecc/original/image.png',
-      title: '主題二：雙軌傳導鏈與模型對比圖 (Model A vs. Model B)',
-      caption: 'Compustat 財務計量 ＋ WSJ 文字情緒 ➔ GEE 回歸 ➔ 機器學習預測',
-      description: '詳細展示了加入文字情緒指標前後，Two-Class Bayes Point Machine 預測準確率從 70.7% 顯著躍升至 84.0% (+13.3%) 的核心對比。'
-    },
-    {
-      id: 'img3',
-      url: 'https://cdn.gamma.app/qczcgzm3dplba12/9b94218218934b80a2ff622e4055a893/original/image.png',
-      title: '主題三：三階段協同與正面效果遞減分析圖',
-      caption: 'Identify ➔ Explain ➔ Predict • 嚴謹文獻判定與係數解讀',
-      description: '揭示 Sales_growth × Positive = -102.094 的負係數真諦：當預期被完全透支（Priced to Perfection），超額報酬反而顯著為負。'
-    },
-    {
       id: 'img4',
       url: 'https://cdn.gamma.app/qczcgzm3dplba12/31f0cf8a12c34c6eafc11666ce048330/original/image.png',
       title: '主題四：SSCI 期刊查核與 8 項學術品質檢核總表',
@@ -83,9 +69,9 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
     {
       id: 'img5',
       url: 'https://cdn.gamma.app/qczcgzm3dplba12/ca044b88abba4ab9b7b11c9b1f51c3c3/original/image.png',
-      title: '主題五：Mixed Methods Research 混合方法研究架構總覽',
-      caption: '量化與質性雙軌整合 • 博士論文 20 大 Skills 導覽圖',
-      description: '結合 Creswell 經典方法論與當代計量金融實證架構之全景總覽圖。'
+      title: '主題五：MMR 文獻篩選判別流程',
+      caption: '關鍵字 → 資料類型 → 整合分析 → 設計類型 → 使用理由 • 五關判定',
+      description: '用五個關卡判斷一篇論文是不是真正的混合方法研究：同時有量化與質性資料、有整合、有說明設計類型與使用理由。'
     },
     {
       id: 'img6',
@@ -95,39 +81,21 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
       description: '詳細拆解 Pilot study ➔ Event study ➔ Experiment 1 ➔ Experiment 2 全部為量化設計，缺乏 QUAL 資料與整合，為博士論文文獻篩選的經典爭議與反例對照！'
     },
     {
-      id: 'img7',
-      url: 'https://cdn.gamma.app/qczcgzm3dplba12/0405f12a37e64bb7a5577eb329abb03b/original/image.png',
-      title: '主題七：/MMR文獻篩選 真正 MMR 典範 (Afego & Alagidede, 2021 JCMS)',
-      caption: '屬於 MMR（收斂並行）• Content Analysis ＋ Event Study • 整合停在敘事層',
-      description: '質性分析企業抵制聲明之動機與正當性價值（QUAL），量化檢驗 Facebook Boycott 公告後 4 天之股票異常報酬 +2.68%（QUAN），共同回答企業社會倡議的市場訊號效應！'
-    },
-    {
       id: 'img8',
       url: 'https://cdn.gamma.app/qczcgzm3dplba12/ceace1f12f5f471d90b70107fa6747b5/original/image.png',
-      title: '主題八：資料轉化模式 Data Transformation Model (QUAL into quan)',
-      caption: '★ Raman et al. (2022) 核心採用模式 • 符號表達式：QUAL ➔ 轉化成 quan 資料 ➔ 與 QUAN 相互關聯',
-      description: '將 WSJ 2,500 篇非結構化新聞文字透過 NLP 與 LM 詞典轉化為量化情感分數（quan），再與 Compustat 財務數據與事件研究超額報酬（QUAN）進行深度面板計量與機器學習相互關聯！'
-    },
-    {
-      id: 'img9',
-      url: 'https://cdn.gamma.app/qczcgzm3dplba12/a258c799d57c43dbb989ede9ff39d03a/original/image.png',
-      title: '主題九：本篇論文 (Raman et al., 2022) 的「真正價值」與四大深層經濟真相',
-      caption: '情緒不是「主菜」而是放大鏡與扭曲器 • Table 2 正面效果遞減 (-102.094)',
-      description: '深入剖析為何跑機器學習或 FinMind 數據會虧損：因為缺乏實用主義哲學與三角交叉檢驗。揭示 Sales_growth × Positive = -102.094 的反直覺真理與 Priced to Perfection 假說！'
+      title: '主題八：Quantitative 與 Qualitative 字根對照',
+      caption: 'QUAN 問「有多少」• QUAL 問「為什麼、如何」• 兩者合起來＝MMR',
+      description: '從字根 quant-（數量）與 qual-（性質）理解量化與質性研究各自問的問題與常見方法。'
     }
   ];
 
   // 依「論文發展＝簡報順序」排列：定位 → 理論架構 → 研究設計 → 方法 → 結果 → 文獻比較 → 延伸
   const ORDER: Array<{ id: string; stage: string; slides: string[] }> = [
     { id: 'img4', stage: '論文定位', slides: ['p1'] },
-    { id: 'img3', stage: '三階段架構', slides: ['p4', 'p9'] },
     { id: 'img1', stage: 'MMR 是什麼', slides: ['p5'] },
-    { id: 'img8', stage: '資料轉化設計', slides: ['p5', 'p8'] },
-    { id: 'img2', stage: '方法：雙軌模型', slides: ['p9', 'p11'] },
-    { id: 'img9', stage: '結果：效果遞減', slides: ['p10', 'r10', 'c3'] },
+    { id: 'img8', stage: '量化與質性', slides: ['p5'] },
+    { id: 'img5', stage: 'MMR 判別流程', slides: ['c5'] },
     { id: 'img6', stage: '對照：非典型 MMR', slides: ['c5'] },
-    { id: 'img7', stage: '對照：典型 MMR', slides: ['c5'] },
-    { id: 'img5', stage: '延伸：研究技能總覽', slides: ['c6'] },
   ];
   const CN = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
   const ordered = ORDER.map((o, i) => {

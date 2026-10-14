@@ -7,23 +7,20 @@ import { ShieldQuestion, ShieldCheck, FileSearch, ZoomIn, X } from 'lucide-react
 
 const IMG = {
   d1: 'https://cdn.gamma.app/qczcgzm3dplba12/69284f7e524448df83d5bfb4c58ee656/original/image.png',
-  d2: 'https://cdn.gamma.app/qczcgzm3dplba12/f0eda1419155494abb9ac7b9fff67118/original/image.png',
-  d3: 'https://cdn.gamma.app/qczcgzm3dplba12/5acca1af49cc4fe0abf0d68ac7e22f9c/original/image.png',
-  d4: 'https://cdn.gamma.app/qczcgzm3dplba12/a34b5060375c4cb59817e824cc42c0ec/original/image.png',
   sum: 'https://cdn.gamma.app/qczcgzm3dplba12/7a419ee5879f4267a66bf77d992d399b/original/image.png',
 };
 
 type Strength = '中等' | '中等偏弱';
-const POINTS: Array<{ no: number; title: string; attack: string; defense: string[]; evidence: string; strength: Strength; note: string; img: string }> = [
+const POINTS: Array<{ no: number; title: string; attack: string; defense: string[]; evidence: string; strength: Strength; note: string; img?: string }> = [
   {
     no: 1,
     title: '「文字資料」不等於「質性研究」',
     attack: '研究者將新聞文本直接轉換成正負面情緒分數，沒有呈現質性編碼、主題分析或意義建構，因此文字資料不等於質性研究。',
     defense: [
-      '這項質疑指出了重要的方法論問題，但需要區分「文字資料的性質」與「文字資料的分析方法」。本研究確實使用 McDonald–Loughran 財務詞典計算正負面情緒，而不是傳統的質性主題分析；然而，這不代表文字資料不能與量化財務資料共同構成整合式分析設計。',
+      '這項質疑指出了重要的方法論問題，但需要區分「文字資料的性質」與「文字資料的分析方法」。本研究確實使用 Loughran–McDonald 財務詞典計算正負面情緒，而不是傳統的質性主題分析；然而，這不代表文字資料不能與量化財務資料共同構成整合式分析設計。',
       '本研究的合理主張應是：新聞文本提供不同於財務報表的資訊來源，並被操作化為情緒變數，進一步檢驗其與財務指標的關係。這可以支持跨資料來源整合，但不能單憑這一點宣稱已完成嚴格意義的質性研究。',
     ],
-    evidence: '第 4 頁（3.1 節）：以 McDonald–Loughran 詞典辨識情緒類別，最後只使用正面與負面情緒的詞頻資料進行分析。',
+    evidence: '第 4 頁（3.1 節）：以 Loughran–McDonald 詞典辨識情緒類別，最後只使用正面與負面情緒的詞頻資料進行分析。',
     strength: '中等',
     note: '不能否認原文沒有報告系統性質性主題分析。',
     img: IMG.d1,
@@ -40,7 +37,6 @@ const POINTS: Array<{ no: number; title: string; attack: string; defense: string
     evidence: '第 3 頁圖 1：Identify、Explain、Predict 三階段；第 7 頁：比較只用財務資料與結合文字資料的預測結果（表 5–8）。',
     strength: '中等',
     note: '能證明研究程序不只是單一的詞頻統計，但無法據此確認多重研究典範。',
-    img: IMG.d2,
   },
   {
     no: 3,
@@ -54,7 +50,6 @@ const POINTS: Array<{ no: number; title: string; attack: string; defense: string
     evidence: '第 4–7 頁：GEE、固定效果與隨機效果模型、SCAR 二元化的穩健性分析與機器學習預測。這些程序證明存在多階段分析，但不能單獨證明已完成質性—量化的詮釋整合。',
     strength: '中等偏弱',
     note: '若對方要求嚴格的詮釋性整合，這是最難完全反駁的質疑。',
-    img: IMG.d3,
   },
   {
     no: 4,
@@ -68,7 +63,6 @@ const POINTS: Array<{ no: number; title: string; attack: string; defense: string
     evidence: '第 3–4 頁：文字資料與財務資料的取得及分析流程；第 7 頁：比較不同資料組合的預測表現。這支持多種分析技術與資料來源的整合，但不能直接證明存在獨立的質性研究方法。',
     strength: '中等',
     note: '重點是證明整合，而非單純羅列技術名稱。',
-    img: IMG.d4,
   },
 ];
 
@@ -118,7 +112,7 @@ export function MmrDefense() {
             </span>
           </div>
           <div className="grid lg:grid-cols-5 gap-4 p-4">
-            <div className="lg:col-span-3 space-y-3 text-xs sm:text-sm leading-relaxed">
+            <div className={`${p.img ? 'lg:col-span-3' : 'lg:col-span-5'} space-y-3 text-xs sm:text-sm leading-relaxed`}>
               <div className="rounded-xl bg-rose-50/60 border border-rose-100 p-3">
                 <div className="flex items-center gap-1.5 font-bold text-rose-800 text-xs mb-1"><ShieldQuestion className="w-4 h-4" />質疑方的論點</div>
                 <p className="text-slate-700">{p.attack}</p>
@@ -133,9 +127,11 @@ export function MmrDefense() {
                 <p className="text-[11px] text-slate-500 mt-1.5">強度說明：{p.note}</p>
               </div>
             </div>
-            <div className="lg:col-span-2">
-              <Figure src={p.img} alt={`答辯 ${p.no}：${p.title}`} onOpen={setZoom} />
-            </div>
+            {p.img && (
+              <div className="lg:col-span-2">
+                <Figure src={p.img} alt={`答辯 ${p.no}：${p.title}`} onOpen={setZoom} />
+              </div>
+            )}
           </div>
         </div>
       ))}

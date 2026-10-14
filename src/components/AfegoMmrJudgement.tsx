@@ -4,7 +4,7 @@
 // Raman 依期刊正式版 PDF（IJIM 64, 102451）核對。
 // =====================================================================
 import React from 'react';
-import { ZoomIn, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 
 type Mark = 'yes' | 'partial' | 'no';
 const Chip = ({ m, children }: { m: Mark; children: React.ReactNode }) => {
@@ -52,7 +52,7 @@ const VERDICT = {
   afego: { label: '屬於 MMR，但整合偏弱', note: '兩種定義下都有質性與量化兩條分析軌，屬收斂並行設計；整合只停在敘事層', m: 'yes' as Mark },
 };
 
-export function AfegoMmrJudgement({ onOpenImage }: { onOpenImage: () => void }) {
+export function AfegoMmrJudgement() {
   return (
     <div className="bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 text-slate-100 rounded-3xl p-6 sm:p-8 border-2 border-emerald-500/40 shadow-2xl space-y-6">
       {/* 標題 */}
@@ -67,10 +67,6 @@ export function AfegoMmrJudgement({ onOpenImage }: { onOpenImage: () => void }) 
             <strong>Afego & Alagidede (2021)</strong>, <em>Journal of Capital Markets Studies</em>, 5(1), 49–68. DOI: 10.1108/JCMS-10-2020-0040（CC BY 4.0）
           </p>
         </div>
-        <button onClick={onOpenImage}
-          className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 rounded-xl text-xs font-black flex items-center gap-2 shadow-lg shrink-0">
-          <ZoomIn className="w-4 h-4" /><span>放大檢視架構圖</span>
-        </button>
       </div>
 
       {/* 對齊判定表 */}

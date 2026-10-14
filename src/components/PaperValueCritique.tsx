@@ -411,14 +411,14 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
               >
                 <img
                   src="https://cdn.gamma.app/qczcgzm3dplba12/ceace1f12f5f471d90b70107fa6747b5/original/image.png"
-                  alt="資料轉化模式 Data Transformation Model"
+                  alt="Quantitative 與 Qualitative 字根對照"
                   className="w-full h-auto object-contain"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 flex items-end justify-end p-2.5 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
                   <span className="px-3.5 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-white text-xs font-bold flex items-center gap-2 shadow-lg group-hover:scale-105 transition-transform border border-purple-400/40">
                     <ZoomIn className="w-4 h-4 text-amber-300" />
-                    <span>點擊放大檢視「資料轉化模式 (QUAL into quan)」高畫質架構圖</span>
+                    <span>點擊放大檢視「量化與質性」字根對照圖</span>
                   </span>
                 </div>
               </div>
@@ -627,86 +627,6 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                 <div className="p-3 bg-slate-900 rounded-xl border border-slate-800">
                   <div className="text-slate-400">核心應用領域</div>
                   <div className="text-purple-300 font-bold mt-0.5">財務計量 • 異常報酬 • 新聞情緒</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Second Gamma Artifact Image */}
-            <div className="space-y-2 pt-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                  <ImageIcon className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>額外架構與模型對比圖 (Gamma 原圖同步)</span>
-                </span>
-                <a
-                  href="https://cdn.gamma.app/qczcgzm3dplba12/dc0eae2c65c94d7abcfa76f3816afecc/original/image.png"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-[11px] font-semibold"
-                >
-                  <span>開啟原圖</span>
-                  <Maximize2 className="w-3 h-3" />
-                </a>
-              </div>
-
-              <div 
-                onClick={() => openLightboxWithImage('img2')}
-                className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 cursor-pointer shadow-inner flex items-center justify-center"
-              >
-                <img
-                  src="https://cdn.gamma.app/qczcgzm3dplba12/dc0eae2c65c94d7abcfa76f3816afecc/original/image.png"
-                  alt="Raman et al. (2022) 模型對比與架構圖"
-                  className="w-full h-auto object-contain"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 flex items-end justify-end p-2.5 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
-                  <span className="px-3 py-1.5 rounded-xl bg-slate-900/80 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 shadow-md group-hover:scale-105 transition-transform">
-                    <ZoomIn className="w-3.5 h-3.5" />
-                    <span>點擊放大檢視第二張高畫質圖表 (雙軌模型對比)</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Third Gamma Artifact Image: Img 9 (主題六：本篇論文真正價值與四大深層經濟真相) */}
-            <div className="bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-950 text-white rounded-3xl p-6 sm:p-7 border border-indigo-500/30 shadow-xl space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2 border-b border-indigo-500/20 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-400 text-slate-950 font-mono shadow-sm">
-                    ★ 主題六精華
-                  </span>
-                  <h4 className="font-extrabold text-sm sm:text-base text-white">
-                    本篇論文 (Raman et al., 2022) 的「真正價值」與四大深層經濟真相
-                  </h4>
-                </div>
-                <button
-                  onClick={() => openLightboxWithImage('img9')}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition-transform active:scale-95"
-                >
-                  <ZoomIn className="w-3.5 h-3.5" />
-                  <span>檢視主題六大圖 (img9)</span>
-                </button>
-              </div>
-
-              <p className="text-xs text-indigo-200 leading-relaxed">
-                情緒除了直接影響報酬，也會調節基本面的效果。重點看 <strong>Sales_growth × Positive = −102.094**</strong>：營收成長越高，正面新聞的加分越小（原文：diminishing effect）；「預期已反映」是本報告的解讀，原文未檢驗。
-              </p>
-
-              <div 
-                onClick={() => openLightboxWithImage('img9')}
-                className="group relative rounded-2xl overflow-hidden border border-indigo-500/30 bg-slate-950 cursor-pointer shadow-inner flex items-center justify-center"
-              >
-                <img
-                  src="https://cdn.gamma.app/qczcgzm3dplba12/a258c799d57c43dbb989ede9ff39d03a/original/image.png"
-                  alt="主題六：本篇論文真正價值與四大深層經濟真相"
-                  className="w-full h-auto object-contain"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 flex items-end justify-end p-2.5 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
-                  <span className="px-3.5 py-2 rounded-xl bg-slate-900/90 backdrop-blur-md text-amber-300 text-xs font-bold flex items-center gap-2 shadow-lg group-hover:scale-105 transition-transform border border-amber-400/30">
-                    <ZoomIn className="w-4 h-4 text-amber-400" />
-                    <span>點擊放大檢視主題六：真正價值與 4 大深層經濟真相</span>
-                  </span>
                 </div>
               </div>
             </div>
@@ -932,7 +852,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                 className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg transition-transform active:scale-95 shrink-0"
               >
                 <ZoomIn className="w-4 h-4" />
-                <span>放大檢視第 5 張導覽圖 (20 大 Skills)</span>
+                <span>放大檢視 MMR 文獻篩選判別流程圖</span>
               </button>
             </div>
 
@@ -941,7 +861,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-slate-800 flex items-center gap-1.5">
                   <ImageIcon className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>主題九：博士論文 20 個 Skills 與 MMR 完整檢驗導覽圖 (Gamma 原圖同步)</span>
+                  <span>MMR 文獻篩選判別流程圖</span>
                 </span>
                 <a
                   href="https://cdn.gamma.app/qczcgzm3dplba12/ca044b88abba4ab9b7b11c9b1f51c3c3/original/image.png"
@@ -960,14 +880,14 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
               >
                 <img
                   src="https://cdn.gamma.app/qczcgzm3dplba12/ca044b88abba4ab9b7b11c9b1f51c3c3/original/image.png"
-                  alt="博士論文 20 個 Skills 與 MMR 完整檢驗導覽圖"
+                  alt="MMR 文獻篩選判別流程"
                   className="w-full h-auto object-contain"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 flex items-end justify-end p-2.5 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
                   <span className="px-3.5 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 shadow-md group-hover:scale-105 transition-transform">
                     <ZoomIn className="w-3.5 h-3.5 text-amber-300" />
-                    <span>點擊放大檢視第五張高畫質圖表 (MMR + SSCI + IF 20 大 Skills 導覽圖)</span>
+                    <span>點擊放大檢視 MMR 文獻篩選判別流程（五關判定）</span>
                   </span>
                 </div>
               </div>
@@ -1415,48 +1335,11 @@ Quantitative Data              Textual Data
                   • 核心方法：Sentiment + Econometrics + Machine Learning
                 </div>
               </div>
-
-              {/* Embedded Gamma Architecture Image Card */}
-              <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                    <ImageIcon className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>核心架構圖 (Gamma 原圖同步)</span>
-                  </span>
-                  <a
-                    href="https://cdn.gamma.app/qczcgzm3dplba12/9b94218218934b80a2ff622e4055a893/original/image.png"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-[11px] font-semibold"
-                  >
-                    <span>開啟原圖</span>
-                    <Maximize2 className="w-3 h-3" />
-                  </a>
-                </div>
-
-                <div 
-                  onClick={() => openLightboxWithImage('img3')}
-                  className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 cursor-pointer shadow-inner flex items-center justify-center"
-                >
-                  <img
-                    src="https://cdn.gamma.app/qczcgzm3dplba12/9b94218218934b80a2ff622e4055a893/original/image.png"
-                    alt="Raman et al. (2022) MMR 架構圖"
-                    className="w-full h-auto object-contain"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 flex items-end justify-end p-2.5 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
-                    <span className="px-3 py-1.5 rounded-xl bg-slate-900/80 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 shadow-md group-hover:scale-105 transition-transform">
-                      <ZoomIn className="w-3.5 h-3.5" />
-                      <span>點擊放大檢視主題二 (三階段協同與正面效果遞減)</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
           {/* 第三篇：Afego & Alagidede (2021)，與 Raman 同一套判準對齊判定 */}
-          <AfegoMmrJudgement onOpenImage={() => openLightboxWithImage('img7')} />
+          <AfegoMmrJudgement />
         </div>
       )}
 
