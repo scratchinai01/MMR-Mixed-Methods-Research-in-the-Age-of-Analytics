@@ -14,7 +14,9 @@ import { PaperUploadAnalysisModal } from './components/PaperUploadAnalysisModal.
 import { SelectionAnalysisModal } from './components/SelectionAnalysisModal.tsx';
 import { GeminiStatusModal } from './components/GeminiStatusModal.tsx';
 import { callAiApi } from './services/aiHelper.ts';
-import { saveFollowupToFirestore } from './services/firebase.ts';
+import { saveFollowupToFirestore, getParaTrajectory } from './services/firebase.ts';
+
+export type ParaMeta = { paraId: string; paraLabel: string; openTrajectory?: boolean };
 import { X, Presentation, ArrowLeft } from 'lucide-react';
 
 export default function App() {
@@ -71,9 +73,11 @@ export default function App() {
   const [paraModalLoading, setParaModalLoading] = useState<boolean>(false);
   const [isSpeakingPara, setIsSpeakingPara] = useState<boolean>(false);
   const [paraModalOffline, setParaModalOffline] = useState<boolean>(false);
+  const [paraModalMeta, setParaModalMeta] = useState<ParaMeta | null>(null);
 
   // 預先寫好的白話解說：直接顯示，不呼叫 AI
-  const handleExplainPara = (title: string, source: string, markdown: string) => {
+  const handleExplainPara = (title: string, source: string, markdown: string, meta?: ParaMeta) => {
+    setParaModalMeta(meta || null);
     setParaModalOffline(true);
     setParaModalSource(source);
     setParaModalTitle(title);
@@ -85,11 +89,12 @@ export default function App() {
   };
 
   // Trigger real AI analysis on specific paragraph/query
-  const handleAskAi = async (promptText: string) => {
+  const handleAskAi = async (promptText: string, meta?: ParaMeta) => {
     let sourceSnippet = promptText.trim();
     if (sourceSnippet.includes('：\n')) {
       sourceSnippet = sourceSnippet.split('：\n')[1]?.trim() || sourceSnippet;
     }
+    setParaModalMeta(meta || null);
     setParaModalOffline(false);
     setParaModalSource(sourceSnippet);
     setParaModalTitle('💡 Gemini AI 論文論述深度解析');
@@ -98,6 +103,20 @@ export default function App() {
     setParaModalLatency(undefined);
     setParaModalLoading(true);
     setParaModalOpen(true);
+
+    // 學習軌跡：這一段之前已解析過，就直接顯示當時的解析，不重複呼叫 AI
+    if (meta) {
+      try {
+        const { records } = await getParaTrajectory(meta.paraId);
+        const prev = [...records].reverse().find((r) => r.kind === 'analysis');
+        if (prev) {
+          setParaModalContent(prev.answer);
+          setParaModalEngine(`學習軌跡：${prev.timestamp} 的解析（${prev.modelUsed || 'Gemini'}）`);
+          setParaModalLoading(false);
+          return;
+        }
+      } catch { /* 讀不到就照常解析 */ }
+    }
 
     try {
       const data = await callAiApi('/api/gemini/explain', {
@@ -111,12 +130,13 @@ export default function App() {
       // Persist to Firebase
       if (data.answer) {
         saveFollowupToFirestore({
-          sourceModule: 'selection_analysis',
-          topic: '論文段落深度解析',
+          sourceModule: meta ? 'mmr_reader' : 'selection_analysis',
+          topic: meta?.paraLabel || '論文段落深度解析',
           sourceText: sourceSnippet.slice(0, 500),
-          question: `針對段落深度解析：${sourceSnippet.slice(0, 80)}...`,
+          question: meta ? `段落解析：${meta.paraLabel}` : `針對段落深度解析：${sourceSnippet.slice(0, 80)}...`,
           answer: data.answer,
           modelUsed: data.modelUsed || 'Gemini',
+          ...(meta ? { paraId: meta.paraId, paraLabel: meta.paraLabel, kind: 'analysis' as const } : {}),
         }).catch(e => console.warn('Firebase save warning:', e));
       }
     } catch (err: any) {
@@ -411,6 +431,7 @@ export default function App() {
         loading={paraModalLoading}
         engineUsed={paraModalEngine}
         latencyMs={paraModalLatency}
+        paraMeta={paraModalMeta}
         isSpeaking={isSpeakingPara}
         onSpeakText={(text) => handleSpeakPara(text)}
         onStopSpeech={() => handleStopSpeechPara()}

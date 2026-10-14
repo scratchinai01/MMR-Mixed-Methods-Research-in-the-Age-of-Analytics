@@ -10,6 +10,7 @@ import {
   orderBy, 
   limit, 
   updateDoc,
+  where,
   arrayUnion,
   Firestore 
 } from 'firebase/firestore';
@@ -27,9 +28,17 @@ export interface FollowupDialogueRecord {
   stage?: number;
   timestamp: string;
   createdAt: number;
+  /** 論文段落編號（學習軌跡用）；kind：analysis＝段落解析，followup＝追問 */
+  paraId?: string;
+  paraLabel?: string;
+  kind?: 'analysis' | 'followup';
 }
 
 let db: Firestore | null = null;
+
+/** 連不上 Firestore 時 SDK 可能一直等待：超過時間就放棄，改用本機紀錄 */
+const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
+  Promise.race([p, new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Firestore 逾時 ${ms}ms`)), ms))]);
 let isInitialized = false;
 
 export function getFirebaseDb(): Firestore | null {
@@ -73,24 +82,26 @@ export async function saveFollowupToFirestore(
     const localKey = 'mmr_followup_dialogues_v1';
     const localRaw = localStorage.getItem(localKey);
     const list: FollowupDialogueRecord[] = localRaw ? JSON.parse(localRaw) : [];
-    const updated = [fullRecord, ...list.filter(item => item.id !== recordId)].slice(0, 100);
+    const updated = [fullRecord, ...list.filter(item => item.id !== recordId)].slice(0, 500);
     localStorage.setItem(localKey, JSON.stringify(updated));
   } catch (e) {
     console.warn('[LocalStorage] Followup backup failed:', e);
   }
+  if (fullRecord.paraId) invalidateTrajectoryCounts();
 
   // Persist to Firebase Firestore
   try {
     const firestore = getFirebaseDb();
     if (firestore) {
       const docRef = doc(firestore, 'followup_dialogues', recordId);
-      await setDoc(docRef, fullRecord, { merge: true });
+      await withTimeout(setDoc(docRef, fullRecord, { merge: true }), 8000);
       console.log(`[Firebase] Successfully saved follow-up to Firestore: ${recordId}`);
     }
   } catch (err) {
     console.warn('[Firebase] Firestore save error (fallback to local):', err);
   }
 
+  if (fullRecord.paraId) invalidateTrajectoryCounts();
   return fullRecord;
 }
 
@@ -211,3 +222,59 @@ export async function deleteAnalysisRecordFromFirestore(id: string): Promise<voi
     console.warn('[Firebase] Error deleting record from Firestore:', err);
   }
 }
+
+
+// =====================================================================
+// 學習軌跡：依段落讀回過去的解析與追問（只讀 followup_dialogues，不需另建索引）
+// =====================================================================
+const LOCAL_KEY = 'mmr_followup_dialogues_v1';
+const readLocal = (): FollowupDialogueRecord[] => {
+  try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); } catch { return []; }
+};
+
+export const normalizeQuestion = (q: string) => q.replace(/\s+/g, '').replace(/[？?。.!！，,、：:「」"']/g, '').toLowerCase();
+
+/** 某一段的學習軌跡（依時間先後）；source 表示資料來自雲端資料庫或僅本機 */
+export async function getParaTrajectory(paraId: string): Promise<{ records: FollowupDialogueRecord[]; source: 'cloud' | 'local' }> {
+  const local = readLocal().filter((r) => r.paraId === paraId);
+  let cloud: FollowupDialogueRecord[] | null = null;
+  try {
+    const firestore = getFirebaseDb();
+    if (firestore) {
+      const snap = await withTimeout(getDocs(query(collection(firestore, 'followup_dialogues'), where('paraId', '==', paraId), limit(200))), 6000);
+      // 連不上伺服器時 SDK 會改回傳本機快取（fromCache），這時不算雲端資料
+      if (!snap.metadata.fromCache) {
+        cloud = [];
+        snap.forEach((d) => cloud!.push(d.data() as FollowupDialogueRecord));
+      }
+    }
+  } catch (err) {
+    console.warn('[Firebase] 讀取學習軌跡失敗，改用本機紀錄：', err);
+  }
+  const map = new Map<string, FollowupDialogueRecord>();
+  [...(cloud || []), ...local].forEach((r) => map.set(r.id, r));
+  const records = [...map.values()].sort((a, b) => a.createdAt - b.createdAt);
+  return { records, source: cloud ? 'cloud' : 'local' };
+}
+
+let countsCache: { at: number; counts: Record<string, number> } | null = null;
+/** 各段落的學習軌跡筆數（論文翻譯頁的段落標記用；快取 60 秒） */
+export async function getTrajectoryCounts(force = false): Promise<Record<string, number>> {
+  if (!force && countsCache && Date.now() - countsCache.at < 60_000) return countsCache.counts;
+  const seen = new Map<string, string>();
+  readLocal().forEach((r) => { if (r.paraId) seen.set(r.id, r.paraId); });
+  try {
+    const firestore = getFirebaseDb();
+    if (firestore) {
+      const snap = await withTimeout(getDocs(query(collection(firestore, 'followup_dialogues'), where('sourceModule', '==', 'mmr_reader'), limit(2000))), 6000);
+      snap.forEach((d) => { const r = d.data() as FollowupDialogueRecord; if (r.paraId) seen.set(r.id, r.paraId); });
+    }
+  } catch (err) {
+    console.warn('[Firebase] 讀取學習軌跡筆數失敗：', err);
+  }
+  const counts: Record<string, number> = {};
+  seen.forEach((pid) => { counts[pid] = (counts[pid] || 0) + 1; });
+  countsCache = { at: Date.now(), counts };
+  return counts;
+}
+export const invalidateTrajectoryCounts = () => { countsCache = null; window.dispatchEvent(new CustomEvent('trajectory-updated')); };

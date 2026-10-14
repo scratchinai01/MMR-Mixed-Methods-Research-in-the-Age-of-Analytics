@@ -19,7 +19,9 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { callAiApi } from '../services/aiHelper.ts';
-import { saveFollowupToFirestore } from '../services/firebase.ts';
+import { saveFollowupToFirestore, getParaTrajectory, normalizeQuestion, FollowupDialogueRecord } from '../services/firebase.ts';
+import { isAiUnlocked } from '../services/aiGate.ts';
+import type { ParaMeta } from '../App.tsx';
 import { MathRenderer } from './MathRenderer.tsx';
 
 interface SelectionAnalysisModalProps {
@@ -36,6 +38,8 @@ interface SelectionAnalysisModalProps {
   onStopSpeech: () => void;
   /** 預寫內容模式：不自動呼叫 AI 產生推薦問題 */
   offline?: boolean;
+  /** 論文段落資訊：有的話會顯示並累積「本段學習軌跡」 */
+  paraMeta?: ParaMeta | null;
 }
 
 export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
@@ -51,6 +55,7 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
   isSpeaking,
   onStopSpeech,
   offline = false,
+  paraMeta = null,
 }) => {
   const [copied, setCopied] = useState<boolean>(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string; modelUsed?: string }[]>([]);
@@ -67,6 +72,24 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
   const [pasteHint, setPasteHint] = useState<string>('');
+
+  // 學習軌跡：這一段過去的解析與追問（依時間先後）
+  const [trajectory, setTrajectory] = useState<FollowupDialogueRecord[]>([]);
+  const [trajSource, setTrajSource] = useState<'cloud' | 'local' | ''>('');
+  const [trajOpen, setTrajOpen] = useState<boolean>(false);
+  const [trajExpanded, setTrajExpanded] = useState<string | null>(null);
+  useEffect(() => {
+    if (!isOpen || !paraMeta) { setTrajectory([]); setTrajSource(''); return; }
+    let alive = true;
+    setTrajOpen(!!paraMeta.openTrajectory);
+    setTrajExpanded(null);
+    getParaTrajectory(paraMeta.paraId).then(({ records, source }) => {
+      if (!alive) return;
+      setTrajectory(records);
+      setTrajSource(source);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [isOpen, paraMeta?.paraId, paraMeta?.openTrajectory]);
 
   // Stage progression state
   const [currentStage, setCurrentStage] = useState<number>(1);
@@ -179,7 +202,9 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
       setMessages([
         { role: 'ai', text: analysisContent, modelUsed: engineUsed }
       ]);
-      if (!offline) fetchDynamicQuestions(1, title, analysisContent);
+      // 從學習軌跡取出的解析：未登入時不另外呼叫 AI 產生推薦問題
+      const fromTrajectory = (engineUsed || '').startsWith('學習軌跡');
+      if (!offline && (!fromTrajectory || isAiUnlocked())) fetchDynamicQuestions(1, title, analysisContent);
     }
   }, [analysisContent, engineUsed, title, offline]);
 
@@ -214,14 +239,24 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
     const userQuery = promptText.trim();
     setMessages(prev => [...prev, { role: 'user', text: userQuery }]);
     setFollowupInput('');
+
+    // 同一段、同一個問題之前問過：直接沿用當時的回答（不呼叫 AI）
+    const asked = paraMeta ? [...trajectory].reverse().find((r) => r.kind !== 'analysis' && normalizeQuestion(r.question) === normalizeQuestion(userQuery)) : undefined;
+    if (asked) {
+      setMessages(prev => [...prev, { role: 'ai', text: asked.answer, modelUsed: `學習軌跡：${asked.timestamp} 的回答` }]);
+      return;
+    }
     setRelayLoading(true);
 
     try {
       const conversationContext = messages.map(m => `${m.role === 'user' ? '用戶提問' : 'AI解析'}: ${m.text}`).join('\n\n');
+      // 學習軌跡回饋：告訴 AI 這段之前已討論過哪些問題，讓回答接著累積、避免重複
+      const pastQs = trajectory.filter((r) => r.kind !== 'analysis').slice(-8).map((r, i) => `${i + 1}. ${r.question.slice(0, 120)}`).join('\n');
+      const trajNote = pastQs ? `\n\n【本段學習軌跡：先前已討論過的問題】\n${pastQs}\n（請在這些討論的基礎上延伸，避免重複已說明過的內容；如與先前看法有關，可簡短串連。）` : '';
       // 保留最近約 6000 字的對話，讓 AI 能接著上一則回應繼續
       const data = await callAiApi('/api/gemini/explain', {
         question: userQuery,
-        context: `針對先前討論之原文：「${sourceText}」\n\n【先前對話歷史紀錄】：\n${conversationContext.slice(-6000)}`,
+        context: `針對先前討論之原文：「${sourceText}」${trajNote}\n\n【先前對話歷史紀錄】：\n${conversationContext.slice(-6000)}`,
         isFollowup: true,
       });
 
@@ -235,14 +270,24 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
 
       // Record follow-up QA dialogue in Firebase Firestore
       saveFollowupToFirestore({
-        sourceModule: 'selection_analysis',
-        topic: title,
+        sourceModule: paraMeta ? 'mmr_reader' : 'selection_analysis',
+        topic: paraMeta?.paraLabel || title,
         sourceText: sourceText.slice(0, 500),
         question: userQuery,
         answer: aiReply,
         modelUsed: aiModel,
         stage: currentStage,
+        ...(paraMeta ? { paraId: paraMeta.paraId, paraLabel: paraMeta.paraLabel, kind: 'followup' as const } : {}),
       }).catch(err => console.warn('Firestore followup save warning:', err));
+      // 立即加入本段學習軌跡（不必等雲端寫入完成）
+      if (paraMeta) {
+        const now = Date.now();
+        setTrajectory((t) => [...t, {
+          id: `pending_${now}`, sourceModule: 'mmr_reader', topic: paraMeta.paraLabel, question: userQuery, answer: aiReply,
+          modelUsed: aiModel, stage: currentStage, kind: 'followup', paraId: paraMeta.paraId, paraLabel: paraMeta.paraLabel,
+          timestamp: new Date(now).toLocaleString('zh-TW', { hour12: false }), createdAt: now,
+        }]);
+      }
 
       fetchDynamicQuestions(currentStage, userQuery, aiReply);
     } catch (err: any) {
@@ -477,6 +522,63 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
               "{sourceText}"
             </div>
           </div>
+
+          {/* 本段學習軌跡 */}
+          {paraMeta && trajectory.length > 0 && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/60">
+              <button
+                onClick={() => setTrajOpen(!trajOpen)}
+                className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left"
+              >
+                <span className="flex items-center gap-2 text-xs font-bold text-amber-900">
+                  <span aria-hidden>🧠</span>
+                  <span>本段學習軌跡・{trajectory.length} 則</span>
+                  <span className="font-normal text-amber-700">
+                    {trajSource === 'cloud' ? '雲端資料庫' : '僅本機紀錄'}・點選可重看，不使用 AI
+                  </span>
+                </span>
+                <span className="text-[11px] text-amber-700">{trajOpen ? '收起' : '展開'}</span>
+              </button>
+              {trajOpen && (
+                <ol className="px-4 pb-3 space-y-1.5 max-h-64 overflow-y-auto">
+                  {trajectory.map((r, i) => (
+                    <li key={r.id} className="rounded-xl bg-white border border-amber-100">
+                      <button
+                        onClick={() => setTrajExpanded(trajExpanded === r.id ? null : r.id)}
+                        className="w-full flex items-start gap-2 px-3 py-2 text-left"
+                      >
+                        <span className="shrink-0 w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[11px] text-slate-500">
+                            {r.timestamp}{r.kind === 'analysis' ? '・段落解析' : r.stage ? `・階段 ${r.stage} 追問` : '・追問'}
+                          </span>
+                          <span className="block text-xs text-slate-800 font-medium truncate">{r.kind === 'analysis' ? 'Gemini 段落深度解析' : r.question}</span>
+                        </span>
+                      </button>
+                      {trajExpanded === r.id && (
+                        <div className="px-3 pb-3 space-y-2">
+                          <div className="max-h-56 overflow-y-auto p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 leading-relaxed">
+                            {renderMarkdown(r.answer)}
+                          </div>
+                          <button
+                            onClick={() => {
+                              setMessages((prev) => [...prev,
+                                ...(r.kind === 'analysis' ? [] : [{ role: 'user' as const, text: r.question }]),
+                                { role: 'ai' as const, text: r.answer, modelUsed: `學習軌跡：${r.timestamp} 的回答` }]);
+                              setTrajOpen(false);
+                            }}
+                            className="text-[11px] font-semibold text-amber-800 hover:underline"
+                          >
+                            放進下方對話，接著追問 →
+                          </button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          )}
 
           {/* Conversation Thread */}
           <div className="space-y-4">

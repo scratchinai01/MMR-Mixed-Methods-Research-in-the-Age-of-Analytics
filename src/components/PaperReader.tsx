@@ -57,11 +57,13 @@ function chipTermsFor(para: { id: string; en: string; glossaryTerms?: string[] }
 }
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
 import { PARA_KIND_LABEL } from '../data/paperAudit.ts';
+import { getTrajectoryCounts } from '../services/firebase.ts';
+import type { ParaMeta } from '../App.tsx';
 
 interface PaperReaderProps {
-  onAskGemini: (context: string) => void;
+  onAskGemini: (context: string, meta?: ParaMeta) => void;
   onOpenGlossaryTerm: (term: string) => void;
-  onExplainPara?: (title: string, source: string, markdown: string) => void;
+  onExplainPara?: (title: string, source: string, markdown: string, meta?: ParaMeta) => void;
   onNavigateToCritique?: () => void;
   onOpenMmrModal?: () => void;
   initialSection?: string;
@@ -86,6 +88,16 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
   const PAPER_TABLES = currentPaper.tables;
 
   const [activeSection, setActiveSection] = useState<string>(initialSection);
+  // 學習軌跡：各段落已累積的解析與追問筆數
+  const [trajCounts, setTrajCounts] = useState<Record<string, number>>({});
+  useEffect(() => {
+    let alive = true;
+    const load = (force = false) => getTrajectoryCounts(force).then((c) => { if (alive) setTrajCounts(c); }).catch(() => {});
+    load();
+    const onUpd = () => load(true);
+    window.addEventListener('trajectory-updated', onUpd);
+    return () => { alive = false; window.removeEventListener('trajectory-updated', onUpd); };
+  }, []);
 
   React.useEffect(() => {
     if (initialSection) {
@@ -1056,9 +1068,23 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                     <BookOpen className="w-3.5 h-3.5" />
                     <span>深入解說</span>
                   </button>
+                  {(trajCounts[para.id] || 0) > 0 && (
+                    <button
+                      onClick={() => {
+                        const meta = { paraId: para.id, paraLabel: para.subSection || para.id, openTrajectory: true };
+                        if (PARA_EXPLAIN[para.id] && onExplainPara) onExplainPara(`💡 白話解說：${para.subSection || '本段'}`, para.zh, buildExplainMarkdown(PARA_EXPLAIN[para.id]), meta);
+                        else onAskGemini(`${para.en}\n\n【中文翻譯】\n${para.zh}`, meta);
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 transition-colors"
+                      title="這一段過去的解析與追問紀錄（不使用 AI）"
+                    >
+                      <span aria-hidden>🧠</span>
+                      <span>學習軌跡 {trajCounts[para.id]}</span>
+                    </button>
+                  )}
                   {PARA_EXPLAIN[para.id] && onExplainPara ? (
                     <button
-                      onClick={() => onExplainPara(`💡 白話解說：${para.subSection || '本段'}`, para.zh, buildExplainMarkdown(PARA_EXPLAIN[para.id]))}
+                      onClick={() => onExplainPara(`💡 白話解說：${para.subSection || '本段'}`, para.zh, buildExplainMarkdown(PARA_EXPLAIN[para.id]), { paraId: para.id, paraLabel: para.subSection || para.id })}
                       className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:text-white bg-emerald-100 hover:bg-emerald-600 rounded-xl transition-all border border-emerald-300/60 shadow-xs active:scale-95 cursor-pointer"
                       title="預先寫好的白話解說與生活例子（不使用 AI，不花費用）"
                     >
@@ -1067,7 +1093,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                     </button>
                   ) : (
                     <button
-                      onClick={() => onAskGemini(`${para.en}\n\n【中文翻譯】\n${para.zh}`)}
+                      onClick={() => onAskGemini(`${para.en}\n\n【中文翻譯】\n${para.zh}`, { paraId: para.id, paraLabel: para.subSection || para.id })}
                       className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-800 hover:text-white bg-purple-100 hover:bg-purple-600 rounded-xl transition-all border border-purple-300/60 shadow-xs active:scale-95 cursor-pointer"
                       title="使用 Gemini AI 解析此段"
                     >
