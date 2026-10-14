@@ -22,7 +22,7 @@ import { callAiApi } from '../services/aiHelper.ts';
 import { saveFollowupToFirestore, getParaTrajectory, normalizeQuestion, FollowupDialogueRecord } from '../services/firebase.ts';
 import { isAiUnlocked } from '../services/aiGate.ts';
 import type { ParaMeta } from '../App.tsx';
-import { MathRenderer } from './MathRenderer.tsx';
+import { RichMarkdown } from './RichMarkdown.tsx';
 
 interface SelectionAnalysisModalProps {
   isOpen: boolean;
@@ -312,88 +312,8 @@ export const SelectionAnalysisModal: React.FC<SelectionAnalysisModalProps> = ({
     fetchDynamicQuestions(currentStage, lastUser, lastAi);
   };
 
-  // Helper to render inline markdown & Math equations
-  const renderInlineMathAndMarkdown = (text: string) => {
-    if (!text) return null;
-    const parts = text.split(/(\*\*.*?\*\*|`.*?`|\$\$.*?\$\$|\$.*?\$|\\\[.*?\\\]|\\\(.*?\\\))/g);
-    return parts.map((part, pIdx) => {
-      if (!part) return null;
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={pIdx} className="font-extrabold text-slate-900 bg-amber-100/60 px-1 py-0.5 rounded">{part.slice(2, -2)}</strong>;
-      }
-      if (part.startsWith('`') && part.endsWith('`')) {
-        return <code key={pIdx} className="px-1.5 py-0.5 rounded bg-slate-100 font-mono text-[11px] font-bold text-indigo-700 border border-slate-200">{part.slice(1, -1)}</code>;
-      }
-      if ((part.startsWith('$$') && part.endsWith('$$')) || (part.startsWith('\\[') && part.endsWith('\\]'))) {
-        const mathContent = part.replace(/^(\$\$|\\\[)|(\$\$|\\\])$/g, '').trim();
-        return <MathRenderer key={pIdx} math={mathContent} displayMode={true} />;
-      }
-      if ((part.startsWith('$') && part.endsWith('$')) || (part.startsWith('\\(') && part.endsWith('\\)'))) {
-        const mathContent = part.replace(/^(\$|\\\()|(\$|\\\))$/g, '').trim();
-        return <MathRenderer key={pIdx} math={mathContent} displayMode={false} />;
-      }
-      return part;
-    });
-  };
-
-  const renderMarkdown = (content: string) => {
-    if (!content) return null;
-    const lines = content.split('\n');
-    return lines.map((line, idx) => {
-      const trimmed = line.trim();
-      if (trimmed.startsWith('$$') && trimmed.endsWith('$$') && trimmed.length > 4) {
-        return <MathRenderer key={idx} math={trimmed.slice(2, -2)} displayMode={true} />;
-      }
-      if (trimmed.startsWith('### ') || trimmed.startsWith('#### ')) {
-        return (
-          <h4 key={idx} className="font-bold text-indigo-950 text-base sm:text-lg mt-4 mb-2 flex items-center gap-2">
-            <span className="w-1.5 h-4 bg-indigo-600 rounded-full" />
-            <span>{renderInlineMathAndMarkdown(trimmed.replace(/^#+\s*/, ''))}</span>
-          </h4>
-        );
-      }
-      if (trimmed.startsWith('## ')) {
-        return (
-          <h3 key={idx} className="font-bold text-slate-900 text-lg sm:text-xl mt-5 mb-3 border-b border-indigo-200 pb-1.5">
-            {renderInlineMathAndMarkdown(trimmed.replace(/^#+\s*/, ''))}
-          </h3>
-        );
-      }
-      if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-        return (
-          <li key={idx} className="ml-5 list-disc my-1 text-slate-700 leading-relaxed">
-            {renderInlineMathAndMarkdown(trimmed.replace(/^[-*]\s+/, ''))}
-          </li>
-        );
-      }
-      if (/^\d+\.\s+/.test(trimmed)) {
-        const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
-        if (numMatch) {
-          return (
-            <div key={idx} className="my-1.5 pl-2 text-slate-700 flex items-start gap-2">
-              <span className="font-bold text-indigo-700 shrink-0">{numMatch[1]}.</span>
-              <div>{renderInlineMathAndMarkdown(numMatch[2])}</div>
-            </div>
-          );
-        }
-      }
-      if (trimmed.startsWith('> ')) {
-        return (
-          <div key={idx} className="my-2.5 p-3 rounded-xl bg-amber-50/80 border-l-4 border-amber-500 text-amber-950 font-medium text-xs leading-relaxed">
-            {renderInlineMathAndMarkdown(trimmed.replace(/^>\s*/, ''))}
-          </div>
-        );
-      }
-      if (trimmed === '') {
-        return <div key={idx} className="h-2" />;
-      }
-      return (
-        <p key={idx} className="my-1.5 text-slate-700 leading-relaxed">
-          {renderInlineMathAndMarkdown(trimmed)}
-        </p>
-      );
-    });
-  };
+  // AI 回答的 Markdown＋LaTeX 排版（共用元件，跨行算式、粗體內含算式都能正確處理）
+  const renderMarkdown = (content: string) => (content ? <RichMarkdown content={content} /> : null);
 
   const quickPromptChips = [
     { label: '💡 解釋計量涵義', prompt: '請進一步用淺顯易懂的語言，解構這段內容在計量金融與統計學上的核心實質意涵：' },

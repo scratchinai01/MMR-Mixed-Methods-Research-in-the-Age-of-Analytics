@@ -38,6 +38,7 @@ import { callAiApi } from '../services/aiHelper.ts';
 import { aiClick } from '../services/aiGate.ts';
 import { saveFollowupToFirestore } from '../services/firebase.ts';
 import { MathRenderer } from './MathRenderer.tsx';
+import { normalizeMathBlocks, renderRichInline } from './RichInline.tsx';
 import { buildReportHtml } from '../services/reportHtml.ts';
 
 interface PaperUploadAnalysisModalProps {
@@ -1180,28 +1181,15 @@ Abstract: This paper quantitatively measures the interactions between media pess
                           </span>
                         </div>
                         <div className="text-slate-200 leading-relaxed pl-4 border-l-2 border-indigo-500 font-sans space-y-1">
-                          {item.a.split('\n').map((para, pIdx) => {
-                            if (!para.trim()) return <div key={pIdx} className="h-1.5" />;
-                            const parts = para.split(/(\*\*.*?\*\*|`.*?`|\$\$.*?\$\$|\$.*?\$|\\\[.*?\\\]|\\\(.*?\\\))/g);
+                          {normalizeMathBlocks(item.a).split('\n').map((para, pIdx) => {
+                            const t = para.trim();
+                            if (!t) return <div key={pIdx} className="h-1.5" />;
+                            if (t.startsWith('$$') && t.endsWith('$$') && t.length > 4) return <MathRenderer key={pIdx} math={t.slice(2, -2)} displayMode={true} />;
                             return (
                               <p key={pIdx} className="my-1">
-                                {parts.map((part, partIdx) => {
-                                  if (!part) return null;
-                                  if (part.startsWith('**') && part.endsWith('**')) {
-                                    return <strong key={partIdx} className="font-bold text-amber-200 bg-amber-400/10 px-1 py-0.5 rounded">{part.slice(2, -2)}</strong>;
-                                  }
-                                  if (part.startsWith('`') && part.endsWith('`')) {
-                                    return <code key={partIdx} className="px-1.5 py-0.5 rounded bg-slate-900 font-mono text-[11px] text-indigo-300 border border-slate-700">{part.slice(1, -1)}</code>;
-                                  }
-                                  if ((part.startsWith('$$') && part.endsWith('$$')) || (part.startsWith('\\[') && part.endsWith('\\]'))) {
-                                    const mathContent = part.replace(/^(\$\$|\\\[)|(\$\$|\\\])$/g, '').trim();
-                                    return <MathRenderer key={partIdx} math={mathContent} displayMode={true} />;
-                                  }
-                                  if ((part.startsWith('$') && part.endsWith('$')) || (part.startsWith('\\(') && part.endsWith('\\)'))) {
-                                    const mathContent = part.replace(/^(\$|\\\()|(\$|\\\))$/g, '').trim();
-                                    return <MathRenderer key={partIdx} math={mathContent} displayMode={false} />;
-                                  }
-                                  return part;
+                                {renderRichInline(t.replace(/^#{1,6}\s+/, ''), {
+                                  bold: 'font-bold text-amber-200 bg-amber-400/10 px-1 py-0.5 rounded',
+                                  code: 'px-1.5 py-0.5 rounded bg-slate-900 font-mono text-[11px] text-indigo-300 border border-slate-700',
                                 })}
                               </p>
                             );

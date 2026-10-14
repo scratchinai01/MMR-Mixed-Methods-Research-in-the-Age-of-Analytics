@@ -14,6 +14,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import { MathRenderer } from './MathRenderer.tsx';
+import { normalizeMathBlocks, renderRichInline } from './RichInline.tsx';
 
 interface MarkdownReportViewerProps {
   content: string;
@@ -57,66 +58,14 @@ export const MarkdownReportViewer: React.FC<MarkdownReportViewerProps> = ({
     setTimeout(() => setCopiedCodeBlockId(null), 2000);
   };
 
-  // Inline formatting helper with KaTeX & MathJax multi-layer math formula rendering
-  const renderInlineFormatting = (text: string): React.ReactNode => {
-    if (!text) return null;
-    // Split by markdown bold (**), inline code (`), and math ($...$ or $$...$$ or \(...\) or \[...\])
-    const parts = text.split(/(\*\*.*?\*\*|`.*?`|\$\$.*?\$\$|\$.*?\$|\\\[.*?\\\]|\\\(.*?\\\))/g);
-    
-    return parts.map((part, i) => {
-      if (!part) return null;
-
-      // Bold (**...**)
-      if (part.startsWith('**') && part.endsWith('**')) {
-        const innerText = part.slice(2, -2);
-        return (
-          <strong key={i} className="font-extrabold text-slate-950 bg-amber-100/70 px-1 py-0.5 rounded shadow-2xs">
-            {renderInlineFormatting(innerText)}
-          </strong>
-        );
-      }
-
-      // Inline code (`...`)
-      if (part.startsWith('`') && part.endsWith('`')) {
-        return (
-          <code key={i} className="px-1.5 py-0.5 rounded bg-slate-100 font-mono text-[11px] font-bold text-indigo-700 border border-slate-200">
-            {part.slice(1, -1)}
-          </code>
-        );
-      }
-
-      // Display math ($$...$$ or \[...\])
-      if ((part.startsWith('$$') && part.endsWith('$$')) || (part.startsWith('\\[') && part.endsWith('\\]'))) {
-        const mathContent = part.replace(/^(\$\$|\\\[)|(\$\$|\\\])$/g, '').trim();
-        return (
-          <MathRenderer 
-            key={i} 
-            math={mathContent} 
-            displayMode={true} 
-          />
-        );
-      }
-
-      // Inline math ($...$ or \(...\))
-      if ((part.startsWith('$') && part.endsWith('$')) || (part.startsWith('\\(') && part.endsWith('\\)'))) {
-        const mathContent = part.replace(/^(\$|\\\()|(\$|\\\))$/g, '').trim();
-        return (
-          <MathRenderer 
-            key={i} 
-            math={mathContent} 
-            displayMode={false} 
-          />
-        );
-      }
-
-      return part;
-    });
-  };
+  // 行內格式：粗體／斜體／程式碼／數學式（共用 renderRichInline，粗體內含算式也不會拆壞）
+  const renderInlineFormatting = (text: string): React.ReactNode =>
+    renderRichInline(text, { bold: 'font-extrabold text-slate-950 bg-amber-100/70 px-1 py-0.5 rounded shadow-2xs' });
 
   // Format and render structured markdown sections with MathJax / KaTeX
   const renderFormattedMarkdown = (raw: string) => {
     if (!raw) return null;
-    const lines = raw.split('\n');
+    const lines = normalizeMathBlocks(raw).split('\n');
     const elements: React.ReactNode[] = [];
     
     let inTable = false;
@@ -299,8 +248,8 @@ export const MarkdownReportViewer: React.FC<MarkdownReportViewerProps> = ({
       }
 
       // Headers (####)
-      if (trimmed.startsWith('#### ')) {
-        const headerText = trimmed.replace('#### ', '');
+      if (/^#{4,6}\s/.test(trimmed)) {
+        const headerText = trimmed.replace(/^#{4,6}\s+/, '');
         elements.push(
           <div key={index} className="mt-5 mb-2 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-purple-600"></span>
@@ -352,8 +301,8 @@ export const MarkdownReportViewer: React.FC<MarkdownReportViewerProps> = ({
       }
 
       // Blockquote (> )
-      if (trimmed.startsWith('> ')) {
-        const quoteText = trimmed.replace('> ', '');
+      if (trimmed.startsWith('>')) {
+        const quoteText = trimmed.replace(/^>\s?/, '');
         const isWarning = quoteText.includes('⚠️') || quoteText.includes('注意') || quoteText.includes('警示');
         const isCore = quoteText.includes('核心結論') || quoteText.includes('💡');
 
@@ -376,11 +325,12 @@ export const MarkdownReportViewer: React.FC<MarkdownReportViewerProps> = ({
       }
 
       // Bullet points (- or *)
-      if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-        const itemText = trimmed.replace(/^[-*]\s+/, '');
+      if (/^[-*+]\s+/.test(trimmed)) {
+        const itemText = trimmed.replace(/^[-*+]\s+/, '');
+        const depth = Math.floor((line.match(/^\s*/)?.[0] ?? '').replace(/\t/g, '    ').length / 2);
         elements.push(
-          <div key={index} className="flex items-start gap-2.5 my-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed pl-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 shrink-0"></span>
+          <div key={index} className="flex items-start gap-2.5 my-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed pl-1" style={depth ? { paddingLeft: `${depth * 1.25 + 0.25}rem` } : undefined}>
+            <span className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${depth ? 'border border-indigo-500' : 'bg-indigo-500'}`}></span>
             <div className="flex-1">{renderInlineFormatting(itemText)}</div>
           </div>
         );
@@ -388,8 +338,8 @@ export const MarkdownReportViewer: React.FC<MarkdownReportViewerProps> = ({
       }
 
       // Numbered items (1. )
-      if (/^\d+\.\s+/.test(trimmed)) {
-        const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
+      if (/^\d+[.)]\s+/.test(trimmed)) {
+        const numMatch = trimmed.match(/^(\d+)[.)]\s+(.*)/);
         if (numMatch) {
           elements.push(
             <div key={index} className="flex items-start gap-2.5 my-2 text-xs sm:text-sm text-slate-800 leading-relaxed pl-1">
