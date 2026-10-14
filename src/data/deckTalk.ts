@@ -144,7 +144,7 @@ export const DECK_TALK: Record<string, (c: DeckContext) => Talk> = {
     const rows: any[] = d(c)?.rows || [];
     const diffs = rows.map((r) => ((r.raw?.textAcc ?? 0) - (r.raw?.quantAcc ?? 0)) * 100);
     const name = (r: any) => String(r.algorithm).replace(/ \(.*\)/, '').replace(/^.*\((.*)\)$/, '$1');
-    const zh = (r: any) => (String(r.algorithm).match(/\(([^)]+)\)/)?.[1] || name(r));
+    const zh = (r: any) => (String(r.algorithm).match(/\(([^)]+)\)/)?.[1] || name(r)).replace(/\s*(MLP|SVM)$/, '');
     const sigUp = rows.filter((r) => r.mcnemar && r.mcnemar.p < 0.05 && r.mcnemar.c > r.mcnemar.b).map(zh);
     const sigDown = rows.filter((r) => r.mcnemar && r.mcnemar.p < 0.05 && r.mcnemar.b > r.mcnemar.c).map(zh);
     const lo = diffs.length ? Math.min(...diffs) : 0;
