@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AiGateToast } from './components/AiGateUI.tsx';
 import { makeUtterance } from './services/ttsVoice.ts';
 import { Header } from './components/Header.tsx';
@@ -166,6 +166,13 @@ export default function App() {
     setActiveGlossaryTerm(term);
     setGlossaryModalOpen(true);
   };
+
+  // 框選工具列點到內建專有名詞時，直接打開名詞辭典對應的那一條（不使用 AI）
+  useEffect(() => {
+    const onTerm = (e: Event) => handleOpenGlossaryTerm(String((e as CustomEvent).detail || ''));
+    window.addEventListener('open-glossary-term', onTerm);
+    return () => window.removeEventListener('open-glossary-term', onTerm);
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col selection:bg-indigo-100 selection:text-indigo-900">

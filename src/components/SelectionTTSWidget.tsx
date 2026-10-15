@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { SelectionAnalysisModal } from './SelectionAnalysisModal.tsx';
 import { callAiApi } from '../services/aiHelper.ts';
+import { lookupBuiltinTerm } from '../data/termLookup.ts';
 
 interface SelectionTTSWidgetProps {
   onAskGemini?: (selectedText: string) => void;
@@ -37,6 +38,25 @@ export const SelectionTTSWidget: React.FC<SelectionTTSWidgetProps> = ({ onAskGem
   const [isSpeakingAnalysis, setIsSpeakingAnalysis] = useState<boolean>(false);
   // 開啟分析視窗時固定住的原文；之後在視窗內選字不會改到它
   const [analysisSource, setAnalysisSource] = useState<string>('');
+
+  // 框選的是內建專有名詞：直接用內建辭典解釋，不呼叫 Gemini，所以不需主帳號
+  const builtinHit = React.useMemo(() => lookupBuiltinTerm(selectedText), [selectedText]);
+  const handleBuiltinTerm = () => {
+    if (!builtinHit) return;
+    setIsVisible(false);
+    if (builtinHit.kind === 'gloss') {
+      window.dispatchEvent(new CustomEvent('open-glossary-term', { detail: builtinHit.key }));
+      return;
+    }
+    const t = builtinHit.term;
+    setAnalysisSource(selectedText);
+    setAnalysisTitle('📖 內建專有名詞解釋');
+    setAnalysisContent(`### ${t.en}　${t.zh}\n\n${t.x}\n\n> 內建名詞小辭典，不使用 AI。要更深入的說明，可在下方提問。`);
+    setAnalysisEngine('內建名詞辭典');
+    setAnalysisLatency(undefined);
+    setAnalysisLoading(false);
+    setAnalysisModalOpen(true);
+  };
 
   const handleTranslateSelection = async () => {
     if (!selectedText.trim()) return;
@@ -401,12 +421,12 @@ export const SelectionTTSWidget: React.FC<SelectionTTSWidgetProps> = ({ onAskGem
           {/* Translate Selection */}
           <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={aiClick(() => handleTranslateSelection())}
+            onClick={builtinHit ? () => handleBuiltinTerm() : aiClick(() => handleTranslateSelection())}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all active:scale-95"
-            title="需主帳號登入"
+            title={builtinHit ? `內建名詞解釋：${builtinHit.label}（不使用 AI）` : '需主帳號登入'}
           >
             <Globe className="w-3.5 h-3.5 text-indigo-200" />
-            <span>翻譯</span>
+            <span>{builtinHit ? '名詞解釋' : '翻譯'}</span>
           </button>
 
           {/* Deep AI Academic Analysis */}
