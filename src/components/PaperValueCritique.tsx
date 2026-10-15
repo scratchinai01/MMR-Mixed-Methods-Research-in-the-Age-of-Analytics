@@ -383,7 +383,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                     <span>詢問此模式台股實務</span>
                   </button>
                   <a
-                    href="https://cdn.gamma.app/qczcgzm3dplba12/ceace1f12f5f471d90b70107fa6747b5/original/image.png"
+                    href="/images/gamma/ceace1f12f5f471d90b70107fa6747b5.webp"
                     target="_blank"
                     rel="noreferrer"
                     className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1 transition-colors"
@@ -410,7 +410,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                 className="group relative rounded-2xl overflow-hidden border border-purple-400/30 bg-slate-950 cursor-pointer shadow-inner flex items-center justify-center"
               >
                 <img
-                  src="https://cdn.gamma.app/qczcgzm3dplba12/ceace1f12f5f471d90b70107fa6747b5/original/image.png"
+                  src="/images/gamma/ceace1f12f5f471d90b70107fa6747b5.webp"
                   alt="Quantitative 與 Qualitative 字根對照"
                   className="w-full h-auto object-contain"
                   loading="lazy"
@@ -794,7 +794,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                         <span>主題一：SSCI 期刊查核與 8 項檢核總表圖</span>
                       </span>
                       <a
-                        href="https://cdn.gamma.app/qczcgzm3dplba12/31f0cf8a12c34c6eafc11666ce048330/original/image.png"
+                        href="/images/gamma/31f0cf8a12c34c6eafc11666ce048330.webp"
                         target="_blank"
                         rel="noreferrer"
                         className="text-emerald-400 hover:text-emerald-300 flex items-center gap-1 text-[11px] font-semibold"
@@ -808,7 +808,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                       className="group relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 cursor-pointer shadow-inner w-full aspect-[16/10] sm:aspect-[16/9] flex items-center justify-center mt-2"
                     >
                       <img
-                        src="https://cdn.gamma.app/qczcgzm3dplba12/31f0cf8a12c34c6eafc11666ce048330/original/image.png"
+                        src="/images/gamma/31f0cf8a12c34c6eafc11666ce048330.webp"
                         alt="SSCI 期刊查核與 8 項學術品質檢核總表圖"
                         className="w-full h-full object-contain p-1 group-hover:scale-102 transition-transform duration-300 opacity-95 group-hover:opacity-100"
                         loading="lazy"
@@ -864,7 +864,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                   <span>MMR 文獻篩選判別流程圖</span>
                 </span>
                 <a
-                  href="https://cdn.gamma.app/qczcgzm3dplba12/ca044b88abba4ab9b7b11c9b1f51c3c3/original/image.png"
+                  href="/images/gamma/ca044b88abba4ab9b7b11c9b1f51c3c3.webp"
                   target="_blank"
                   rel="noreferrer"
                   className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-[11px] font-semibold"
@@ -879,7 +879,7 @@ export const PaperValueCritique: React.FC<PaperValueCritiqueProps> = ({
                 className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 cursor-pointer shadow-inner flex items-center justify-center"
               >
                 <img
-                  src="https://cdn.gamma.app/qczcgzm3dplba12/ca044b88abba4ab9b7b11c9b1f51c3c3/original/image.png"
+                  src="/images/gamma/ca044b88abba4ab9b7b11c9b1f51c3c3.webp"
                   alt="MMR 文獻篩選判別流程"
                   className="w-full h-auto object-contain"
                   loading="lazy"
@@ -1387,7 +1387,7 @@ Quantitative Data              Textual Data
                   title="點擊放大查看 1536×1024 高清圖"
                 >
                   <img
-                    src="https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png"
+                    src="/images/gamma/21329b1e9960461ea76049af3c5883ef.webp"
                     alt="MMR 全景架構圖"
                     className="w-full h-full object-contain transition-transform"
                   />

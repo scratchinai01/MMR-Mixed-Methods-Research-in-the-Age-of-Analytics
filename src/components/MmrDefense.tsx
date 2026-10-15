@@ -6,8 +6,8 @@ import React, { useEffect, useState } from 'react';
 import { ShieldQuestion, ShieldCheck, FileSearch, ZoomIn, X } from 'lucide-react';
 
 const IMG = {
-  d1: 'https://cdn.gamma.app/qczcgzm3dplba12/69284f7e524448df83d5bfb4c58ee656/original/image.png',
-  sum: 'https://cdn.gamma.app/qczcgzm3dplba12/7a419ee5879f4267a66bf77d992d399b/original/image.png',
+  d1: '/images/gamma/69284f7e524448df83d5bfb4c58ee656.webp',
+  sum: '/images/gamma/7a419ee5879f4267a66bf77d992d399b.webp',
 };
 
 type Strength = '中等' | '中等偏弱';

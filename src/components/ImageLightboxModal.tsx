@@ -54,35 +54,35 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
   const images: ImageItem[] = [
     {
       id: 'img1',
-      url: 'https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png',
+      url: '/images/gamma/21329b1e9960461ea76049af3c5883ef.webp',
       title: '主題一：MMR 混合方法研究全景架構圖',
       caption: '實用主義哲學 • 三角交叉檢驗 • 數值廣度與敘事深度融合',
       description: '本圖精準概括了管理學 SSCI 頂級期刊對 MMR 的四維要求，直接對應本論文各項計量與機器學習設計。'
     },
     {
       id: 'img4',
-      url: 'https://cdn.gamma.app/qczcgzm3dplba12/31f0cf8a12c34c6eafc11666ce048330/original/image.png',
+      url: '/images/gamma/31f0cf8a12c34c6eafc11666ce048330.webp',
       title: '主題四：SSCI 期刊查核與 8 項學術品質檢核總表',
       caption: 'Web of Science SSCI Q1 • 2025 JIF 31.0 • AJG 2 • 博士論文可信度高',
       description: '完整核對 WoS Core Collection、JIF 歷年演變（2022 JIF 21.0 vs 2025 JIF 31.0）、JCR Q1、AJG 2024=2、非 FT50 與文獻品質卡。'
     },
     {
       id: 'img5',
-      url: 'https://cdn.gamma.app/qczcgzm3dplba12/ca044b88abba4ab9b7b11c9b1f51c3c3/original/image.png',
+      url: '/images/gamma/ca044b88abba4ab9b7b11c9b1f51c3c3.webp',
       title: '主題五：MMR 文獻篩選判別流程',
       caption: '關鍵字 → 資料類型 → 整合分析 → 設計類型 → 使用理由 • 五關判定',
       description: '用五個關卡判斷一篇論文是不是真正的混合方法研究：同時有量化與質性資料、有整合、有說明設計類型與使用理由。'
     },
     {
       id: 'img6',
-      url: 'https://cdn.gamma.app/qczcgzm3dplba12/70dbe7ce78974009a403a083b190751d/original/image.png',
+      url: '/images/gamma/70dbe7ce78974009a403a083b190751d.webp',
       title: '主題六：/MMR文獻篩選 反例教學 (Wang et al., 2023 JBR)',
       caption: '這不是典型 MMR • 作者雖宣稱 Mixed Methods 但實質為 Multi-study Quantitative Design',
       description: '詳細拆解 Pilot study ➔ Event study ➔ Experiment 1 ➔ Experiment 2 全部為量化設計，缺乏 QUAL 資料與整合，為博士論文文獻篩選的經典爭議與反例對照！'
     },
     {
       id: 'img8',
-      url: 'https://cdn.gamma.app/qczcgzm3dplba12/ceace1f12f5f471d90b70107fa6747b5/original/image.png',
+      url: '/images/gamma/ceace1f12f5f471d90b70107fa6747b5.webp',
       title: '主題八：Quantitative 與 Qualitative 字根對照',
       caption: 'QUAN 問「有多少」• QUAL 問「為什麼、如何」• 兩者合起來＝MMR',
       description: '從字根 quant-（數量）與 qual-（性質）理解量化與質性研究各自問的問題與常見方法。'

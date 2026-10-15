@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { ZoomIn, X, MapPin, BookOpen } from 'lucide-react';
 
-const IMG = 'https://cdn.gamma.app/qczcgzm3dplba12/bf3d64fe7d52449b8c673a0f5685d6f9/original/image.png';
+const IMG = '/images/gamma/bf3d64fe7d52449b8c673a0f5685d6f9.webp';
 
 const STAGES = [
   {

@@ -312,7 +312,7 @@ export default function App() {
                 src="/images/paper_framework_diagram.png"
                 alt="MMR 縮圖"
                 onError={(e) => {
-                  e.currentTarget.src = "https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png";
+                  e.currentTarget.src = "/images/gamma/21329b1e9960461ea76049af3c5883ef.webp";
                 }}
                 className="w-full h-full object-contain transition-transform"
               />

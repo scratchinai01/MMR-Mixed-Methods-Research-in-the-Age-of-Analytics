@@ -1292,7 +1292,7 @@ Abstract: This paper quantitatively measures the interactions between media pess
 
                 <div className="flex items-center gap-2 shrink-0">
                   <a
-                    href="https://cdn.gamma.app/qczcgzm3dplba12/ca044b88abba4ab9b7b11c9b1f51c3c3/original/image.png"
+                    href="/images/gamma/ca044b88abba4ab9b7b11c9b1f51c3c3.webp"
                     target="_blank"
                     rel="noreferrer"
                     className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-xs"

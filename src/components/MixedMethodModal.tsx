@@ -467,7 +467,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
                     src="/images/paper_framework_diagram.png"
                     alt="混合方法研究 (MMR) 全景架構圖"
                     onError={(e) => {
-                      e.currentTarget.src = "https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png";
+                      e.currentTarget.src = "/images/gamma/21329b1e9960461ea76049af3c5883ef.webp";
                     }}
                     className="max-h-[540px] w-auto object-contain rounded-lg group-hover:scale-[1.01] transition-transform duration-200"
                   />
@@ -542,7 +542,7 @@ export const MixedMethodModal: React.FC<MixedMethodModalProps> = ({
                       src="/images/paper_framework_diagram.png" 
                       alt="MMR 架構圖縮圖" 
                       onError={(e) => {
-                        e.currentTarget.src = "https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png";
+                        e.currentTarget.src = "/images/gamma/21329b1e9960461ea76049af3c5883ef.webp";
                       }}
                       className="w-full h-full object-contain transition-transform" 
                     />

@@ -531,7 +531,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                   <span>主題七：/MMR文獻篩選 反例全景圖解 (Gamma 原圖同步)</span>
                 </span>
                 <a
-                  href="https://cdn.gamma.app/qczcgzm3dplba12/70dbe7ce78974009a403a083b190751d/original/image.png"
+                  href="/images/gamma/70dbe7ce78974009a403a083b190751d.webp"
                   target="_blank"
                   rel="noreferrer"
                   className="text-rose-400 hover:text-rose-300 flex items-center gap-1 text-[11px] font-semibold"
@@ -546,7 +546,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                 className="group relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950 cursor-pointer shadow-inner flex items-center justify-center max-h-72"
               >
                 <img
-                  src="https://cdn.gamma.app/qczcgzm3dplba12/70dbe7ce78974009a403a083b190751d/original/image.png"
+                  src="/images/gamma/70dbe7ce78974009a403a083b190751d.webp"
                   alt="/MMR文獻篩選 反例教學：Wang et al. (2023)"
                   className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
                   loading="lazy"
@@ -712,7 +712,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({
                 src="/images/paper_framework_diagram.png"
                 alt="MMR 縮圖"
                 onError={(e) => {
-                  e.currentTarget.src = "https://cdn.gamma.app/qczcgzm3dplba12/21329b1e9960461ea76049af3c5883ef/original/image.png";
+                  e.currentTarget.src = "/images/gamma/21329b1e9960461ea76049af3c5883ef.webp";
                 }}
                 className="w-full h-full object-contain transition-transform"
               />
