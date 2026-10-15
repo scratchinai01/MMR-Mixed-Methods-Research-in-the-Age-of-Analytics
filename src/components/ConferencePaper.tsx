@@ -106,11 +106,8 @@ export function ConferencePaper({ data }: { data: any | null }) {
         <div className="text-[1.02em] italic text-slate-700 leading-snug">
           News Sentiment, Financial Indicators, and Abnormal Stock Returns:<br />A Taiwan Replication of Raman et al. (2022)
         </div>
-        <div className="pt-3 text-[0.95em]">
-          <span className="border-b border-dashed border-slate-400 px-6 text-slate-400">作者姓名</span>
-          <sup>1</sup>
-        </div>
-        <div className="text-[0.85em] text-slate-500"><sup>1</sup>服務單位／系所（請填寫）　電子郵件：（請填寫）</div>
+        <div className="pt-3 text-[1.05em] font-semibold">程瑋翔</div>
+        <div className="text-[0.9em] text-slate-600">指導教授：吳明政院長、林美純教授</div>
       </header>
 
       {/* ── 中文摘要 ── */}
