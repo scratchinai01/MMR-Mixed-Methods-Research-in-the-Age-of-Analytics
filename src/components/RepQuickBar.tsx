@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { DECK } from '../data/thesisDeck.tsx';
 import { REP_ANCHORS, SLIDE_LINKS, RepAnchor } from '../data/deckLinks.ts';
 
@@ -46,6 +46,9 @@ export function useAnchorJump(jump?: { anchor: string; step?: number; nonce: num
   }, [jump?.nonce]);
 }
 
+// Gamma 簡報「研究目的與研究問題（RQ）」
+const GAMMA_RQ_URL = 'https://gamma.app/docs/Mixed-Methods-Research-in-the-Age-of-Analytics-An-Exemplar-Levera-1rly67lo5v7wqdd?mode=present#card-fvphacjauv5m68c';
+
 export function RepQuickBar({ returnToThesisSlide, onReturnToThesis }: { returnToThesisSlide: number | null; onReturnToThesis?: (slide?: number) => void }) {
   const [active, setActive] = useState<RepAnchor>('rep-compare');
 
@@ -79,6 +82,10 @@ export function RepQuickBar({ returnToThesisSlide, onReturnToThesis }: { returnT
             </button>
           ))}
           <div className="flex-1" />
+          <a href={GAMMA_RQ_URL} target="_blank" rel="noreferrer" title="在新分頁開啟 Gamma 簡報：研究目的與研究問題"
+            className="h-8 px-3 rounded-lg text-xs font-bold whitespace-nowrap bg-indigo-50 text-indigo-700 hover:bg-indigo-100 flex items-center gap-1">
+            研究目的與 RQ<ExternalLink className="w-3 h-3" />
+          </a>
           {onReturnToThesis && (
             <button onClick={() => onReturnToThesis(returnToThesisSlide || undefined)}
               className="h-8 px-3 rounded-lg text-xs font-extrabold whitespace-nowrap bg-amber-400 hover:bg-amber-300 text-slate-950 flex items-center gap-1">
