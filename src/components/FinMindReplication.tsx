@@ -10,6 +10,7 @@ import { RealReplicationFacts } from './RealReplicationFacts.tsx';
 import { ReplicationReplay } from './ReplicationReplay.tsx';
 import { NewsDownload } from './NewsDownload.tsx';
 import { RepQuickBar, useAnchorJump } from './RepQuickBar.tsx';
+import { GammaEmbed } from './GammaEmbed.tsx';
 import { PAPER_TABLES } from '../data/paperContent.ts';
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
 import { MlExampleVideo } from './MlExampleVideo.tsx';
@@ -663,6 +664,9 @@ export const FinMindReplication: React.FC<FinMindReplicationProps> = ({
 
       {/* 快速標籤：跳到各區塊，並可回到簡報對應頁 */}
       <RepQuickBar returnToThesisSlide={returnToThesisSlide ?? null} onReturnToThesis={onReturnToThesis} />
+
+      {/* Gamma 簡報：研究目的與研究問題 */}
+      <GammaEmbed />
 
       {/* FinMind Tool Hero Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
