@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { paperTermNote } from './src/data/paperTerms.ts';
 
 dotenv.config();
 
@@ -881,7 +882,7 @@ app.post('/api/gemini/explain', async (req, res) => {
 任務：精準翻譯用戶提供的學術論文句子、段落或術語。
 規範要求：
 1. 輸出流暢、精確、具頂尖學術標準之繁體中文學術對譯（信達雅；若原文已為中文則譯為專業道地之英文學術用語）。
-2. 列出 2-4 個核心專門學術術語之英漢精準對照與學術語境微意涵。
+2. 列出 2-4 個核心專門學術術語之英漢精準對照與學術語境微意涵；若提供了【本篇專有名詞對照】，譯名與意思一律以它為準（本篇指 Raman et al., 2022 與本平台的台股復刻）。
 3. 嚴禁任何無關客套話、自問自答或公式化免責宣告，直擊翻譯核心與術語解析。`
       : `你是一位精通計量金融、市場微結構、金融文本探勘與實證研究方法論的頂尖資深教授與期刊主審。
 任務：針對用戶所選取的文字或提出的學術問題，提供精準、原創、深入的學術解析。
@@ -891,17 +892,24 @@ app.post('/api/gemini/explain', async (req, res) => {
 3. 若涉及台股實務，以本平台實際有的資料為主（FinMind 日資料、三大法人買賣超、月營收、新聞情緒）；談到盤中或委託簿層次時，須說明需要哪些資料、目前是否取得得到。
 4. 繁體中文，Markdown 結構化排版，言簡意賅，資訊密度高。` + ACCURACY_GUARD;
 
+    // 本篇專有名詞對照：從選取文字比對出變數名稱與名詞，附在提示中，讓譯名以本篇用法為準
+    const qStr = String(question);
+    const selPart = qStr.includes('：\n\n') ? qStr.slice(qStr.lastIndexOf('：\n\n') + 3) : qStr; // 前端會在選取文字前加一句任務說明
+    const { note: termNote, exact: termExact } = paperTermNote(selPart);
+
     try {
       const result = await callAiWithGemini({
-        contents: `${context ? `[論文或研究背景]\n${context}\n\n` : ''}[提問或選取文字]\n${question}`,
+        contents: `${context ? `[論文或研究背景]\n${context}\n\n` : ''}${termNote ? `${termNote}\n\n` : ''}[提問或選取文字]\n${question}`,
         systemInstruction: isTranslationReq ? systemInstruction : systemInstruction + SEARCH_NOTE,
         useSearch: !isTranslationReq && shouldUseSearch(question),
         temperature: isTranslationReq ? 0.3 : 0.4,
         task: isTranslationReq ? 'translate' : 'analysis',
       });
 
+      // 選取的就是本篇名詞時，答案最前面固定附上本篇用法（不靠模型記得）
+      const answer = isTranslationReq && termExact ? `> 本篇用法：${termExact}\n\n${result.text}` : result.text;
       return res.json({
-        answer: result.text,
+        answer,
         modelUsed: result.modelUsed,
         latencyMs: result.latencyMs,
       });
@@ -909,7 +917,7 @@ app.post('/api/gemini/explain', async (req, res) => {
       console.warn('AI pipeline failed, using dynamic academic response:', apiErr.message);
       const fallback = generateSmartAcademicResponse(question, context);
       return res.json({
-        answer: fallback.text,
+        answer: isTranslationReq && termExact ? `> 本篇用法：${termExact}\n\n${fallback.text}` : fallback.text,
         modelUsed: fallback.modelUsed,
       });
     }
