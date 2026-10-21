@@ -8,7 +8,7 @@
 // =====================================================================
 
 const UNLOCK_MINUTES = 10;
-const AI_PATHS = ['/api/gemini/explain', '/api/gemini/analyze-paper', '/api/gemini/critique-value', '/api/gemini/test',
+const AI_PATHS = ['/api/gemini/explain', '/api/gemini/analyze-paper', '/api/gemini/deck-outline', '/api/gemini/critique-value', '/api/gemini/test',
   '/api/ai/dynamic-questions', '/api/sentiment/analyze-headline', '/api/translate'];
 
 let unlockedUntil = 0;

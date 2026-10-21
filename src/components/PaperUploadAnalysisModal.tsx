@@ -31,6 +31,7 @@ import {
 import { TriangulationAbcdeViewer } from './TriangulationAbcdeViewer.tsx';
 import { Table42MajorDesignsViewer } from './Table42MajorDesignsViewer.tsx';
 import { MarkdownReportViewer } from './MarkdownReportViewer.tsx';
+import { MmrDeckBuilder, type DeckPayload } from './MmrDeckBuilder.tsx';
 import { ExplanatoryVsExploratoryDiagram } from './ExplanatoryVsExploratoryDiagram.tsx';
 import { analysisStorage, AnalysisRecord } from '../services/analysisStorage.ts';
 import { AnalysisHistoryDrawer } from './AnalysisHistoryDrawer.tsx';
@@ -80,6 +81,8 @@ export const PaperUploadAnalysisModal: React.FC<PaperUploadAnalysisModalProps> =
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [fileBase64, setFileBase64] = useState<string | null>(null);
+  const [deckPayload, setDeckPayload] = useState<DeckPayload | null>(null);
+  const [deckAuto, setDeckAuto] = useState(false);
   const [fileText, setFileText] = useState<string>('');
   const [pastedText, setPastedText] = useState<string>('');
   const [focusTopic, setFocusTopic] = useState<string>('表 4.2 四大主要設計類型判定 ➔ 次級變型推導 (先定大類再定變型)');
@@ -155,7 +158,8 @@ export const PaperUploadAnalysisModal: React.FC<PaperUploadAnalysisModalProps> =
     { id: '17', code: '/計量架構', name: '計量架構', desc: '檢核 GEE / 固定隨機效果 / 交互作用項之模型穩健性與內生性防禦', category: '計量模型', icon: '📈' },
     { id: '18', code: '/ML預測力', name: 'ML預測力', desc: '評估機器學習分類準確率增量 (ΔAccuracy: 70.7% ➔ 84.0%) 與混淆矩陣', category: '機器學習', icon: '🤖' },
     { id: '19', code: '/交互作用解讀', name: '交互作用解讀', desc: '解讀交互項（−102.094**）：營收成長越高，正面情緒效果越小', category: '因果機理', icon: '⚡' },
-    { id: '20', code: '/博論寫作指引', name: '博論寫作指引', desc: '產出符合國際頂級期刊標準之方法論章節段落建議與口試口委答辯策略', category: '博士指引', icon: '🎓' }
+    { id: '20', code: '/博論寫作指引', name: '博論寫作指引', desc: '產出符合國際頂級期刊標準之方法論章節段落建議與口試口委答辯策略', category: '博士指引', icon: '🎓' },
+    { id: '21', code: '/40頁簡報', name: '40頁簡報', desc: '依 MMR 報告邏輯產生 40 頁簡報（每頁標題、重點與講稿），可下載 PowerPoint', category: '簡報產出', icon: '🖼️' }
   ];
 
   // 是否已有可分析的論文（上傳檔案、貼上文字或選了範例論文）
@@ -280,6 +284,7 @@ Abstract: This paper quantitatively measures the interactions between media pess
     setAnalysisResult(null);
     setVerdict(null);
     setIsFallbackReport(false);
+    setDeckPayload(null);
 
     // 貼上文字時不要沿用範例論文的名稱，避免 AI 把它當成 Raman et al. (2022)
     const fileNameToReport = file ? file.name : (uploadMode === 'paste' && !finalFileName ? '使用者貼上的論文內容' : (finalFileName || '使用者貼上的論文內容'));
@@ -298,6 +303,9 @@ Abstract: This paper quantitatively measures the interactions between media pess
 
       if (data && data.answer) {
         setAnalysisResult(data.answer);
+        // 40 頁簡報沿用同一份論文內容
+        setDeckPayload({ fileName: fileNameToReport, fileType: file?.type || 'text/plain', fileBase64, textContent: finalTargetText });
+        setDeckAuto(skillsToUse.includes('/40頁簡報'));
         setAnalyzedFileName(fileNameToReport);
         if (data.modelUsed) setAnalyzedModelUsed(data.modelUsed);
         if (data.latencyMs) setAnalyzedLatencyMs(data.latencyMs);
@@ -513,7 +521,7 @@ Abstract: This paper quantitatively measures the interactions between media pess
                 </span>
                 <div>
                   <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
-                    <span>這裡 先勾選要用的快捷指令 (已勾選 {checkedSkillCodes.length} / 20 項)</span>
+                    <span>這裡 先勾選要用的快捷指令 (已勾選 {checkedSkillCodes.length} / {phdSkillsList.length} 項)</span>
                   </h3>
                   <p className="text-[11px] text-indigo-200/80">
                     利用勾選的 skills 直接進行聯合診斷（如 /MMR判定、/計量架構、/交互作用解讀等）
@@ -527,7 +535,7 @@ Abstract: This paper quantitatively measures the interactions between media pess
                   onClick={handleSelectAllSkills}
                   className="px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-white font-medium transition-colors"
                 >
-                  全選 (20項)
+                  全選 ({phdSkillsList.length}項)
                 </button>
                 <button
                   type="button"
@@ -1091,6 +1099,11 @@ Abstract: This paper quantitatively measures the interactions between media pess
                 fileName={analyzedFileName || 'Paper_MMR_Analysis'} 
               />
 
+              {/* 40 頁 MMR 論文報告簡報（勾選 /40頁簡報 時自動產生） */}
+              {(deckAuto || checkedSkillCodes.includes('/40頁簡報')) && analysisResult && !isFallbackReport && (
+                <MmrDeckBuilder report={analysisResult} payload={deckPayload} autoStart={deckAuto} />
+              )}
+
               {/* Interactive In-Modal Follow-up Q&A Section */}
               <div className="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
@@ -1257,7 +1270,7 @@ Abstract: This paper quantitatively measures the interactions between media pess
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-white flex items-center gap-2">
-                    <span>🎓 博士論文｜MMR＋SSCI＋IF 20 個 Skills 快速套用</span>
+                    <span>🎓 博士論文｜MMR＋SSCI＋IF {phdSkillsList.length} 個 Skills 快速套用</span>
                   </h3>
                   <p className="text-xs text-indigo-200/80">
                     點擊任何項目，即可直接將其指定為本次論文審查焦點，精準執行單元診斷！

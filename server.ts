@@ -22,7 +22,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // 會消耗 Gemini 的端點：需由網頁解鎖後才會帶上 x-ai-unlock 標頭；
 // 另以每個 IP 10 分鐘內最多 AI_RATE_LIMIT 次（預設 60）限制，避免現場大量觀眾誤觸造成費用。
 // ─────────────────────────────────────────────────────────────────────
-const AI_ROUTES = ['/api/gemini/explain', '/api/gemini/analyze-paper', '/api/gemini/critique-value', '/api/gemini/test',
+const AI_ROUTES = ['/api/gemini/explain', '/api/gemini/analyze-paper', '/api/gemini/deck-outline', '/api/gemini/critique-value', '/api/gemini/test',
   '/api/ai/dynamic-questions', '/api/sentiment/analyze-headline', '/api/translate'];
 const AI_RATE_LIMIT = Number(process.env.AI_RATE_LIMIT || 60);
 const aiHits = new Map<string, number[]>();
@@ -929,6 +929,86 @@ app.post('/api/gemini/explain', async (req, res) => {
       answer: fallback.text,
       modelUsed: fallback.modelUsed,
     });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// 40 頁 MMR 報告簡報：固定 40 頁骨架（MMR 報告邏輯），由 Gemini 依論文與診斷報告填內容
+// ─────────────────────────────────────────────────────────────────────
+const DECK_SKELETON: Array<[string, string]> = [
+  ['開場', '封面'], ['開場', '報告大綱'],
+  ['緒論', '研究背景'], ['緒論', '研究動機'], ['緒論', '研究問題'], ['緒論', '研究目的'], ['緒論', '論文基本資料與期刊定位'],
+  ['文獻與理論', '理論基礎（一）'], ['文獻與理論', '理論基礎（二）'], ['文獻與理論', '文獻缺口'], ['文獻與理論', '研究假說或研究命題'],
+  ['MMR 研究設計', '為什麼需要混合方法'], ['MMR 研究設計', '主要設計類型判定（表 4.2 第一階段）'], ['MMR 研究設計', '子變型判定（第二階段）'],
+  ['MMR 研究設計', '時機與權重（QUAN：QUAL）'], ['MMR 研究設計', '研究流程（設計程序圖）'],
+  ['量化軌', '量化資料來源與樣本'], ['量化軌', '量化變數定義'], ['量化軌', '量化分析方法'],
+  ['質性軌', '質性資料來源'], ['質性軌', '質性資料處理與編碼'], ['質性軌', '質性分析方法'],
+  ['整合', '整合點：資料、方法與詮釋'],
+  ['結果', '量化結果（一）'], ['結果', '量化結果（二）'], ['結果', '量化結果（三）：穩健性'],
+  ['結果', '質性結果（一）'], ['結果', '質性結果（二）'],
+  ['整合結果', '聯合展示（Joint Display）'], ['整合結果', '元推論（Meta-inference）'], ['整合結果', '結果與假說對照'],
+  ['討論', '理論意涵'], ['討論', '實務意涵'], ['討論', 'MMR 品質評估：整合度與推論品質'],
+  ['限制與展望', '研究限制（一）：資料與方法'], ['限制與展望', '研究限制（二）：混合方法層面'], ['限制與展望', '未來研究方向'],
+  ['結論', '結論'], ['結論', '口試可能提問與回應'], ['結論', '參考文獻'],
+];
+
+app.post('/api/gemini/deck-outline', async (req, res) => {
+  try {
+    const { fileName, fileType, fileBase64, textContent, report } = req.body || {};
+    const skeleton = DECK_SKELETON.map(([sec, t], i) => `${i + 1}. 〔${sec}〕${t}`).join('\n');
+    const prompt = `請為這篇論文製作一份 40 頁的混合方法研究（MMR）論文報告簡報內容，頁序與每頁主題必須完全依照下列骨架：
+${skeleton}
+
+每一頁輸出：
+- title：該頁標題（可在骨架主題後加上這篇論文的具體內容，例如「量化變數定義：情緒與財務指標」）
+- bullets：3～5 點投影片重點，每點 40 字以內，寫具體內容（研究對象、變數、方法、數字、表號），不要空話
+- notes：講稿 2～4 句，口語、可直接照念
+
+規則：
+1. 只能根據下面提供的論文與診斷報告；論文沒有的內容，該頁重點寫「論文未說明」並在講稿說明這代表什麼（例如沒有質性編碼，就要誠實說明質性軌只有文字轉數字）。
+2. 數字、係數、表號必須與論文一致；不可編造。
+3. 第 1 頁封面的 bullets 寫論文題目、作者、期刊與年份；第 2 頁列出報告的章節。
+4. 第 40 頁列出論文中實際引用、且報告中用到的主要文獻（最多 8 筆），只寫作者、年份與題名，不寫 DOI。
+5. 繁體中文；英文專有名詞可保留原文。
+
+只輸出 JSON：{"slides":[{"no":1,"title":"…","bullets":["…"],"notes":"…"}, …共 40 筆]}
+
+【MMR 診斷報告】
+${String(report || '（無）').slice(0, 20000)}`;
+
+    const isPdf = fileBase64 && (fileType === 'application/pdf' || String(fileType || '').includes('pdf'));
+    let contents: any;
+    if (isPdf) contents = [{ inlineData: { mimeType: 'application/pdf', data: fileBase64 } }, { text: prompt }];
+    else if (fileBase64 && /text|markdown|json/.test(String(fileType || ''))) contents = `${prompt}\n\n【論文內容】\n${Buffer.from(fileBase64, 'base64').toString('utf-8').slice(0, 60000)}`;
+    else contents = `${prompt}\n\n【論文內容】\n${String(textContent || '').slice(0, 60000)}`;
+
+    const started = Date.now();
+    const r = await callGeminiWithFallback({
+      task: 'analysis',
+      jsonMode: true,
+      temperature: 0.4,
+      timeoutMs: 150000,
+      systemInstruction: '你是混合方法研究的資深教授，負責把論文整理成口試用的 40 頁簡報內容。只輸出 JSON。' + ACCURACY_GUARD,
+      contents,
+    });
+    const parsed = parseJsonLoose(r.text);
+    const got: any[] = Array.isArray(parsed?.slides) ? parsed.slides : [];
+    // 依骨架補齊 40 頁：模型漏頁時保留頁序，標示「未產生」
+    const slides = DECK_SKELETON.map(([sec, t], i) => {
+      const g = got.find((x) => Number(x?.no) === i + 1) || got[i] || {};
+      const bullets = Array.isArray(g.bullets) ? g.bullets.map(String).filter(Boolean).slice(0, 6) : [];
+      return {
+        no: i + 1,
+        section: sec,
+        title: String(g.title || t),
+        bullets: bullets.length ? bullets : ['（此頁內容未產生，請重新產生或自行補充）'],
+        notes: String(g.notes || ''),
+      };
+    });
+    return res.json({ success: true, slides, modelUsed: r.model, latencyMs: Date.now() - started, filled: got.length });
+  } catch (err: any) {
+    console.warn('[Deck-Outline] failed:', err.message);
+    return res.status(500).json({ success: false, error: err.message || '簡報產生失敗' });
   }
 });
 
