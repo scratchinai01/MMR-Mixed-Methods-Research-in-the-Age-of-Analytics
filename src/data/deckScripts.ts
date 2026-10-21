@@ -27,7 +27,7 @@ const fmtSecs = (s?: number) => (typeof s === 'number' ? `${Math.floor(s / 60)} 
 export const DECK_SCRIPTS: Record<string, Script> = {
   // ═══════════ 第一部分　原文報告 ═══════════
   p1: (ctx) => [
-    '各位老師、各位同學好，我是報告人程瑋翔，指導教授是吳明政院長與林美純教授。今天我要報告的論文是 Raman、Aljafari、Venkatesh 與 Richardson 在 2022 年發表於 International Journal of Information Management 的〈Mixed-methods research in the age of analytics〉，副標題是「以新聞情緒預測企業績效的範例」。',
+    '各位老師、各位同學好，我是報告人程瑋翔。今天我要報告的論文是 Raman、Aljafari、Venkatesh 與 Richardson 在 2022 年發表於 International Journal of Information Management 的〈Mixed-methods research in the age of analytics〉，副標題是「以新聞情緒預測企業績效的範例」。',
     '今天的報告分成三個部分，總共兩個小時。第一部分約四十分鐘，我會完整報告原論文：它的問題、理論、資料、方法和結果。第二部分約六十分鐘，報告我們用台股真實資料做的復刻。第三部分約二十分鐘，逐項比較原著和台股的結果，並討論差異從哪裡來。',
     `為了方便對照，每一頁投影片都固定分成左右兩欄：左邊藍色是原著，右邊綠色是我們的台股復刻。右邊只放真實計算出來的數字${d(ctx) ? `，這次的資料期間是 ${d(ctx).period.start} 到 ${d(ctx).period.end}，樣本是 ${stocks(ctx)} 這 ${d(ctx).stocks.length} 檔權值股` : ''}。如果某個結果還沒算出來，投影片上會直接寫「尚未計算」，不會放示範數字。`,
   ],

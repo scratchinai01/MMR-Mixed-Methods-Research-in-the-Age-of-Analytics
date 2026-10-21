@@ -296,7 +296,6 @@ export const DECK: DeckSlide[] = [
           ['樣本', ctx.data ? `${stockList(ctx)}；${ctx.data.period.start}～${ctx.data.period.end}` : '尚未計算'],
           ['報告架構', '原文報告 40 分 → 台股復刻 60 分 → 復刻後比較 20 分'],
           ['報告人', '程瑋翔'],
-          ['指導教授', '吳明政院長、林美純教授'],
         ]} />
       </div>
     ),

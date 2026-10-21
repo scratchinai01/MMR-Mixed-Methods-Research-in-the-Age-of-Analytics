@@ -247,7 +247,7 @@ export const ThesisReportView: React.FC<ThesisReportViewProps> = ({
               </span>
             </div>
             <p className="text-[11px] text-slate-500 hidden md:block truncate">
-              Raman et al. (2022) IJIM 混合方法與台股實證全景報告・報告人：程瑋翔・指導教授：吳明政院長、林美純教授
+              Raman et al. (2022) IJIM 混合方法與台股實證全景報告・報告人：程瑋翔
             </p>
           </div>
 

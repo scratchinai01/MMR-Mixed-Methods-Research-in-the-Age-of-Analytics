@@ -107,7 +107,6 @@ export function ConferencePaper({ data }: { data: any | null }) {
           News Sentiment, Financial Indicators, and Abnormal Stock Returns:<br />A Taiwan Replication of Raman et al. (2022)
         </div>
         <div className="pt-3 text-[1.05em] font-semibold">程瑋翔</div>
-        <div className="text-[0.9em] text-slate-600">指導教授：吳明政院長、林美純教授</div>
       </header>
 
       {/* ── 中文摘要 ── */}
